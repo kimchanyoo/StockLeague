@@ -12,6 +12,7 @@ import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.TokenRedisService;
+import com.stockleague.backend.user.dto.response.NicknameCheckResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -23,9 +24,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -79,7 +82,7 @@ public class AuthController {
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "OAuthAuthFailed",
-                                    summary = "소셜 로그인 실패",
+                                    summary = "로그인 인증 실패",
                                     value = """
                                     {
                                        "success" : false,
@@ -95,7 +98,7 @@ public class AuthController {
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "OAuthAuthFailed",
-                                    summary = "소셜 로그인 실패",
+                                    summary = "서버 통신 오류",
                                     value = """
                                     {
                                        "success" : false,
@@ -243,5 +246,66 @@ public class AuthController {
                         .accessToken(newAccessToken)
                         .build()
         );
+    }
+
+    @GetMapping("/check-nickname")
+    @Operation(summary = "닉네임 중복 검사", description = "사용자가 입력한 닉네임이 중복되는지 확인합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "중복 검사 성공",
+                    content = @Content(schema = @Schema(implementation = NicknameCheckResponseDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "사용 가능",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "available": true,
+                                                      "message": "사용 가능한 닉네임입니다."
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "사용 중",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "available": false,
+                                                      "message": "이미 사용 중인 닉네임입니다."
+                                                    }
+                                                    """
+                                    )
+                            })),
+            @ApiResponse(responseCode = "400", description = "닉네임 오류",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = {
+
+                                    @ExampleObject(
+                                            name = "InvalidNicknameFormat",
+                                            summary = "올바르지 않은 닉네임 형식",
+                                            value = """
+                                                    {
+                                                       "success" : false,
+                                                       "message" : "닉네임 형식이 올바르지 않습니다.",
+                                                       "errorCode": "NICKNAME_FORMAT_INVALID"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "DuplicatedNickname",
+                                            summary = "이미 사용 중인 닉네임",
+                                            value = """
+                                                    {
+                                                       "success" : false,
+                                                       "message" : "이미 사용 중인 닉네임입니다.",
+                                                       "errorCode": "DUPLICATED_NICKNAME"
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    public ResponseEntity<NicknameCheckResponseDto> checkNickname(@RequestParam String nickname) {
+        return ResponseEntity.ok(authService.checkNickname(nickname));
     }
 }
