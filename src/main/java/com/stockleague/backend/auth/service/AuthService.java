@@ -9,8 +9,10 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.domain.UserRole;
+import com.stockleague.backend.user.dto.response.NicknameCheckResponseDto;
 import com.stockleague.backend.user.repository.UserRepository;
 import java.time.Duration;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final TokenRedisService redisService;
+    private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
 
     public OAuthLoginResponseDto completeSignup(String tempToken, AdditionalInfoRequestDto requestDto) {
 
@@ -29,19 +32,12 @@ public class AuthService {
         String oauthId = payload.oauthId();
         var provider = payload.provider();
 
+
         if (userRepository.findByOauthIdAndProvider(oauthId, provider).isPresent()) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
         }
 
         try {
-
-            System.out.println("==== [회원가입 진입] ====");
-            System.out.println("oauthId: " + oauthId);
-            System.out.println("provider: " + provider);
-            System.out.println("nickname: " + requestDto.getNickname());
-            System.out.println("agreedToTerms: " + requestDto.getAgreedToTerms());
-            System.out.println("isOverFifteen: " + requestDto.getIsOverFifteen());
-
             User user = userRepository.save(User.builder()
                     .oauthId(oauthId)
                     .provider(provider)
@@ -60,5 +56,20 @@ public class AuthService {
         } catch (DataIntegrityViolationException e) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
         }
+    }
+
+    public NicknameCheckResponseDto checkNickname(String nickname) {
+        if(!nicknamePattern.matcher(nickname).matches()) {
+            throw new GlobalException(GlobalErrorCode.NICKNAME_FORMAT_INVALID);
+        }
+
+        boolean isAvailable = userRepository.existsByNickname(nickname);
+
+        return NicknameCheckResponseDto.builder()
+                .success(true)
+                .available(isAvailable)
+                .message(!isAvailable ? "사용가능한 닉네임입니다." : "이미 사용중인 닉네임입니다.")
+                .build();
+
     }
 }
