@@ -4,6 +4,7 @@ import com.stockleague.backend.auth.jwt.JwtAuthenticationFilter;
 import com.stockleague.backend.auth.jwt.JwtLoggingFilter;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.infra.properties.CorsProperties;
+import com.stockleague.backend.infra.redis.TokenRedisService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,10 +27,11 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final CorsProperties corsProperties;
+    private final TokenRedisService redisService;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtProvider);
+        return new JwtAuthenticationFilter(jwtProvider, redisService);
     }
 
     @Bean

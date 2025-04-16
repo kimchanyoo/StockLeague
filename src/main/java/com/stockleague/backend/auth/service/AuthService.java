@@ -2,6 +2,7 @@ package com.stockleague.backend.auth.service;
 
 import com.stockleague.backend.auth.dto.request.AdditionalInfoRequestDto;
 import com.stockleague.backend.auth.dto.response.OAuthLoginResponseDto;
+import com.stockleague.backend.auth.dto.response.OAuthLogoutResponseDto;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.auth.jwt.JwtProvider.OauthTokenPayload;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
@@ -71,5 +72,25 @@ public class AuthService {
                 .message(!isAvailable ? "사용가능한 닉네임입니다." : "이미 사용중인 닉네임입니다.")
                 .build();
 
+    }
+
+    public OAuthLogoutResponseDto logout(String accessToken, String refreshToken) {
+        if(!jwtProvider.validateToken(accessToken)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        Long userId = jwtProvider.getUserId(accessToken);
+
+        String savedRefreshToken = redisService.getRefreshToken(userId);
+        if(!refreshToken.equals(savedRefreshToken)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        redisService.deleteRefreshToken(userId);
+
+        long expiration = jwtProvider.getTokenRemainingTime(accessToken);
+        redisService.blacklistAccessToken(accessToken, expiration);
+
+        return new OAuthLogoutResponseDto(true, "로그아웃이 완료되었습니다.");
     }
 }

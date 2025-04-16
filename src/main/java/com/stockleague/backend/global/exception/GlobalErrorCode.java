@@ -35,3 +35,4 @@ public enum GlobalErrorCode {
         this.message = message;
     }
 }
+
