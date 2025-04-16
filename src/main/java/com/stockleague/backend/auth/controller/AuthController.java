@@ -2,8 +2,10 @@ package com.stockleague.backend.auth.controller;
 
 import com.stockleague.backend.auth.dto.request.AdditionalInfoRequestDto;
 import com.stockleague.backend.auth.dto.request.OAuthLoginRequestDto;
+import com.stockleague.backend.auth.dto.request.OAuthLogoutRequestDto;
 import com.stockleague.backend.auth.dto.request.RefreshTokenRequestDto;
 import com.stockleague.backend.auth.dto.response.OAuthLoginResponseDto;
+import com.stockleague.backend.auth.dto.response.OAuthLogoutResponseDto;
 import com.stockleague.backend.auth.dto.response.TokenReissueResponseDto;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.auth.service.AuthService;
@@ -112,6 +114,49 @@ public class AuthController {
     })
     public ResponseEntity<OAuthLoginResponseDto> socialLogin(@RequestBody @Valid OAuthLoginRequestDto request) {
         return ResponseEntity.ok(oAuthLoginService.login(request));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "accessToken을 블랙리스트에 등록하고 refreshToken을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공",
+                    content = @Content(schema = @Schema(implementation = OAuthLogoutResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "LogoutSuccess",
+                                    summary = "정상 로그아웃",
+                                    value = """
+                                        {
+                                          "success": true,
+                                          "message": "로그아웃이 완료되었습니다."
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "유효하지 않은 리프레시 토큰",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InvalidRefreshToken",
+                                    summary = "Refresh Token 검증 실패",
+                                    value = """
+                                        {
+                                          "success": false,
+                                          "message": "유효하지 않은 토큰입니다.",
+                                          "errorCode": "INVALID_REFRESH_TOKEN"
+                                        }
+                                        """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<OAuthLogoutResponseDto> logout(
+            HttpServletRequest request,
+            @RequestBody OAuthLogoutRequestDto requestDto
+    ) {
+        String accessToken = jwtProvider.resolveToken(request);
+        String refreshToken = requestDto.refreshToken();
+        OAuthLogoutResponseDto response = authService.logout(accessToken, refreshToken);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/oauth/complete")

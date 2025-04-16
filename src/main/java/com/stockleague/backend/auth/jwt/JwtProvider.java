@@ -97,6 +97,12 @@ public class JwtProvider {
         }
     }
 
+    // 만료 시간 구하는 메서드
+    public long getTokenRemainingTime(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.getTime() - System.currentTimeMillis();
+    }
+
     // userId 추출
     public Long getUserId(String token) {
         return Long.valueOf(parseClaims(token).getSubject());

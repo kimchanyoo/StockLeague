@@ -22,4 +22,12 @@ public class TokenRedisService {
     public void deleteRefreshToken(Long userId) {
         redisTemplate.delete("refresh:" + userId);
     }
+
+    public void blacklistAccessToken(String token, long expiration) {
+        redisTemplate.opsForValue().set("BL:" + token, "logout", Duration.ofMillis(expiration));
+    }
+
+    public boolean isBlacklisted(String accessToken) {
+        return redisTemplate.hasKey("BL:" + accessToken);
+    }
 }
