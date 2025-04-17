@@ -1,0 +1,50 @@
+.stockList {
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    gap: 12px;
+  }
+  
+  .stockCard {
+    padding: 12px;
+    border-bottom: 1px solid #D9D9D9;
+    cursor: pointer;
+  }
+  
+  .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+  
+  .name {
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .price {
+    font-weight: normal;
+    font-size: 16px;
+  }
+  
+  .code {
+    font-size: 10px;
+    color: #D9D9D9;
+  }
+  
+  .change {
+    font-weight: normal;
+  }
+  
+  .red {
+    color: #CB3030;
+  }
+  
+  .blue {
+    color: #2D7CD1;
+  }
+  
+  .gray {
+    color: gray;
+  }
+  

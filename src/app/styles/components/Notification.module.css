@@ -1,0 +1,67 @@
+.notificationMenu {
+    position: relative;
+    margin-right: 1rem;
+    cursor: pointer;
+  }
+  
+  .iconWrapper {
+    position: relative;
+    font-weight: bold;
+  }
+  
+  .badge {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: red;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6.5px;
+    border-radius: 50%;
+  }
+  
+  .dropdown {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    right: 0;
+    top: 110%;
+    background: white;
+    width: 250px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 100;
+    padding: 10px;
+  }
+  
+  .item {
+    padding: 10px;
+    border-bottom: 1px solid black;
+    font-size: 0.9rem;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .item:last-child {
+    border-bottom: none;
+  }
+
+  .closeIcon {
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.2s ease;
+  }
+  
+  .closeIcon:hover {
+    color: #333;
+  }
+  
+  .empty {
+    padding: 10px;
+    text-align: center;
+    color: #999;
+  }
+  

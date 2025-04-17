@@ -1,0 +1,43 @@
+/* 풋터 스타일 */
+.footer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #EBEDF0;
+    height: 200px;
+}
+/* 로고 스타일 */
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    cursor: default;
+}
+.stock {
+    font-size: 1rem; 
+    font-weight: bold;
+    letter-spacing: 0.3em;
+    color: #999999;
+}
+.league {
+    font-size: 0.75rem; 
+    color: #A7BCD3; 
+    letter-spacing: 0.5em; 
+}
+
+/* 내용 스타일 */
+.content {
+    color: #999999;
+    font-size: 14px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.information {
+    display: flex;
+    gap: 10px;
+}
