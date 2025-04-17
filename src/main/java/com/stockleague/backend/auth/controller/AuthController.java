@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name="Auth", description = "인증 관련 API")
+@Tag(name = "Auth", description = "인증 관련 API")
 public class AuthController {
 
     private final JwtProvider jwtProvider;
@@ -49,34 +49,34 @@ public class AuthController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "소셜 로그인 성공",
                     content = @Content(schema = @Schema(implementation = OAuthLoginResponseDto.class),
-                        examples = {
-                            @ExampleObject(
-                                name = "SocialLoginSuccess",
-                                summary = "소셜 로그인 성공",
-                                value = """
-                                    {
-                                       "success" : true,
-                                       "message" : "소셜 로그인 성공",
-                                       "accessToken" : "eyJhbGciOiJIUzI1...",
-                                       "refreshToken": "c82h3g2h3...",
-                                       "isFirstLogin" : false
-                                    }
-                                    """
-                            ),
-                            @ExampleObject(
-                                    name = "FirstLoginRequiresAdditionalInfo",
-                                    summary = "최초 로그인: 추가 정보 필요",
-                                    value = """
-                                    {
-                                       "success" : true,
-                                       "message" : "소셜 로그인 성공",
-                                       "accessToken" : "eyJhbGciOiJIUzI1...",
-                                       "refreshToken": null,
-                                       "isFirstLogin" : true
-                                    }
-                                    """
-                            )
-                        }
+                            examples = {
+                                    @ExampleObject(
+                                            name = "SocialLoginSuccess",
+                                            summary = "소셜 로그인 성공",
+                                            value = """
+                                                    {
+                                                       "success" : true,
+                                                       "message" : "소셜 로그인 성공",
+                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
+                                                       "refreshToken": "c82h3g2h3...",
+                                                       "isFirstLogin" : false
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "FirstLoginRequiresAdditionalInfo",
+                                            summary = "최초 로그인: 추가 정보 필요",
+                                            value = """
+                                                    {
+                                                       "success" : true,
+                                                       "message" : "소셜 로그인 성공",
+                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
+                                                       "refreshToken": null,
+                                                       "isFirstLogin" : true
+                                                    }
+                                                    """
+                                    )
+                            }
                     )
             ),
             @ApiResponse(responseCode = "400", description = "소셜 로그인 인증에 실패했습니다.",
@@ -86,12 +86,12 @@ public class AuthController {
                                     name = "OAuthAuthFailed",
                                     summary = "로그인 인증 실패",
                                     value = """
-                                    {
-                                       "success" : false,
-                                       "message" : "소셜 로그인 인증에 실패했습니다.",
-                                       "errorCode": "OAUTH_AUTH_FAILED"
-                                    }
-                                    """
+                                            {
+                                               "success" : false,
+                                               "message" : "소셜 로그인 인증에 실패했습니다.",
+                                               "errorCode": "OAUTH_AUTH_FAILED"
+                                            }
+                                            """
                             )
                     )
             ),
@@ -102,12 +102,12 @@ public class AuthController {
                                     name = "OAuthAuthFailed",
                                     summary = "서버 통신 오류",
                                     value = """
-                                    {
-                                       "success" : false,
-                                       "message" : "소셜 로그인 서버와 통신 중 문제가 발생했습니다.",
-                                       "errorCode": "OAUTH_SERVER_ERROR"
-                                    }
-                                    """
+                                            {
+                                               "success" : false,
+                                               "message" : "소셜 로그인 서버와 통신 중 문제가 발생했습니다.",
+                                               "errorCode": "OAUTH_SERVER_ERROR"
+                                            }
+                                            """
                             )
                     )
             )
@@ -125,11 +125,11 @@ public class AuthController {
                                     name = "LogoutSuccess",
                                     summary = "정상 로그아웃",
                                     value = """
-                                        {
-                                          "success": true,
-                                          "message": "로그아웃이 완료되었습니다."
-                                        }
-                                        """
+                                            {
+                                              "success": true,
+                                              "message": "로그아웃이 완료되었습니다."
+                                            }
+                                            """
                             )
                     )
             ),
@@ -139,12 +139,12 @@ public class AuthController {
                                     name = "InvalidRefreshToken",
                                     summary = "Refresh Token 검증 실패",
                                     value = """
-                                        {
-                                          "success": false,
-                                          "message": "유효하지 않은 토큰입니다.",
-                                          "errorCode": "INVALID_REFRESH_TOKEN"
-                                        }
-                                        """
+                                            {
+                                              "success": false,
+                                              "message": "유효하지 않은 토큰입니다.",
+                                              "errorCode": "INVALID_REFRESH_TOKEN"
+                                            }
+                                            """
                             )
                     )
             )
@@ -165,14 +165,14 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "회원가입 완료",
                     content = @Content(schema = @Schema(implementation = OAuthLoginResponseDto.class),
                             examples = @ExampleObject(
-                                name = "CompleteLogin",
-                                summary = "추가 정보 입력 완료",
-                                value = """
-                                    {
-                                       "success" : true,
-                                       "message" : "추가 정보 입력이 완료되었습니다",
-                                    }
-                                    """
+                                    name = "CompleteLogin",
+                                    summary = "추가 정보 입력 완료",
+                                    value = """
+                                            {
+                                               "success" : true,
+                                               "message" : "추가 정보 입력이 완료되었습니다",
+                                            }
+                                            """
                             )
                     )
             ),
@@ -183,12 +183,12 @@ public class AuthController {
                                     name = "AlreadyRegisteredUser",
                                     summary = "가입된 유저",
                                     value = """
-                                    {
-                                       "success" : false,
-                                       "message" : "이미 가입된 유저입니다.",
-                                       "errorCode": "ALREADY_REGISTERED"
-                                    }
-                                    """
+                                            {
+                                               "success" : false,
+                                               "message" : "이미 가입된 유저입니다.",
+                                               "errorCode": "ALREADY_REGISTERED"
+                                            }
+                                            """
                             )
                     )
             ),
@@ -199,12 +199,12 @@ public class AuthController {
                                     name = "InvalidTempToken",
                                     summary = "유효하지 않은 임시 토큰",
                                     value = """
-                                    {
-                                       "success" : false,
-                                       "message" : "임시 토큰이 유효하지 않습니다.",
-                                       "errorCode": "ALREADY_REGISTERED"
-                                    }
-                                    """
+                                            {
+                                               "success" : false,
+                                               "message" : "임시 토큰이 유효하지 않습니다.",
+                                               "errorCode": "ALREADY_REGISTERED"
+                                            }
+                                            """
                             )
                     )
             )
@@ -227,11 +227,11 @@ public class AuthController {
                                     name = "ReissuanceAccessToken",
                                     summary = "엑세스 토큰 재발급",
                                     value = """
-                                    {
-                                       "success" : true,
-                                       "accessToken" : "eyJhbGciOiJIUzI1...",
-                                    }
-                                    """
+                                            {
+                                               "success" : true,
+                                               "accessToken" : "eyJhbGciOiJIUzI1...",
+                                            }
+                                            """
                             )
                     )
             ),
@@ -242,12 +242,12 @@ public class AuthController {
                                     name = "InvalidRefreshToken",
                                     summary = "리프레시 토큰이 유효하지 않음",
                                     value = """
-                                    {
-                                       "success" : false,
-                                       "message" : "리프레시 토큰이 유효하지 않습니다.",
-                                       "errorCode": "INVALID_REFRESH_TOKEN"
-                                    }
-                                    """
+                                            {
+                                               "success" : false,
+                                               "message" : "리프레시 토큰이 유효하지 않습니다.",
+                                               "errorCode": "INVALID_REFRESH_TOKEN"
+                                            }
+                                            """
                             )
                     )
             ),
@@ -258,17 +258,17 @@ public class AuthController {
                                     name = "ExpiredRefreshToken",
                                     summary = "리프레시 토큰 만료",
                                     value = """
-                                    {
-                                       "success" : false,
-                                       "message" : "리프레시 토큰이 만료되었습니다.",
-                                       "errorCode": "EXPIRED_REFRESH_TOKEN"
-                                    }
-                                    """
+                                            {
+                                               "success" : false,
+                                               "message" : "리프레시 토큰이 만료되었습니다.",
+                                               "errorCode": "EXPIRED_REFRESH_TOKEN"
+                                            }
+                                            """
                             )
                     )
             )
     })
-    public ResponseEntity<?> refreshAccessToken(@RequestBody @Valid RefreshTokenRequestDto requestDto){
+    public ResponseEntity<?> refreshAccessToken(@RequestBody @Valid RefreshTokenRequestDto requestDto) {
         String refreshToken = requestDto.getRefreshToken();
 
         if (!jwtProvider.validateToken(refreshToken)) {

@@ -3,6 +3,7 @@ package com.stockleague.backend.global.config;
 import com.stockleague.backend.auth.jwt.JwtAuthenticationFilter;
 import com.stockleague.backend.auth.jwt.JwtLoggingFilter;
 import com.stockleague.backend.auth.jwt.JwtProvider;
+import com.stockleague.backend.global.handler.CustomAccessDeniedHandler;
 import com.stockleague.backend.infra.properties.CorsProperties;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import java.util.List;
@@ -40,13 +41,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, CustomAccessDeniedHandler customAccessDeniedHandler)
+            throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(customAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/swagger-ui/**",
