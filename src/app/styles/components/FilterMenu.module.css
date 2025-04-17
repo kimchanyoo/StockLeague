@@ -1,0 +1,23 @@
+.container {
+    position: relative;
+}
+
+.filterTool {
+    position: absolute;
+    left: 0;         
+    background-color: white;    
+    border: 1px solid #e5e7eb;  
+    border-radius: 5px;   
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: max-content;
+    z-index: 10;
+}
+
+.index {
+    width: 100%;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+}
+.index:hover {
+    background-color: #d9d9d9;
+}

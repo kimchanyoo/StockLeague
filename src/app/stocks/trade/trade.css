@@ -1,0 +1,140 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-width: 100vw;
+    margin: 0 auto; 
+    gap: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.stockList_section,
+.stockOrder_section {
+    width: 360px;
+    height: 100vh;
+    border: 1px solid rgba(118, 118, 128, 0.12);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.stockChart_section {
+    flex: 1;
+    height: 100vh;
+    border: 1px solid rgba(118, 118, 128, 0.12);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+/* 비로그인 시 주식주문창 */
+.stockOrder_section {
+    position: relative;
+  }
+  
+/* 흐리게 처리 */
+.blur {
+    filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+}
+  
+/* 로그인 안내 메시지 */
+.loginOverlay {
+    position: absolute;
+    width: 90%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.95);
+    padding: 24px 32px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+  
+.loginBtn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: #007aff;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+  
+.loginBtn:hover {
+    background-color: #005ecb;
+}
+  
+/* 종목 정보/버튼 섹션 */
+.topSection {
+    width: 100%;
+    border-bottom: 1px solid #999999;
+    padding: 1rem;
+}
+.chartTitle {
+    display: flex;
+    flex-direction:row;
+    justify-content: space-between;
+}
+.chartTitle label {
+    font-weight: bold;
+}
+
+.btnGroup {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.bigBtn {
+    font-size: 0.875rem;
+    color: #6D6D6D;
+    background-color: #D9D9D9;
+    border-radius: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.smallBtn {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: #6D6D6D;
+    background-color: #D9D9D9;
+    border-radius: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.active {
+    color: gold;
+}
+
+.titleCantent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    font-size: 0.8125rem;
+    gap: 7px;
+    font-weight: bold;
+    cursor: default;
+}
+.titleCantent h1 {
+    color: #D9D9D9;
+}
+.titleCantent h2 {
+    color: #CB3030;
+}
+.titleCantent span {
+    font-size: 1rem;
+    color: #CB3030;
+}
+.titleCantent h3 {
+    color: black;
+}

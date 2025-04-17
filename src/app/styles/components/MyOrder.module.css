@@ -1,0 +1,66 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+    
+.orderStatus {
+    flex-grow: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    overflow-y: auto;
+}
+  
+.orderStatus > p {
+    color: #D9D9D9; /* 메시지일 때만 회색 */
+}
+  
+.orderList {
+    width: 100%;
+    color: #000000; /* 정상 주문 내역 텍스트는 어두운 색 */
+    
+}
+  
+.orderItem {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    line-height: 1.5;
+    background-color: #fafafa; /* 살짝 밝은 배경 */
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+  
+.orderItem strong {
+    color: #000000;
+}
+  
+.orderDate {
+    font-size: 0.85rem;
+    color: #999999;
+}
+  
+.cancelBtn {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: #ff4d4f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+  
+.cancelBtn:hover {
+    background-color: #d9363e;
+}
+
+.orderItem strong.buy {
+    color: #CB3030;
+}
+  
+.orderItem strong.sell {
+    color: #2D7CD1;
+}

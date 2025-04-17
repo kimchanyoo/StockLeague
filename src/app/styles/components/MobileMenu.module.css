@@ -1,0 +1,78 @@
+.menuContainer {
+    position: relative;
+}
+
+.menuButton {
+    cursor: pointer;
+}
+
+.menuOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
+    z-index: 100;
+}
+
+.menuContent {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    position: relative;
+}
+.menuContent h1 {
+    color: black;
+    font-size: 32px;
+    border-bottom: 2px solid black;
+}
+
+.closeButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+.menu {
+    display: flex;
+    flex-direction: row;
+}
+
+.menuTitle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px;
+
+}
+.menuTitle h1 {
+    color: black;
+    font-size: 24px;
+    border: none;
+}
+.menuLinks {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: #6d6d6d;
+    font-size: 18px;
+    padding: 10px;
+
+}
+.menuLinks a:hover {
+    color: #006add;
+    text-decoration: underline;
+}

@@ -1,0 +1,138 @@
+.container {
+    max-width: 1440px;
+    min-width: 1100px;
+    width: 100%;
+    margin: 0 auto; 
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.container label {
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+}
+.title {
+    font-size: 3rem;
+    font-weight: bold;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #999999;
+    width: 100%;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+.title span {
+    font-size: 1rem;
+    font-weight: normal;
+}
+.inquiry-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 20px;
+}
+
+.inquiry-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+.inquiry-subTitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: bold;
+}
+.inquiry-subTitle span {
+    font-weight: normal;
+}
+.inquiry-title h1 {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* 문의/답변 박스 */
+.inquiry-details,
+.answer-contents {
+    width: 100%;
+    border: 1px solid rgba(118, 118, 128, 0.12);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    min-height: 120px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 1rem;
+}
+
+.additional-inquiries {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 댓글 창 */
+.comment-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .comment-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+  
+  .nickname {
+    flex: 0 0 80px; /* 고정 넓이 */
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .text {
+    flex: 1;
+    color: #444;
+    padding: 0 10px;
+    word-break: break-word;
+  }
+  
+  .date {
+    flex: 0 0 100px;
+    text-align: right;
+    color: #888;
+  }
+
+/* 댓글 입력창 */
+.additional-comment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.additional-comment input {
+    width: 50%;
+    border: 1px solid #d9d9d9;
+    padding: 1rem;
+    border-radius: 10px;
+}
+.additional-comment button {
+    padding: 1rem;
+    border-radius: 10px;
+    background-color: #006ADD;
+    color: white;
+    font-weight: bold;
+}

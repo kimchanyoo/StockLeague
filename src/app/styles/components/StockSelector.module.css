@@ -1,0 +1,57 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.header {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #999999;
+    width: 100%;
+}
+  
+.left {
+    position: absolute;
+    left: 1rem;
+}
+  
+.center {
+    font-weight: bold;
+    text-align: center;
+}
+
+.search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-bottom: 1px solid #999999;
+    width: 90%;
+}
+
+.searchBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #999999;
+    border-radius: 10px;
+    padding: 0.2rem;
+    width: 100%;
+}
+.searchBox input {
+    width: 100%;
+    outline: none;
+}
+
+.miniStockList {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    height: 100%;
+    overflow-y: auto;
+}

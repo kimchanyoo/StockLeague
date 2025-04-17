@@ -1,0 +1,130 @@
+.commentContainer {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .comment {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .leftSide {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .nickname {
+    font-weight: bold;
+  }
+  
+  .dot {
+    color: #999;
+  }
+  
+  .time {
+    color: #888;
+    font-size: 14px;
+  }
+  
+  .actionBtn {
+    background: none;
+    border: none;
+    color: #006ADD;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .reportBtn {
+    background: none;
+    border: none;
+    color: red;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .commentContent {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-left: 4px;
+  }
+  
+  .replySection {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .replyInput {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px;
+    resize: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .submitReply {
+    align-self: flex-end;
+    padding: 6px 12px;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .reportModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modalContent {
+    background-color: white;
+    padding: 24px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .modalButtons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    gap: 12px;
+  }
+  
+  .modalButtons button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .reportConfirm {
+    background-color: red;
+    color: white;
+  }
+  

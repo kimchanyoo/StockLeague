@@ -1,103 +1,72 @@
-import Image from "next/image";
+"use client";
+
+import React, {useState} from "react";
+import styles from "@/app/styles/page.module.css";
+import DownIcon from '@mui/icons-material/ArrowDropDown';
+import RightIcon from '@mui/icons-material/ChevronRight';
+import SignUpIcon from '@mui/icons-material/PersonAdd';
+import SignInIcon from '@mui/icons-material/Login';
+import TabMenu from "@/app/components/TabMenu";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [activeTab, setActiveTab] = useState("전체");
+  const tabList = ["전체", "인기", "관심"];
+  const router = useRouter();
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.topSection}>
+        <div className={styles.chartContainer}>
+          <div className={styles.chart}>
+          {/* 차트 컴포넌트 들어갈 부분 */}
+          </div>
+          <div className={styles.chartTitle}>
+            <h1 className={styles.content}>
+              <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
+            </h1>
+            <button className={styles.gotoBtn}>종목시세 보러가기</button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className={styles.loginContainer}>
+          <div className={styles.signSection}>
+            <button className={styles.signBtn} ><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
+            <button className={styles.signBtn} onClick={() => router.push("/auth/login")}><SignInIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>로그인</button>
+          </div>
+          <div className={styles.announcement}>
+            <h1 className={styles.announcementTitle}>공지사항<RightIcon/></h1>
+            <div className={styles.announcementContent}>이것은 첫 번째 공지사항 예시입니다.</div>
+            <div className={styles.announcementContent}>이것은 두 번째 공지사항 예시입니다.</div>
+            <div className={styles.announcementContent}>이것은 세 번째 공지사항 예시입니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <h1 className={styles.stockTitle}>📈 오늘의 시세 📉</h1>
+      <div className={styles.stockListContainer}>
+        <TabMenu
+          tabs={tabList}
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab)}
+          tabTextSize="2rem"
+        />
+        <div className={styles.kategorie}>
+          <h1>종목명</h1>
+          <h1>종가</h1>
+          <h1>대비</h1>
+          <h1>등락률</h1>
+          <h1>시가</h1>
+          <h1>고가</h1>
+          <h1>저가</h1>
+          <h1>거래량</h1>
+          <h1>시가총액</h1>
+        </div>
+          {/* 종목 */}
+      </div>
+      <h1 className={styles.moreBtn}>더보기<DownIcon fontSize="large"/></h1>
     </div>
+     
   );
 }
