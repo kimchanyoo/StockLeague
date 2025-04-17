@@ -20,15 +20,17 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    width: 80%;
+    width: 100%;
     gap: 10px;
-    margin-left: 3%;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #999999;
 }
 .search input {
-    width: 60%;
+    width: 50%;
     height: 50px;
     border: 1px solid #999999;
     border-radius: 10px;
+    margin-left: 3%;
     padding: 10px;
 }
 .search button {
@@ -46,6 +48,9 @@
 /* 공지사항 리스트*/
 .notice-container {
     padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .notice-title {
@@ -86,4 +91,33 @@
   .notice-table td a:hover {
     text-decoration: underline;
   }
+
+  /* 아래 페이징 스타일*/
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    gap: 8px;
+  }
+  
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  .pagination button.active {
+    background-color: #0070f3;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .pagination button:disabled {
+    background-color: #eee;
+    color: #aaa;
+    cursor: not-allowed;
+  }
+  
   
