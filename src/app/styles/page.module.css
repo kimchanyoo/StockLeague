@@ -155,17 +155,23 @@
     font-weight: bold;
     cursor: pointer;
 }
-.kategorie {
-    width: 100%;
+.categorie {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
     background-color: #F5F5F5;
     color: #999999;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
     border-radius: 10px;
     padding: 1.5rem 4.6875rem ;
-    gap: 80px;
+    margin-top: 30px;
+    text-align: center;
+    align-items: center;
+    width: 100%;
+}
+.list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
 }
 .moreBtn {
     font-size: 1.5rem;
