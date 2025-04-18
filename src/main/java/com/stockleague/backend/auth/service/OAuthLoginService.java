@@ -34,11 +34,8 @@ public class OAuthLoginService {
                 .map(user -> {
                     // 기존 유저 → 바로 로그인 처리
                     String accessToken = jwtProvider.createAccessToken(user.getId());
-                    System.out.println("accessToken 생성 완료");
-                    String refreshToken = jwtProvider.createRefreshToken();
-                    System.out.println("refreshToken 생성 완료");
+                    String refreshToken = jwtProvider.createRefreshToken(user.getId());
                     redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(14));
-                    System.out.println("Redis 저장 완료");
 
                     return new OAuthLoginResponseDto(true, "소셜 로그인 성공", false,
                             accessToken, refreshToken);
