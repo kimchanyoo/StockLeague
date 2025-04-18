@@ -31,9 +31,6 @@ public class JwtProvider {
     @PostConstruct
     public void init() {
         String secret = jwtProperties.getSecret();
-        System.out.println("[JWT Secret 설정 확인]");
-        System.out.println("값: " + secret);
-        System.out.println("길이: " + (secret != null ? secret.length() : "null"));
 
         try {
             byte[] keyBytes = Decoders.BASE64.decode(secret);
@@ -66,8 +63,9 @@ public class JwtProvider {
     }
 
     // refreshToken 생성
-    public String createRefreshToken() {
+    public String createRefreshToken(Long userId) {
         return Jwts.builder()
+                .setSubject(String.valueOf(userId))
                 .claim("type", "refresh")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getRefreshTokenValidity()))

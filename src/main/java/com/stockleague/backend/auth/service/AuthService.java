@@ -50,7 +50,7 @@ public class AuthService {
             );
 
             String accessToken = jwtProvider.createAccessToken(user.getId());
-            String refreshToken = jwtProvider.createRefreshToken();
+            String refreshToken = jwtProvider.createRefreshToken(user.getId());
             redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(14));
             return new OAuthLoginResponseDto(true, "회원가입 완료", false, accessToken, refreshToken);
 
