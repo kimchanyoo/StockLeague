@@ -5,17 +5,18 @@ import SearchIcon from "@mui/icons-material/Search";
 import Link from "next/link";
 import { useState } from "react";
 
-const noticesPerPage = 10;
-const maxPageButtons = 10;
-
-const mockNotices = Array.from({ length: 971 }, (_, i) => ({
-  id: `${i + 1}`,
-  type: i % 2 === 0 ? "공지" : "업데이트",
-  title: `공지사항 ${i + 1}`,
-  date: `2025-04-${(i % 30 + 1).toString().padStart(2, "0")}`,
-}));
-
 export default function Notice() {
+
+  const noticesPerPage = 10;
+  const maxPageButtons = 10;
+
+  const mockNotices = Array.from({ length: 971 }, (_, i) => ({
+    id: `${i + 1}`,
+    type: i % 2 === 0 ? "공지" : "업데이트",
+    title: `공지사항 ${i + 1}`,
+    date: `2025-04-${(i % 30 + 1).toString().padStart(2, "0")}`,
+  }));
+  
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(mockNotices.length / noticesPerPage);
 

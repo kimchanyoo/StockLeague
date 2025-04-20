@@ -6,22 +6,22 @@ import "./stockList.css";
 import StockItem from "@/app/components/StockItem";
 import DownIcon from '@mui/icons-material/ArrowDropDown';
 
-// 예시용 더미 데이터 생성
-const dummyStockData = Array.from({ length: 100 }, (_, i) => ({
-  code: `STK${i + 1}`,
-  name: `종목 ${i + 1}`,
-  close: 10000 + i * 10,
-  change: parseFloat((Math.random() * 20 - 10).toFixed(2)),
-  rate: parseFloat((Math.random() * 4 - 2).toFixed(2)),
-  open: 10000 + i * 8,
-  high: 10000 + i * 12,
-  low: 10000 + i * 6,
-  volume: 1000000 + i * 1000,
-  marketCap: 500000000 + i * 500000,
-}));
+  // 예시용 더미 데이터 생성
+  const dummyStockData = Array.from({ length: 100 }, (_, i) => ({
+    code: `STK${i + 1}`,
+    name: `종목 ${i + 1}`,
+    close: 10000 + i * 10,
+    change: parseFloat((Math.random() * 20 - 10).toFixed(2)),
+    rate: parseFloat((Math.random() * 4 - 2).toFixed(2)),
+    open: 10000 + i * 8,
+    high: 10000 + i * 12,
+    low: 10000 + i * 6,
+    volume: 1000000 + i * 1000,
+    marketCap: 500000000 + i * 500000,
+  }));
 
 export default function StockList() {
-
+  
   const [activeTab, setActiveTab] = useState("전체"); // 상단 탭탭
   const [activeSubCategory, setActiveSubCategory] = useState("전체"); // 서브 탭
 

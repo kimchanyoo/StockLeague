@@ -1,0 +1,53 @@
+// components/OrderHistoryItem.tsx
+import React from "react";
+import styles from "@/app/styles/components/OrderHistoryItem.module.css";
+
+type OrderHistoryItemProps = {
+  code: string;
+  name: string;
+  orderAmount: number;
+  orderPrice: number;
+  orderType: "매수" | "매도";
+  orderStatus: string;
+  orderQuantity: number;
+  executedQuantity: number;
+  unexecutedQuantity: number;
+  averageExecutedPrice: number;
+  createdAt: string;
+};
+
+export default function OrderHistoryItem({
+  code,
+  name,
+  orderAmount,
+  orderPrice,
+  orderType,
+  orderStatus,
+  orderQuantity,
+  executedQuantity,
+  unexecutedQuantity,
+  averageExecutedPrice,
+  createdAt,
+}: OrderHistoryItemProps) {
+  const typeClass =
+    orderType === "매수" ? styles.orderType_buy : styles.orderType_sell;
+
+  return (
+    <div className={styles.orderHistoryItem}>
+      <div>{name}</div>
+      <div>{orderAmount.toLocaleString()}</div>
+      <div>{orderPrice.toLocaleString()}</div>
+      <div className={typeClass}>{orderType}</div>
+      <div>{orderStatus}</div>
+      <div>{orderQuantity}</div>
+      <div>{executedQuantity}</div>
+      <div>{unexecutedQuantity}</div>
+      <div>
+        {averageExecutedPrice === 0
+          ? "-"
+          : averageExecutedPrice.toLocaleString()}
+      </div>
+      <div className={styles.createdAt}>{createdAt}</div>
+    </div>
+  );
+}
