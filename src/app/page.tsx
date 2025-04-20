@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from "react";
+import React, { useEffect, useState } from "react";
 import styles from "@/app/styles/page.module.css";
 import DownIcon from '@mui/icons-material/ArrowDropDown';
 import RightIcon from '@mui/icons-material/ChevronRight';
@@ -10,40 +10,46 @@ import TabMenu from "@/app/components/TabMenu";
 import StockItem from "@/app/components/StockItem";
 import { useRouter } from "next/navigation";
 
-// 예시용 더미 데이터 생성
-const dummyStockData = Array.from({ length: 100 }, (_, i) => ({
-  code: `STK${i + 1}`,
-  name: `종목 ${i + 1}`,
-  close: 10000 + i * 10,
-  change: parseFloat((Math.random() * 20 - 10).toFixed(2)),
-  rate: parseFloat((Math.random() * 4 - 2).toFixed(2)),
-  open: 10000 + i * 8,
-  high: 10000 + i * 12,
-  low: 10000 + i * 6,
-  volume: 1000000 + i * 1000,
-  marketCap: 500000000 + i * 500000,
-}));
+// 랜덤 주식 데이터 생성 함수
+const generateDummyStockData = () => {
+  return Array.from({ length: 100 }, (_, i) => ({
+    code: `STK${i + 1}`,
+    name: `종목 ${i + 1}`,
+    close: 10000 + i * 10,
+    change: parseFloat((Math.random() * 20 - 10).toFixed(2)),
+    rate: parseFloat((Math.random() * 4 - 2).toFixed(2)),
+    open: 10000 + i * 8,
+    high: 10000 + i * 12,
+    low: 10000 + i * 6,
+    volume: 1000000 + i * 1000,
+    marketCap: 500000000 + i * 500000,
+  }));
+};
 
 export default function Home() {
-
   const [activeTab, setActiveTab] = useState("전체");
   const tabList = ["전체", "인기", "관심"];
   const router = useRouter();
 
   const [visibleCount, setVisibleCount] = useState(20);
-  
+  const [stockData, setStockData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const data = generateDummyStockData();
+    setStockData(data);
+  }, []);
+
   const handleShowMore = () => {
     setVisibleCount((prev) => prev + 20);
   };
-  
-  const visibleStocks = dummyStockData.slice(0, visibleCount);
+
+  const visibleStocks = stockData.slice(0, visibleCount);
+
   return (
     <div className={styles.container}>
       <div className={styles.topSection}>
         <div className={styles.chartContainer}>
-          <div className={styles.chart}>
-          {/* 차트 컴포넌트 들어갈 부분 */}
-          </div>
+          <div className={styles.chart}></div>
           <div className={styles.chartTitle}>
             <h1 className={styles.content}>
               <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
@@ -54,7 +60,7 @@ export default function Home() {
 
         <div className={styles.loginContainer}>
           <div className={styles.signSection}>
-            <button className={styles.signBtn} ><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
+            <button className={styles.signBtn}><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
             <button className={styles.signBtn} onClick={() => router.push("/auth/login")}><SignInIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>로그인</button>
           </div>
           <div className={styles.announcement}>
@@ -88,15 +94,14 @@ export default function Home() {
         <div className={styles.list}>
           {visibleStocks.map((stock) => (
             <StockItem key={stock.code} {...stock} />
-          ))}        
+          ))}
         </div>
       </div>
-      {visibleCount < dummyStockData.length && (
+      {visibleCount < stockData.length && (
         <button className={styles.moreBtn} onClick={handleShowMore}>
           더보기<DownIcon fontSize="large"/>
         </button>
       )}
     </div>
-     
   );
 }
