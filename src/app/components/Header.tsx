@@ -8,7 +8,7 @@ import NotificationMenu from "./NotificationMenu";
 export default function Header() {
   // 임시 유저 (나중에 실제 로그인 정보로 대체)
   const user = {
-    nickname: "김석환",
+    nickname: "닉네임",
   };
   const isLoggedIn = !!user;
     return (
