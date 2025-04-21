@@ -76,7 +76,7 @@ public class AuthService {
 
     public OAuthLogoutResponseDto logout(String accessToken, String refreshToken) {
         if(!jwtProvider.validateToken(accessToken)) {
-            throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
+            throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
         }
 
         Long userId = jwtProvider.getUserId(accessToken);
