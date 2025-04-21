@@ -25,7 +25,7 @@ export default function OrderHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const tabList = ["전체", "체결", "미체결"];
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
   const maxPageButtons = 10;
 
   // 필터링된 데이터
