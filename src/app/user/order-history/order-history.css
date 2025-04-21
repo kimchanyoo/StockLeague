@@ -2,7 +2,6 @@
     max-width: 1440px;
     min-width: 1100px;
     width: 100vw;
-    min-height: 100vh;
     margin: 0 auto; 
     flex-direction: column;
     display: flex;
@@ -16,7 +15,7 @@
 }
 .orderHistoryBox {
     width: 100%;
-    min-height: 100vh;
+    height: 100%;
     border: 1px solid rgba(118, 118, 128, 0.12);
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 10px;
