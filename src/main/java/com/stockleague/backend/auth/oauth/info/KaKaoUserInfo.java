@@ -24,13 +24,6 @@ public class KaKaoUserInfo implements OAuthUserInfo {
     }
 
     @Override
-    public Integer getBirthYear() {
-        Map<String, Object> account = (Map<String, Object>) attributes.get("kakao_account");
-        String year = (String) account.get("birthyear"); // "1996"
-        return year != null ? Integer.parseInt(year) : null;
-    }
-
-    @Override
     public OauthServerType getProvider() {
         return OauthServerType.KAKAO;
     }

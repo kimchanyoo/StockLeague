@@ -42,10 +42,10 @@ public class KakaoOAuthClient implements OAuthClient {
     }
 
     @Override
-    public OAuthUserInfo requestUserInfo(OAuthLoginRequestDto requestDto){
+    public OAuthUserInfo requestUserInfo(OAuthLoginRequestDto requestDto) {
         log.info("[Kakao] 인가 코드로 토큰 요청");
 
-        try{
+        try {
             // Access Token 요청
             Map<String, Object> tokenResponse = kakaoAuthWebClient.post()
                     .uri(kakaoProperties.getTokenUri())
@@ -56,7 +56,8 @@ public class KakaoOAuthClient implements OAuthClient {
                             "&redirect_uri=" + kakaoProperties.getRedirectUri() +
                             "&code=" + requestDto.getAuthCode())
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .block();
 
             if (tokenResponse == null || !tokenResponse.containsKey("access_token")) {
@@ -69,13 +70,14 @@ public class KakaoOAuthClient implements OAuthClient {
                     .uri(kakaoProperties.getUserInfoUri())
                     .headers(headers -> headers.setBearerAuth(accessToken))
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .block();
 
             log.info("[Kakao] 사용자 정보 조회 완료");
 
             return new KaKaoUserInfo(userAttributes);
-        }catch (WebClientResponseException e) {
+        } catch (WebClientResponseException e) {
             log.warn("[KakaoOAuthClient] WebClientResponseException: status={}, body={}",
                     e.getStatusCode(), e.getResponseBodyAsString());
             if (e.getStatusCode().is4xxClientError()) {
@@ -92,7 +94,6 @@ public class KakaoOAuthClient implements OAuthClient {
             log.error("[KakaoOAuthClient] 예기치 못한 오류 발생", e);
             throw new GlobalException(GlobalErrorCode.OAUTH_SERVER_ERROR);
         }
-
 
 
     }
