@@ -8,8 +8,10 @@ import com.stockleague.backend.notice.dto.request.NoticeUpdateRequestDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminPageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminSummaryDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticeDeleteResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeDetailResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticePageResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticeRestoreResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeSummaryDto;
 import com.stockleague.backend.notice.dto.response.NoticeUpdateResponseDto;
 import com.stockleague.backend.notice.repository.NoticeRepository;
@@ -138,5 +140,36 @@ public class NoticeService {
         }
 
         return new NoticeUpdateResponseDto(true, "공지사항이 성공적으로 수정되었습니다.");
+    }
+
+    @Transactional
+    public NoticeDeleteResponseDto deleteNotice(Long noticeId) {
+        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTICE_NOT_FOUND));
+
+        notice.markAsDeleted();
+
+        return new NoticeDeleteResponseDto(
+                true,
+                "공지사항이 삭제 처리되었습니다.",
+                notice.getDeletedAt().toString()
+        );
+    }
+
+    @Transactional
+    public NoticeRestoreResponseDto restoreNotice(Long noticeId) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTICE_NOT_FOUND));
+
+        if(notice.getDeletedAt() == null) {
+            throw new GlobalException(GlobalErrorCode.INVALID_RESTORE_OPERATION);
+        }
+
+        notice.restore();
+        return new NoticeRestoreResponseDto(
+                true,
+                "공지사항이 복원되었습니다.",
+                notice.getDeletedAt() != null
+        );
     }
 }

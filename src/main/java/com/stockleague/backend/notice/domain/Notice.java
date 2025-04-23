@@ -76,4 +76,12 @@ public class Notice {
     public void updateIsPinned(Boolean isPinned) {
         this.isPinned = isPinned;
     }
+
+    public void markAsDeleted() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void restore() {
+        this.deletedAt = null;
+    }
 }
