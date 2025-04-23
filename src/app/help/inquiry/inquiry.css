@@ -34,7 +34,6 @@
     justify-content: center;
     width: 100%;
     gap: 20px; 
-    margin-bottom: 30px;   
 }
 .inquiry-item {
     display: flex;
@@ -81,7 +80,7 @@
 .pagination {
     display: flex;
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 30px;
     gap: 8px;
   }
   
