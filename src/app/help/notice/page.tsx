@@ -5,18 +5,20 @@ import SearchIcon from "@mui/icons-material/Search";
 import Link from "next/link";
 import { useState } from "react";
 
-const noticesPerPage = 10;
-const maxPageButtons = 10;
-
-const mockNotices = Array.from({ length: 971 }, (_, i) => ({
-  id: `${i + 1}`,
-  type: i % 2 === 0 ? "공지" : "업데이트",
-  title: `공지사항 ${i + 1}`,
-  date: `2025-04-${(i % 30 + 1).toString().padStart(2, "0")}`,
-}));
-
 export default function Notice() {
+
+  const noticesPerPage = 10;
+  const maxPageButtons = 10;
+
+  const mockNotices = Array.from({ length: 971 }, (_, i) => ({
+    id: `${i + 1}`,
+    type: i % 2 === 0 ? "공지" : "업데이트",
+    title: `공지사항 ${i + 1}`,
+    date: `2025-04-${(i % 30 + 1).toString().padStart(2, "0")}`,
+  }));
+  
   const [currentPage, setCurrentPage] = useState(1);
+  
   const totalPages = Math.ceil(mockNotices.length / noticesPerPage);
 
   const indexOfLastNotice = currentPage * noticesPerPage;
@@ -41,28 +43,23 @@ export default function Notice() {
         <button><SearchIcon /></button>
       </div>
 
-      <table className="notice-table">
-        <thead>
-          <tr>
-            <th>번호</th>
-            <th>구분</th>
-            <th>제목</th>
-            <th>등록일</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentNotices.map((notice, index) => (
-            <tr key={notice.id}>
-              <td>{mockNotices.length - (indexOfFirstNotice + index)}</td>
-              <td>{notice.type}</td>
-              <td>
-                <Link href={`/help/notice/${notice.id}`}>{notice.title}</Link>
-              </td>
-              <td>{notice.date}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="notice-categorie">
+        <h1>번호</h1>
+        <h1>구분</h1>
+        <h1>제목</h1>
+        <h1>등록일</h1>
+      </div> 
+
+      <div className="notice-cards">
+        {currentNotices.map((notice, index) => (
+          <Link href={`/help/notice/${notice.id}`} className="notice-item" key={notice.id}>
+            <div className="card-no">{mockNotices.length - (indexOfFirstNotice + index)}</div>
+            <div className="card-type">{notice.type}</div>
+            <div className="card-title">{notice.title}</div>
+            <div className="card-date">{notice.date}</div>
+          </Link>
+        ))}
+      </div>
 
       {/* 페이지네이션 */}
       <div className="pagination">
