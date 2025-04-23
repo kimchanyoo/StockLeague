@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/notices")
-@Tag(name = "Notice", description = "공지사항 관련 API(관리자용)")
+@Tag(name = "Notice(Admin)", description = "공지사항 관련 API(관리자용)")
 public class NoticeAdminController {
 
     private final NoticeService noticeService;
