@@ -1,123 +1,113 @@
 .container {
-    max-width: 1440px;
-    min-width: 1100px;
-    width: 100vw;
-    margin: 0 auto; 
-    flex-direction: column;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  max-width: 1440px;
+  min-width: 1100px;
+  width: 100vw;
+  margin: 0 auto; 
+  flex-direction: column;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .title {
-    font-size: 3rem;
-    font-weight: bold;
-    padding: 30px;
+  font-size: 3rem;
+  font-weight: bold;
+  padding: 30px;
 }
 
 .search {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 10px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid #999999;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 10px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #999999;
 }
 .search input {
-    width: 50%;
-    height: 50px;
-    border: 1px solid #999999;
-    border-radius: 10px;
-    margin-left: 3%;
-    padding: 10px;
+  width: 50%;
+  height: 50px;
+  border: 1px solid #999999;
+  border-radius: 10px;
+  margin-left: 3%;
+  padding: 10px;
 }
 .search button {
-    color: white;
-    background-color: #006ADD;
-    font-size: 1rem;
-    border-radius: 10px;
-    padding: 12.8px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+  color: white;
+  background-color: #006ADD;
+  font-size: 1rem;
+  border-radius: 10px;
+  padding: 12.8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
 }
 
 /* 공지사항 리스트*/
-.notice-container {
-    padding: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .notice-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1.5rem;
-  }
-  
-  .notice-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 1rem;
-    margin-top: 30px;
-    border: 1px solid rgba(118, 118, 128, 0.12);
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  
-  .notice-table th,
-  .notice-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #e0e0e0;
-    text-align: center;
-  }
-  
-  .notice-table th {
-    background-color: #E3EEFA;
-    color: #555;
-  }
-  
-  .notice-table td a {
-    color: #333;
-    text-decoration: none;
-  }
-  
-  .notice-table td a:hover {
-    text-decoration: underline;
-  }
+.notice-categorie {
+display: grid;
+width: 100%;
+grid-template-columns: repeat(4, 1fr);
+background-color: #E3EEFA;
+color: #999999;
+border-radius: 10px;
+padding: 1.5rem 4.6875rem ;
+margin-top: 30px;
+margin-bottom: 30px;
+text-align: center;
+align-items: center;
+}
+.notice-cards {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 20px;
+}
+.notice-item {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  padding: 1.5rem 4.6875rem ;
+  border: 1px solid rgba(118, 118, 128, 0.12);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  align-items: center;
+  text-align: center;
+}
+.card-type,
+.card-date {
+font-size: 12px;
+color: #888;
+}
 
-  /* 아래 페이징 스타일*/
-  .pagination {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    gap: 8px;
-  }
-  
-  .pagination button {
-    padding: 6px 12px;
-    border: 1px solid #ddd;
-    background-color: white;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  
-  .pagination button.active {
-    background-color: #0070f3;
-    color: white;
-    font-weight: bold;
-  }
-  
-  .pagination button:disabled {
-    background-color: #eee;
-    color: #aaa;
-    cursor: not-allowed;
-  }
-  
-  
+/* 아래 페이징 스타일*/
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  gap: 8px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background-color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pagination button.active {
+  background-color: #0070f3;
+  color: white;
+  font-weight: bold;
+}
+
+.pagination button:disabled {
+  background-color: #eee;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
