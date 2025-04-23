@@ -80,4 +80,8 @@ public class Notice {
     public void markAsDeleted() {
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void restore() {
+        this.deletedAt = null;
+    }
 }

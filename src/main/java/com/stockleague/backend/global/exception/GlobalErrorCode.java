@@ -23,6 +23,7 @@ public enum GlobalErrorCode {
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     MISSING_FIELDS(HttpStatus.BAD_REQUEST, "제목과 내용을 모두 입력해야 합니다."),
     MISSING_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 입력해주세요."),
+    INVALID_RESTORE_OPERATION(HttpStatus.BAD_REQUEST, "복원할 수 없는 상태입니다."),
 
     // 페이지 처리
     INVALID_PAGINATION(HttpStatus.BAD_REQUEST, "페이지 번호 또는 크기가 유효하지 않습니다."),

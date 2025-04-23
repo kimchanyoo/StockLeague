@@ -6,6 +6,7 @@ import com.stockleague.backend.notice.dto.request.NoticeUpdateRequestDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminPageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeDeleteResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticeRestoreResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeUpdateResponseDto;
 import com.stockleague.backend.notice.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -225,5 +226,60 @@ public class NoticeAdminController {
     ) {
         NoticeDeleteResponseDto notice = noticeService.deleteNotice(noticeId);
         return ResponseEntity.ok(notice);
+    }
+
+    @PatchMapping("/{noticeId}/restore")
+    @Operation(summary = "공지사항 복원", description = "삭제된 공지사항을 복원합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "복원 성공",
+                    content = @Content(schema = @Schema(implementation = NoticeRestoreResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "RestoreSuccess",
+                                    summary = "공지 복원",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "message": "공지사항이 복원되었습니다.",
+                                              "isDeleted": false
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "이미 복원된 상태이거나 복원 불가",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InvalidRestore",
+                                    summary = "복원 불가 상태",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "복원할 수 없는 상태입니다.",
+                                              "errorCode": "INVALID_RESTORE_OPERATION"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "공지 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoticeNotFound",
+                                    summary = "공지 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "해당 공지사항을 찾을 수 없습니다.",
+                                              "errorCode": "NOTICE_NOT_FOUND"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<NoticeRestoreResponseDto> restoreNotice(@PathVariable Long noticeId) {
+        return ResponseEntity.ok(noticeService.restoreNotice(noticeId));
     }
 }
