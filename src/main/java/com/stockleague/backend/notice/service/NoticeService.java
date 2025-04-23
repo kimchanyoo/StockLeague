@@ -5,7 +5,7 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notice.domain.Notice;
 import com.stockleague.backend.notice.dto.request.NoticeCreateRequestDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
-import com.stockleague.backend.notice.dto.response.NoticeSearchResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticePageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeSummaryDto;
 import com.stockleague.backend.notice.repository.NoticeRepository;
 import java.util.List;
@@ -45,7 +45,7 @@ public class NoticeService {
         );
     }
 
-    public NoticeSearchResponseDto search(String keyword, int page, int size) {
+    public NoticePageResponseDto search(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         Page<Notice> result = noticeRepository.findByTitleContainingOrContentContainingAndDeletedAtIsNull(
                 keyword, keyword, pageable
@@ -55,6 +55,24 @@ public class NoticeService {
                 .map(NoticeSummaryDto::from)
                 .toList();
 
-        return new NoticeSearchResponseDto(true, notices, page, size, result.getTotalElements());
+        return new NoticePageResponseDto(true, notices, page, size, result.getTotalElements());
+    }
+
+    public NoticePageResponseDto getNoticeList(int page, int size) {
+
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(
+                Sort.Order.desc("isPinned"),
+                Sort.Order.desc("createdAt")
+        ));
+        Page<Notice> noticePage = noticeRepository.findByDeletedAtIsNull(pageable);
+
+        List<NoticeSummaryDto> noticeList = noticePage.getContent().stream()
+                .map(NoticeSummaryDto::from)
+                .toList();
+
+        return new NoticePageResponseDto(true, noticeList, page, size, noticePage.getTotalElements());
     }
 }

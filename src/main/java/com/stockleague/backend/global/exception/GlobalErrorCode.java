@@ -22,7 +22,10 @@ public enum GlobalErrorCode {
     // 공지사항 관련
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     MISSING_FIELDS(HttpStatus.BAD_REQUEST, "제목과 내용을 모두 입력해야 합니다."),
-    MISSING_KEYWORD(HttpStatus.BAD_REQUEST,"검색어를 입력해주세요."),
+    MISSING_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 입력해주세요."),
+
+    // 페이지 처리
+    INVALID_PAGINATION(HttpStatus.BAD_REQUEST, "페이지 번호 또는 크기가 유효하지 않습니다."),
 
     // 토큰
     INVALID_TEMP_TOKEN(HttpStatus.UNAUTHORIZED, "임시 토큰이 유효하지 않습니다."),
