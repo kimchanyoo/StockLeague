@@ -4,12 +4,14 @@ import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notice.domain.Notice;
 import com.stockleague.backend.notice.dto.request.NoticeCreateRequestDto;
+import com.stockleague.backend.notice.dto.request.NoticeUpdateRequestDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminPageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminSummaryDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeDetailResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticePageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeSummaryDto;
+import com.stockleague.backend.notice.dto.response.NoticeUpdateResponseDto;
 import com.stockleague.backend.notice.repository.NoticeRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -111,5 +114,29 @@ public class NoticeService {
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTICE_NOT_FOUND));
 
         return NoticeDetailResponseDto.from(notice);
+    }
+
+    @Transactional
+    public NoticeUpdateResponseDto updateNotice(Long noticeId, NoticeUpdateRequestDto request) {
+        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTICE_NOT_FOUND));
+
+        if (request.title() != null) {
+            notice.updateTitle(request.title());
+        }
+
+        if (request.content() != null) {
+            notice.updateContent(request.content());
+        }
+
+        if (request.category() != null) {
+            notice.updateCategory(request.category());
+        }
+
+        if (request.isPinned() != null) {
+            notice.updateIsPinned(request.isPinned());
+        }
+
+        return new NoticeUpdateResponseDto(true, "공지사항이 성공적으로 수정되었습니다.");
     }
 }
