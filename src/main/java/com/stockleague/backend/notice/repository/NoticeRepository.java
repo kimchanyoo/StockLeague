@@ -12,4 +12,6 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             String title, String content, Pageable pageable);
 
     Page<Notice> findByDeletedAtIsNull(Pageable pageable);
+
+    Page<Notice> findByDeletedAtIsNotNull(Pageable pageable);
 }

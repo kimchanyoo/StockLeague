@@ -4,6 +4,8 @@ import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notice.domain.Notice;
 import com.stockleague.backend.notice.dto.request.NoticeCreateRequestDto;
+import com.stockleague.backend.notice.dto.response.NoticeAdminPageResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticeAdminSummaryDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticePageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeSummaryDto;
@@ -74,5 +76,32 @@ public class NoticeService {
                 .toList();
 
         return new NoticePageResponseDto(true, noticeList, page, size, noticePage.getTotalElements());
+    }
+
+    public NoticeAdminPageResponseDto getAdminNoticeList(int page, int size, Boolean isDeleted) {
+
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(
+                Sort.Order.desc("isPinned"),
+                Sort.Order.desc("createdAt")
+        ));
+
+        Page<Notice> noticePage;
+
+        if (isDeleted == null) {
+            noticePage = noticeRepository.findAll(pageable);
+        } else if (isDeleted) {
+            noticePage = noticeRepository.findByDeletedAtIsNotNull(pageable);
+        } else {
+            noticePage = noticeRepository.findByDeletedAtIsNull(pageable);
+        }
+
+        List<NoticeAdminSummaryDto> noticeAdminList = noticePage.getContent().stream()
+                .map(NoticeAdminSummaryDto::from)
+                .toList();
+
+        return new NoticeAdminPageResponseDto(true, noticeAdminList, page, size, noticePage.getTotalElements());
     }
 }
