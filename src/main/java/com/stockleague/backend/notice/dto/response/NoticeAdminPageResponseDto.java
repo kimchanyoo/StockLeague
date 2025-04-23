@@ -2,9 +2,9 @@ package com.stockleague.backend.notice.dto.response;
 
 import java.util.List;
 
-public record NoticeSearchResponseDto(
+public record NoticeAdminPageResponseDto (
         boolean success,
-        List<NoticeSummaryDto> notices,
+        List<NoticeAdminSummaryDto> notices,
         int page,
         int size,
         long totalCount

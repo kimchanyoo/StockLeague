@@ -10,4 +10,8 @@ import org.springframework.stereotype.Repository;
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
     Page<Notice> findByTitleContainingOrContentContainingAndDeletedAtIsNull(
             String title, String content, Pageable pageable);
+
+    Page<Notice> findByDeletedAtIsNull(Pageable pageable);
+
+    Page<Notice> findByDeletedAtIsNotNull(Pageable pageable);
 }
