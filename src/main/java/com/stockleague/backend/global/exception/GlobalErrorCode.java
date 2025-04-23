@@ -19,6 +19,10 @@ public enum GlobalErrorCode {
     NICKNAME_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "닉네임 형식이 올바르지 않습니다."),
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
 
+    // 공지사항 관련
+    NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
+    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "제목과 내용을 모두 입력해야 합니다."),
+
     // 토큰
     INVALID_TEMP_TOKEN(HttpStatus.UNAUTHORIZED, "임시 토큰이 유효하지 않습니다."),
     INVALID_ACCESS_TOKEN(HttpStatus.BAD_REQUEST, "엑세스 토큰이 유효하지 않습니다."),
