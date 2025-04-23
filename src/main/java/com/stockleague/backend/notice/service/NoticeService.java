@@ -7,6 +7,7 @@ import com.stockleague.backend.notice.dto.request.NoticeCreateRequestDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminPageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminSummaryDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticeDetailResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticePageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeSummaryDto;
 import com.stockleague.backend.notice.repository.NoticeRepository;
@@ -103,5 +104,12 @@ public class NoticeService {
                 .toList();
 
         return new NoticeAdminPageResponseDto(true, noticeAdminList, page, size, noticePage.getTotalElements());
+    }
+
+    public NoticeDetailResponseDto getNoticeDetail(long noticeId) {
+        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTICE_NOT_FOUND));
+
+        return NoticeDetailResponseDto.from(notice);
     }
 }

@@ -3,6 +3,7 @@ package com.stockleague.backend.notice.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.notice.dto.response.NoticeDetailResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticePageResponseDto;
 import com.stockleague.backend.notice.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -88,4 +90,48 @@ public class NoticeController {
         NoticePageResponseDto response = noticeService.getNoticeList(page, size);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{noticeId}")
+    @Operation(summary = "공지사항 상세 조회", description = "특정 공지사항의 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "공지사항 상세 조회 성공",
+                    content = @Content(schema = @Schema(implementation = NoticeDetailResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "NoticeDetailSuccess",
+                                    summary = "상세 공지 조회 성공",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "noticeId": 101,
+                                              "title": "시스템 점검 안내",
+                                              "category": "점검",
+                                              "content": "3월 20일 오전 2시부터 4시까지 시스템 점검이 진행됩니다.",
+                                              "createdAt": "2025-03-18T08:00:00Z",
+                                              "isPinned": false
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "공지사항 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoticeNotFound",
+                                    summary = "공지 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "해당 공지사항을 찾을 수 없습니다.",
+                                              "errorCode": "NOTICE_NOT_FOUND"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<NoticeDetailResponseDto> getNoticeDetail(@PathVariable Long noticeId) {
+        NoticeDetailResponseDto response = noticeService.getNoticeDetail(noticeId);
+        return ResponseEntity.ok(response);
+    }
+
 }
