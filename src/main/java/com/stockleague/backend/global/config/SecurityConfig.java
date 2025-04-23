@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/favicon.ico",
                                 "/api/v1/auth/**",
+                                "/api/v1/notices/**",
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
