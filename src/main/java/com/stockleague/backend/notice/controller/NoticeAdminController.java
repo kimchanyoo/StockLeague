@@ -5,6 +5,7 @@ import com.stockleague.backend.notice.dto.request.NoticeCreateRequestDto;
 import com.stockleague.backend.notice.dto.request.NoticeUpdateRequestDto;
 import com.stockleague.backend.notice.dto.response.NoticeAdminPageResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeCreateResponseDto;
+import com.stockleague.backend.notice.dto.response.NoticeDeleteResponseDto;
 import com.stockleague.backend.notice.dto.response.NoticeUpdateResponseDto;
 import com.stockleague.backend.notice.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -181,6 +182,48 @@ public class NoticeAdminController {
             @Valid @RequestBody NoticeUpdateRequestDto requestDto
     ) {
         NoticeUpdateResponseDto notice = noticeService.updateNotice(noticeId, requestDto);
+        return ResponseEntity.ok(notice);
+    }
+
+    @PatchMapping("/{noticeId}/delete")
+    @Operation(summary = "공지사항 삭제", description = "공지사항을 소프트 삭제 처리합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "공지사항 삭제 성공",
+                    content = @Content(schema = @Schema(implementation = NoticeDeleteResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "DeleteSuccess",
+                                    summary = "삭제 성공",
+                                    value = """
+                                                {
+                                                  "success": true,
+                                                  "message": "공지사항이 삭제 처리되었습니다.",
+                                                  "deletedAt": "2025-04-21T15:45:37"
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "공지사항 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoticeNotFound",
+                                    summary = "존재하지 않는 공지사항",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "수정할 공지사항이 존재하지 않습니다.",
+                                                  "errorCode": "NOTICE_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<NoticeDeleteResponseDto> deleteNotice(
+            @PathVariable Long noticeId
+    ) {
+        NoticeDeleteResponseDto notice = noticeService.deleteNotice(noticeId);
         return ResponseEntity.ok(notice);
     }
 }
