@@ -15,7 +15,7 @@ type CommentProps = {
   comments?: CommentType[];
 };
 
-export default function Comment({ comments = [] }: CommentProps) {
+const Comment = ({ comments = [] }: CommentProps) => {
   const [likedMap, setLikedMap] = useState<{ [key: number]: boolean }>({});
   const [likesMap, setLikesMap] = useState<{ [key: number]: number }>({});
   const [replyToggleMap, setReplyToggleMap] = useState<{ [key: number]: boolean }>({});
@@ -139,4 +139,6 @@ export default function Comment({ comments = [] }: CommentProps) {
       )}
     </div>
   );
-}
+};
+
+export default Comment;

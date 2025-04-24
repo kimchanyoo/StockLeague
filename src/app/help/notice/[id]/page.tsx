@@ -16,8 +16,8 @@ export default function NoticeDetailPage() {
   if (!notice) return notFound();
 
   return (
-    <div className="container">
-      <h1 className="title">공지사항
+    <div className="noticeDetail_container">
+      <h1 className="noticeDetail_title">공지사항
         <span>세부사항</span>
       </h1>
       <div className="mainContainer">
