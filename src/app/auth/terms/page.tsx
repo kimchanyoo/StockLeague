@@ -35,7 +35,17 @@ export default function Terms() {
                 onChange={handleCheckboxChange}
                 className="mr-2"
               />
-              <label htmlFor="agree">[필수] 약관에 동의합니다</label>
+              <label htmlFor="agree">[필수] 약관에 동의합니다.</label>
+            </div>
+            <div className="agreeBox">
+              <input
+                type="checkbox"
+                id="agree"
+                checked={isAgreed}
+                onChange={handleCheckboxChange}
+                className="mr-2"
+              />
+              <label htmlFor="agree">[필수] 만 14세 이상입니다.</label>
             </div>
             <NextButton text="다음" onClick={handleNextClick} disabled={!isAgreed}/>
         </div>
