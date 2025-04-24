@@ -12,7 +12,7 @@ interface StockOrderProps {
   currentPrice: number;
 }
 
-export default function StockOrder({ stockName, currentPrice }: StockOrderProps) {
+const StockOrder = ({ stockName, currentPrice }: StockOrderProps) => {
   const myMoney = 1000000;
 
   const [activeTab, setActiveTab] = useState<string>("체결 내역");
@@ -235,4 +235,6 @@ export default function StockOrder({ stockName, currentPrice }: StockOrderProps)
       </div>
     </div>
   );
-}
+};
+
+export default StockOrder;
