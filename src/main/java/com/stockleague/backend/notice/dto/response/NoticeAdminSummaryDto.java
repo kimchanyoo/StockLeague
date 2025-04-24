@@ -1,6 +1,7 @@
 package com.stockleague.backend.notice.dto.response;
 
 import com.stockleague.backend.notice.domain.Notice;
+import java.time.format.DateTimeFormatter;
 
 public record NoticeAdminSummaryDto(
         Long noticeId,
@@ -17,7 +18,7 @@ public record NoticeAdminSummaryDto(
                 notice.getCategory(),
                 notice.getIsPinned(),
                 notice.getDeletedAt() != null,
-                notice.getCreatedAt().toString()
+                notice.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         );
     }
 }

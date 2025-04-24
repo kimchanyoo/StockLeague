@@ -6,10 +6,17 @@ import com.stockleague.backend.inquiry.domain.Inquiry;
 import com.stockleague.backend.inquiry.domain.InquiryStatus;
 import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquirySummaryDto;
 import com.stockleague.backend.inquiry.repository.InquiryRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -44,5 +51,27 @@ public class InquiryService {
                 "문의가 정상적으로 접수되었습니다.",
                 savedInquiry.getId()
         );
+    }
+
+    public InquiryPageResponseDto getInquirys(Long userId, int page, int size, String status) {
+
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
+        Page<Inquiry> result;
+
+        if(status == null || status.isBlank()) {
+            result = inquiryRepository.findByUserId(userId, pageable);
+        }else{
+            result = inquiryRepository.findByUserIdAndStatus(userId, status, pageable);
+        }
+
+        List<InquirySummaryDto> inquiries = result.getContent().stream()
+                .map(InquirySummaryDto::from)
+                .toList();
+
+        return new InquiryPageResponseDto(true, inquiries, page, size, result.getTotalElements());
     }
 }

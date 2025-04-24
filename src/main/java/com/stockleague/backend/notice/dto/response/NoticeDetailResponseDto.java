@@ -1,6 +1,7 @@
 package com.stockleague.backend.notice.dto.response;
 
 import com.stockleague.backend.notice.domain.Notice;
+import java.time.format.DateTimeFormatter;
 
 public record NoticeDetailResponseDto(
         boolean success,
@@ -18,7 +19,7 @@ public record NoticeDetailResponseDto(
                 notice.getTitle(),
                 notice.getCategory(),
                 notice.getContent(),
-                notice.getCreatedAt().toString(),
+                notice.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 notice.getIsPinned()
         );
     }

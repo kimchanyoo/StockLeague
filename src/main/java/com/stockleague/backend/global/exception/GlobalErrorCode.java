@@ -19,13 +19,13 @@ public enum GlobalErrorCode {
     NICKNAME_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "닉네임 형식이 올바르지 않습니다."),
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
 
-    // 공지사항 관련
+    // 문의 및 공지사항 작성 관련
+    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "제목, 내용 그리고 카테고리를 모두 입력해야 합니다."),
+    INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 문의를 찾을 수 없습니다."),
+    NOT_OWNER(HttpStatus.FORBIDDEN, "본인 문의만 조회할 수 있습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     MISSING_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 입력해주세요."),
     INVALID_RESTORE_OPERATION(HttpStatus.BAD_REQUEST, "복원할 수 없는 상태입니다."),
-
-    // 문의 및 공지사항 작성 관련
-    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "제목, 내용 그리고 카테고리를 모두 입력해야 합니다."),
 
     // 페이지 처리
     INVALID_PAGINATION(HttpStatus.BAD_REQUEST, "페이지 번호 또는 크기가 유효하지 않습니다."),
