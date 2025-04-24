@@ -3,9 +3,8 @@
 import React, {useState} from "react";
 import styles from "@/app/styles/components/Community.module.css";
 import Comment from "./Comment";
-import Nickname from "../auth/nickname/page";
 
-export default function Community() {
+const Community = () => {
 
   const mockComment = Array.from({ length: 100 }, (_, i) => ({
     id: `${i + 1}`,
@@ -36,40 +35,42 @@ export default function Community() {
   );
 
       
-    return (
-        <div className={styles.container}>
-            <h1>
-                종목이름 커뮤니티
-            </h1>
+  return (
+    <div className={styles.container}>
+      <h1>
+        종목이름 커뮤니티
+      </h1>
             
-            <div className={styles.searchSection}>
-                <input type="text"/>
-                <button className={styles.mainBtn}>의견 남기기</button>
-            </div>
-            <div className={styles.commentSection}>
-                <Comment comments={currentComments}/>
-            </div>
+      <div className={styles.searchSection}>
+        <input type="text"/>
+        <button className={styles.mainBtn}>의견 남기기</button>
+      </div>
+      <div className={styles.commentSection}>
+        <Comment comments={currentComments}/>
+      </div>
 
-            {/* 페이지네이션 */}
-            <div className={styles.pagination}>
-              <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-                이전
-              </button>
+      {/* 페이지네이션 */}
+      <div className={styles.pagination}>
+        <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+          이전
+        </button>
 
-              {pageNumbers.map((num) => (
-                <button
-                  key={num}
-                  className={num === currentPage ? styles.active : ''}
-                  onClick={() => setCurrentPage(num)}
-                >
-                  {num}
-                </button>
-              ))}
+        {pageNumbers.map((num) => (
+          <button
+            key={num}
+            className={num === currentPage ? styles.active : ''}
+            onClick={() => setCurrentPage(num)}
+          >
+            {num}
+          </button>
+        ))}
 
-              <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
-                다음
-              </button>
-            </div>
-        </div>
-    );
-}
+        <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+          다음
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Community;
