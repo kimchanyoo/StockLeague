@@ -32,7 +32,12 @@
 
 .termsContent {
     width: 450px;
-    height: 300px;
+    height: 250px;
     border: 1px solid #767680;
     border-radius: 10px;
+}
+.agreeBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
