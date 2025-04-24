@@ -2,7 +2,7 @@
 import React, {useState} from "react";
 import styles from "@/app/styles/components/InquriyDropdown.module.css";
 
-export default function InquriyDropdown() {
+const InquriyDropdown = () => {
 
   const [category, setCategory] = useState('');
 
@@ -29,4 +29,6 @@ export default function InquriyDropdown() {
         </select>
     </div>
   );
-}
+};
+
+export default InquriyDropdown;
