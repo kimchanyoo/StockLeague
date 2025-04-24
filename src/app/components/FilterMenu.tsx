@@ -6,13 +6,13 @@ import ListIcon from "@mui/icons-material/List";
 
 const filters = ['전체종목', '인기종목', '관심종목'];
 
-export default function FilterMenu({
+const FilterMenu = ({
   selected,
   onChange,
 }: {
   selected: string;
   onChange: (filter: string) => void;
-}) {
+}) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -58,4 +58,6 @@ export default function FilterMenu({
       )}
     </div>
   );
-}
+};
+
+export default FilterMenu;
