@@ -1,8 +1,10 @@
-package com.stockleague.backend.notice.domain;
+package com.stockleague.backend.inquiry.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,7 +15,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -22,16 +23,19 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "notices")
-public class Notice {
+@Table(name = "inquiries")
+public class Inquiry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notice_id")
+    @Column(name = "inquiry_id")
     private Long id;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
+
+    @Column(name = "nickname", nullable = false)
+    private String nickname;
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -42,42 +46,14 @@ public class Notice {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Builder.Default
-    @Column(name = "is_pinned", nullable = false)
-    private Boolean isPinned = false;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private InquiryStatus status;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    public void updateTitle(String title) {
-        this.title = title;
-    }
-
-    public void updateCategory(String category) {
-        this.category = category;
-    }
-
-    public void updateContent(String content) {
-        this.content = content;
-    }
-
-    public void updateIsPinned(Boolean isPinned) {
-        this.isPinned = isPinned;
-    }
-
-    public void markAsDeleted() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    public void restore() {
-        this.deletedAt = null;
-    }
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
 }
