@@ -7,7 +7,7 @@ interface MyOrderProps {
   activeTab: string;
 }
 
-export default function MyOrder({ activeTab }: MyOrderProps) {
+const MyOrder = ({ activeTab }: MyOrderProps) => {
 
   const filledOrders = [
     {
@@ -39,42 +39,6 @@ export default function MyOrder({ activeTab }: MyOrderProps) {
     },
     {
       id: 2,
-      stock: "현대차",
-      side: "매수",
-      quantity: 3,
-      price: 195000,
-      datetime: "2025-04-15 09:12:03",
-    },
-    {
-      id: 3,
-      stock: "현대차",
-      side: "매수",
-      quantity: 3,
-      price: 195000,
-      datetime: "2025-04-15 09:12:03",
-    },{
-      id: 24,
-      stock: "현대차",
-      side: "매수",
-      quantity: 3,
-      price: 195000,
-      datetime: "2025-04-15 09:12:03",
-    },{
-      id: 23,
-      stock: "현대차",
-      side: "매수",
-      quantity: 3,
-      price: 195000,
-      datetime: "2025-04-15 09:12:03",
-    },{
-      id: 22,
-      stock: "현대차",
-      side: "매수",
-      quantity: 3,
-      price: 195000,
-      datetime: "2025-04-15 09:12:03",
-    },{
-      id: 27,
       stock: "현대차",
       side: "매수",
       quantity: 3,
@@ -140,4 +104,6 @@ export default function MyOrder({ activeTab }: MyOrderProps) {
         )}
       </div>
   );
-}
+};
+
+export default MyOrder;
