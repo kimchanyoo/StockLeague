@@ -5,7 +5,7 @@ import MobileMenu from "./MobileMenu";
 import UserMenu from "./UserMenu";
 import NotificationMenu from "./NotificationMenu";
 
-export default function Header() {
+const Header = () => {
   // 임시 유저 (나중에 실제 로그인 정보로 대체)
   const user = {
     nickname: "닉네임",
@@ -46,4 +46,6 @@ export default function Header() {
         </div>
       </header>
     );
-  }
+  };
+
+  export default Header;

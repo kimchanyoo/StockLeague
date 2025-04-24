@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import styles from "@/app/styles/components/Notification.module.css";
 import CloseIcon from '@mui/icons-material/Close';
 
-export default function NotificationMenu() {
+const NotificationMenu = () => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -57,4 +57,6 @@ export default function NotificationMenu() {
       )}
     </div>
   );
-}
+};
+
+export default NotificationMenu;
