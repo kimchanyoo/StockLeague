@@ -13,7 +13,7 @@ const dummyStocks = [
   { id: 3, name: '네이버', stockCode: '035420', currentPrice: 182000, priceChange: 0.0 },
 ];
 
-export default function StockSelector() {
+const StockSelector = () => {
     
   const [selectedFilter, setSelectedFilter] = useState('전체종목');
 
@@ -38,4 +38,6 @@ export default function StockSelector() {
       </div>
     </div>
   );
-}
+};
+
+export default StockSelector;

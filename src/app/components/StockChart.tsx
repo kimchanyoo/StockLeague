@@ -92,13 +92,13 @@ const CandleShape = (props: any) => {
   });
 };
 
-export default function StockChart({
+const StockChart = ({
   activeTab,
   setActiveTab,
 }: {
   activeTab: 'chart' | 'community';
   setActiveTab: (tab: 'chart' | 'community') => void;
-}) {
+}) => {
   return (
     <div className={styles.container}>
       <div className={styles.centerSection}>
@@ -161,4 +161,6 @@ export default function StockChart({
       </div>
     </div>
   );
-}
+};
+
+export default StockChart;

@@ -14,7 +14,7 @@ type StockListProps = {
   stocks: StockType[];
 };  
 
-export default function MiniStockList({ stocks }:StockListProps) {
+const MiniStockList = ({ stocks }:StockListProps) => {
 
   // 등락률에 따라 색상 변경 함수
   const getPriceChangeColor = (priceChange: number) => {
@@ -45,4 +45,6 @@ export default function MiniStockList({ stocks }:StockListProps) {
       ))}
     </div>
   );
-}
+};
+
+export default MiniStockList;
