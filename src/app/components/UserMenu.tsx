@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "@/app/styles/components/UserMenu.module.css";
 
-export default function UserMenu({ nickname }: { nickname: string }) {
+const UserMenu = ({ nickname }: { nickname: string }) => {
 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -34,4 +34,6 @@ export default function UserMenu({ nickname }: { nickname: string }) {
       )}
     </div>
   );
-}
+};
+
+export default UserMenu;
