@@ -15,7 +15,12 @@ const TimeIntervalSelector: React.FC<TimeIntervalProps> = ({ onIntervalChange })
 
   return (
     <div>
-      <select onChange={handleIntervalChange} value={timeInterval}>
+      <select onChange={handleIntervalChange} value={timeInterval}  
+      style={{
+      padding: "5px",
+      borderRadius: "5px",
+      border: "1px solid #999",
+      }}>
         <option value="1m">1분</option>
         <option value="3m">3분</option>
         <option value="5m">5분</option>

@@ -1,164 +1,140 @@
 "use client";
 
-import React from "react";
-import {
-  ComposedChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Bar,
-  Line,
-  Cell,
-  ResponsiveContainer,
-  Customized,
-  Brush
-} from "recharts";
+import React, { useState, useEffect, useRef } from "react";
+import { createChart, UTCTimestamp } from "lightweight-charts";
 import styles from "@/app/styles/components/StockChart.module.css";
+import TimeIntervalSelector from "./TimeIntervalSelector";
+import MovingAverageSelector from "./MovingAverageSelector"
 
-// 예시 주식 데이터
-const stockData = [
-  { time: '09:00', open: 120, high: 122, low: 119, close: 121.5 },
-  { time: '09:03', open: 121.5, high: 122, low: 120.5, close: 120.7 },
-  { time: '09:06', open: 120.7, high: 121.5, low: 120, close: 121.2 },
-  { time: '09:09', open: 121.2, high: 122, low: 120.8, close: 120.5 },
-  { time: '09:12', open: 120.5, high: 121.7, low: 120, close: 121.8 },
-  { time: '09:15', open: 121.8, high: 122.2, low: 121, close: 120.9 },
-  { time: '09:18', open: 120.9, high: 122, low: 120.5, close: 121.6 },
-  { time: '09:21', open: 121.6, high: 121.9, low: 120.9, close: 120.7 },
-  { time: '09:24', open: 120.7, high: 122, low: 120.4, close: 121.3 },
-  { time: '09:27', open: 121.3, high: 122.1, low: 120.8, close: 120.5 },
-  { time: '09:30', open: 120.5, high: 121.8, low: 120.3, close: 121.4 },
-  { time: '09:33', open: 121.4, high: 122, low: 120.7, close: 120.6 },
-  { time: '09:36', open: 120.6, high: 121.5, low: 120.4, close: 121.7 },
-  { time: '09:39', open: 121.7, high: 122.1, low: 121.1, close: 121 },
-  { time: '09:42', open: 121, high: 122.3, low: 120.8, close: 122 },
-  { time: '09:45', open: 122, high: 122.5, low: 121.3, close: 121.5 },
-  { time: '09:48', open: 121.5, high: 122.6, low: 121, close: 122.4 },
-  { time: '09:51', open: 122.4, high: 123, low: 121.8, close: 121.9 },
-  { time: '09:54', open: 121.9, high: 123.2, low: 121.5, close: 122.6 },
-  { time: '09:57', open: 122.6, high: 123, low: 121.9, close: 122 },
-];
-
-// 이동평균 계산 함수
-function calculateMovingAverage(data: any[], windowSize: number) {
-  return data.map((_, index) => {
-    if (index < windowSize - 1) return null;
-    const windowSlice = data.slice(index - windowSize + 1, index + 1);
-    const avg = windowSlice.reduce((sum, item) => sum + item.close, 0) / windowSize;
-    return Number(avg.toFixed(2));
-  });
-}
-
-// MA 데이터 추가
-const shortMA = calculateMovingAverage(stockData, 5);
-const longMA = calculateMovingAverage(stockData, 10);
-const stockDataWithMA = stockData.map((item, idx) => ({
-  ...item,
-  shortMA: shortMA[idx],
-  longMA: longMA[idx],
-}));
-
-// 캔들 차트
-const CandleShape = (props: any) => {
-  const { xAxisMap, yAxisMap, data } = props;
-  const xAxis = xAxisMap["0"];
-  const yAxis = yAxisMap["right"];
-  const xBand = xAxis.scale.bandwidth();
-
-  return data.map((entry: any, index: number) => {
-    const x = xAxis.scale(entry.time) ?? 0;
-    const centerX = x + xBand / 2;
-    const openY = yAxis.scale(entry.open);
-    const closeY = yAxis.scale(entry.close);
-    const highY = yAxis.scale(entry.high);
-    const lowY = yAxis.scale(entry.low);
-
-    const isRise = entry.close >= entry.open;
-    const color = isRise ? "#f44336" : "#2196f3";
-
-    return (
-      <g key={`candle-${index}`}>
-        <line x1={centerX} x2={centerX} y1={highY} y2={lowY} stroke={color} strokeWidth={1} />
-        <rect
-          x={x + xBand * 0.25}
-          width={xBand * 0.5}
-          y={Math.min(openY, closeY)}
-          height={Math.max(Math.abs(closeY - openY), 1)}
-          fill={color}
-        />
-      </g>
-    );
-  });
-};
-
-const StockChart = ({
-  activeTab,
-  setActiveTab,
-}: {
+type Props = {
   activeTab: 'chart' | 'community';
   setActiveTab: (tab: 'chart' | 'community') => void;
-}) => {
+};
+
+// 예시 주식 데이터
+const data: { time: UTCTimestamp; open: number; high: number; low: number; close: number; volume: number }[] = [
+  { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876, volume: 3000 },
+  { open: 9.55, high: 10.30, low: 9.42, close: 9.94, time: 1642514276, volume: 2000 },
+  { open: 9.94, high: 10.17, low: 9.92, close: 9.78, time: 1642600676, volume: 1500 },
+  { open: 9.78, high: 10.59, low: 9.18, close: 9.51, time: 1642687076, volume: 2500 },
+  { open: 9.51, high: 10.46, low: 9.10, close: 10.17, time: 1642773476, volume: 4000 },
+  { open: 10.17, high: 10.96, low: 10.16, close: 10.47, time: 1642859876, volume: 3500 },
+  { open: 10.47, high: 11.39, low: 10.40, close: 10.81, time: 1642946276, volume: 3000 },
+  { open: 10.81, high: 11.60, low: 10.30, close: 10.75, time: 1643032676, volume: 2200 },
+  { open: 10.75, high: 11.60, low: 10.49, close: 10.93, time: 1643119076, volume: 3300 },
+  { open: 10.93, high: 11.53, low: 10.76, close: 10.96, time: 1643205476, volume: 3800 }
+];
+
+const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const volumeContainerRef = useRef<HTMLDivElement | null>(null);
+  const [maVisibility, setMaVisibility] = useState({
+    short: true,
+    mid: false,
+    long: false,
+  });
+  const toggleMA = (type: 'short' | 'mid' | 'long') => {
+    setMaVisibility(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    // 차트 옵션
+    const chartOptions = {
+      layout: { 
+        textColor: 'black', 
+        background: { type: 'solid', color: 'white' } 
+      },
+      
+    };
+
+    const chart = createChart(chartContainerRef.current, chartOptions);
+
+    // 캔들스틱 시리즈 추가
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#CB3030',
+      downColor: '#2D7CD1',
+      borderVisible: false,
+      wickUpColor: '#CB3030',
+      wickDownColor: '#2D7CD1',
+    });
+
+    // 거래량 차트 영역을 위한 또 다른 차트
+    const volumeChart = createChart(volumeContainerRef.current, {
+      layout: {
+        textColor: 'black',
+        background: { type: 'solid', color: 'white' },
+      },
+      crosshair: {
+        vertLine: { color: '#000', width: 1 },
+        horzLine: { color: '#000', width: 1 },
+      },
+      grid: {
+        vertLines: { visible: false },
+        horzLines: { visible: false },
+      },
+      priceScale: {
+        visible: false, // 거래량 차트에는 가격 축을 숨깁니다
+      },
+    });
+
+    // 거래량 시리즈 추가
+    const volumeSeries = volumeChart.addHistogramSeries({
+      color: '#26a69a',
+      priceLineVisible: false,
+    });
+
+    // 평균이동선 추가
+    const addMovingAverage = (period: number, color: string) => {
+      const maSeries = chart.addLineSeries({ color, lineWidth: 1 });
+      const maData = data.map((d, i, arr) => {
+        if (i < period - 1) return null;
+        const slice = arr.slice(i - period + 1, i + 1);
+        const avg = slice.reduce((sum, item) => sum + item.close, 0) / period;
+        return { time: d.time, value: avg };
+      }).filter(Boolean) as { time: UTCTimestamp; value: number }[];
+      maSeries.setData(maData);
+    };
+
+    if (maVisibility.short) addMovingAverage(5, '#FFA500');  // 주황 단기
+    if (maVisibility.mid) addMovingAverage(20, '#008000');   // 초록 중기
+    if (maVisibility.long) addMovingAverage(60, '#0000FF');  // 파랑 장기
+
+    // 데이터 설정
+    candlestickSeries.setData(data);
+     // 데이터 설정 (거래량 차트)
+     volumeSeries.setData(
+      data.map((d, i) => {
+        const prev = data[i - 1];
+        const isHigherVolume = prev ? d.volume > prev.volume : true;
+    
+        return {
+          time: d.time,
+          value: d.volume,
+          color: isHigherVolume ? "#CB3030" : "#2D7CD1",
+        };
+      })
+    );
+    
+
+    // 화면에 맞게 시간 범위 조정
+    chart.timeScale().fitContent();
+    volumeChart.timeScale().fitContent();
+
+    // 차트 클린업
+    return () => chart.remove();
+  }, []);
+
   return (
     <div className={styles.container}>
-      <div className={styles.centerSection}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={stockDataWithMA}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis yAxisId="right" orientation="right" domain={["auto", "auto"]} />
-            <Tooltip />
-
-            {/* 캔들 */}
-            <Customized component={<CandleShape />} />
-
-            {/* 이동평균선 */}
-            <Line
-              type="monotone"
-              dataKey="shortMA"
-              stroke="#ff9800"
-              dot={false}
-              strokeWidth={2}
-              yAxisId="right"
-              name="5일선"
-            />
-            <Line
-              type="monotone"
-              dataKey="longMA"
-              stroke="#4caf50"
-              dot={false}
-              strokeWidth={2}
-              yAxisId="right"
-              name="10일선"
-            />
-            <Brush dataKey="time" height={20} stroke="#8884d8" />
-          </ComposedChart>
-        </ResponsiveContainer>
+      <div className={styles.btnSection}>
+        <TimeIntervalSelector onIntervalChange={setInterval}/>
+        <MovingAverageSelector selected={maVisibility} onToggle={toggleMA} />
       </div>
-
-      <div className={styles.bottomSection}>
-        <ResponsiveContainer width="100%" height={100}>
-          <ComposedChart data={stockDataWithMA}>
-            <XAxis dataKey="time"  />
-            <YAxis hide />
-            <Tooltip />
-
-            <Bar
-              dataKey={(data) => data.high - data.low}
-              barSize={10}
-              fill="#999"
-              opacity={0.4}
-            >
-              {stockData.map((entry, index) => (
-                <Cell
-                  key={`volume-cell-${index}`}
-                  fill={entry.close >= entry.open ? "#f44336" : "#2196f3"}
-                />
-              ))}
-            </Bar>
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      {/* 차트 영역 */}
+      <div ref={chartContainerRef} className={styles.centerSection} />
+      <div ref={volumeContainerRef} className={styles.bottomSection}/>
     </div>
   );
 };
