@@ -62,10 +62,14 @@ public class InquiryService {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         Page<Inquiry> result;
 
-        if (status == null || status.isBlank()) {
+        InquiryStatus statusEnum = (status != null && !status.isBlank())
+                ? InquiryStatus.from(status)
+                : null;
+
+        if (statusEnum == null) {
             result = inquiryRepository.findByUserId(userId, pageable);
         } else {
-            result = inquiryRepository.findByUserIdAndStatus(userId, status, pageable);
+            result = inquiryRepository.findByUserIdAndStatus(userId, statusEnum, pageable);
         }
 
         List<InquirySummaryDto> inquiries = result.getContent().stream()
@@ -83,10 +87,14 @@ public class InquiryService {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         Page<Inquiry> result;
 
-        if (status == null || status.isBlank()) {
+        InquiryStatus statusEnum = (status != null && !status.isBlank())
+                ? InquiryStatus.from(status)
+                : null;
+
+        if (statusEnum == null) {
             result = inquiryRepository.findAll(pageable);
         } else {
-            result = inquiryRepository.findByStatus(status, pageable);
+            result = inquiryRepository.findByStatus(statusEnum, pageable);
         }
 
         List<InquirySummaryDto> inquiries = result.getContent().stream()
