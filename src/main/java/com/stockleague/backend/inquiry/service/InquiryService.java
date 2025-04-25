@@ -53,7 +53,7 @@ public class InquiryService {
         );
     }
 
-    public InquiryPageResponseDto getInquirys(Long userId, int page, int size, String status) {
+    public InquiryPageResponseDto getInquiries(Long userId, int page, int size, String status) {
 
         if (page < 1 || size < 1) {
             throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
@@ -62,10 +62,31 @@ public class InquiryService {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         Page<Inquiry> result;
 
-        if(status == null || status.isBlank()) {
+        if (status == null || status.isBlank()) {
             result = inquiryRepository.findByUserId(userId, pageable);
-        }else{
+        } else {
             result = inquiryRepository.findByUserIdAndStatus(userId, status, pageable);
+        }
+
+        List<InquirySummaryDto> inquiries = result.getContent().stream()
+                .map(InquirySummaryDto::from)
+                .toList();
+
+        return new InquiryPageResponseDto(true, inquiries, page, size, result.getTotalElements());
+    }
+
+    public InquiryPageResponseDto getInquiriesForAdmin(int page, int size, String status) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
+        Page<Inquiry> result;
+
+        if (status == null || status.isBlank()) {
+            result = inquiryRepository.findAll(pageable);
+        } else {
+            result = inquiryRepository.findByStatus(status, pageable);
         }
 
         List<InquirySummaryDto> inquiries = result.getContent().stream()

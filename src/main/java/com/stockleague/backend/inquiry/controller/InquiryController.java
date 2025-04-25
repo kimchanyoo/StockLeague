@@ -1,6 +1,7 @@
 package com.stockleague.backend.inquiry.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
+import com.stockleague.backend.inquiry.domain.InquiryStatus;
 import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
@@ -106,13 +107,35 @@ public class InquiryController {
                     responseCode = "200",
                     description = "문의 목록 조회 성공",
                     content = @Content(
-                            schema = @Schema(implementation = InquiryPageResponseDto.class)
+                            schema = @Schema(implementation = InquiryPageResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "InquiryListSuccess",
+                                    summary = "문의 사항 조회 성공",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "inquiries": [
+                                                {
+                                                  "inquiryId": 102,
+                                                  "userNickname": "테스트",
+                                                  "category": "기술적 결함",
+                                                  "title": "문의 테스트",
+                                                  "status": "WAITING",
+                                                  "createdAt": "2025-04-24T08:19:43"
+                                                }
+                                              ],
+                                              "page": 1,
+                                              "size": 10,
+                                              "totalCount": 134
+                                            }
+                                            """
+                            )
                     )
             ),
             @ApiResponse(
                     responseCode = "400",
                     description = "페이지네이션 파라미터 오류",
-                    content = @Content(
+                    content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "InvalidPagination",
@@ -132,10 +155,10 @@ public class InquiryController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
-            Authentication authentication){
+            Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
 
-        InquiryPageResponseDto result = inquiryService.getInquirys(userId, page, size, status);
+        InquiryPageResponseDto result = inquiryService.getInquiries(userId, page, size, status);
 
         return ResponseEntity.ok(result);
     }

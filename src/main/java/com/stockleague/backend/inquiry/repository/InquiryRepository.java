@@ -9,4 +9,6 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     Page<Inquiry> findByUserId(Long userId, Pageable pageable);
 
     Page<Inquiry> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
+
+    Page<Inquiry> findByStatus(String status, Pageable pageable);
 }
