@@ -66,4 +66,8 @@ public class Inquiry {
 
     @OneToOne(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
     private InquiryAnswer answer;
+
+    public void markAsAnswered() {
+        this.status = InquiryStatus.ANSWERED;
+    }
 }

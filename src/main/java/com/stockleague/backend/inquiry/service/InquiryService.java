@@ -12,7 +12,6 @@ import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminRespons
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquirySummaryDto;
-import com.stockleague.backend.inquiry.repository.InquiryAnswerRepository;
 import com.stockleague.backend.inquiry.repository.InquiryRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Service;
 public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
-    private final InquiryAnswerRepository inquiryCommentRepository;
     private final UserRepository userRepository;
 
     public InquiryCreateResponseDto createInquiry(

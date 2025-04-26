@@ -20,9 +20,8 @@ public enum GlobalErrorCode {
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
 
     // 문의 및 공지사항 작성 관련
-    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "제목, 내용 그리고 카테고리를 모두 입력해야 합니다."),
+    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다."),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 문의를 찾을 수 없습니다."),
-    NOT_OWNER(HttpStatus.FORBIDDEN, "본인 문의만 조회할 수 있습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
     MISSING_KEYWORD(HttpStatus.BAD_REQUEST, "검색어를 입력해주세요."),
     INVALID_RESTORE_OPERATION(HttpStatus.BAD_REQUEST, "복원할 수 없는 상태입니다."),
