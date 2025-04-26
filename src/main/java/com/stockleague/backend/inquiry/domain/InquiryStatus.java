@@ -6,9 +6,7 @@ import java.util.Arrays;
 
 public enum InquiryStatus {
     WAITING,
-    ANSWERED,
-    REOPENED,
-    CLOSED;
+    ANSWERED;
 
     public static InquiryStatus from(String value) {
         return Arrays.stream(InquiryStatus.values())
