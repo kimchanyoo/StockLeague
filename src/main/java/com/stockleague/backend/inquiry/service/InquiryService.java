@@ -3,11 +3,15 @@ package com.stockleague.backend.inquiry.service;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.inquiry.domain.Inquiry;
+import com.stockleague.backend.inquiry.domain.InquiryAnswer;
 import com.stockleague.backend.inquiry.domain.InquiryStatus;
 import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryAnswerDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquirySummaryDto;
+import com.stockleague.backend.inquiry.repository.InquiryAnswerRepository;
 import com.stockleague.backend.inquiry.repository.InquiryRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Service;
 public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
+    private final InquiryAnswerRepository inquiryCommentRepository;
     private final UserRepository userRepository;
 
     public InquiryCreateResponseDto createInquiry(
@@ -102,5 +107,19 @@ public class InquiryService {
                 .toList();
 
         return new InquiryPageResponseDto(true, inquiries, page, size, result.getTotalElements());
+    }
+
+    public InquiryDetailForAdminResponseDto getInquiryDetailForAdmin(Long inquiryId) {
+        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INQUIRY_NOT_FOUND));
+
+        InquiryAnswer answer = inquiry.getAnswer();
+
+        InquiryAnswerDto answerDto = null;
+        if (answer != null) {
+            answerDto = InquiryAnswerDto.from(answer);
+        }
+
+        return InquiryDetailForAdminResponseDto.from(inquiry, answerDto);
     }
 }

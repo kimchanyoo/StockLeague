@@ -9,7 +9,8 @@ public record InquirySummaryDto(
         String category,
         String title,
         String status,
-        String createdAt
+        String createdAt,
+        String updatedAt
 ) {
     public static InquirySummaryDto from(Inquiry inquiry) {
         return new InquirySummaryDto(
@@ -18,7 +19,8 @@ public record InquirySummaryDto(
                 inquiry.getCategory(),
                 inquiry.getTitle(),
                 inquiry.getStatus().name(),
-                inquiry.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                inquiry.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                inquiry.getUpdatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         );
     }
 }

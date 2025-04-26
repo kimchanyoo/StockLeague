@@ -170,7 +170,7 @@ public class NoticeAdminController {
                                     value = """
                                                 {
                                                   "success": false,
-                                                  "message": "수정할 공지사항이 존재하지 않습니다.",
+                                                  "message": "해당 공지사항을 찾을 수 없습니다.",
                                                   "errorCode": "NOTICE_NOT_FOUND"
                                                 }
                                             """

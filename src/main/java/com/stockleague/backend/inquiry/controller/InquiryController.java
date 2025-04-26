@@ -121,7 +121,8 @@ public class InquiryController {
                                                   "category": "기술적 결함",
                                                   "title": "문의 테스트",
                                                   "status": "WAITING",
-                                                  "createdAt": "2025-04-24T08:19:43"
+                                                  "createdAt": "2025-04-24T08:19:43",
+                                                  "updatedAt": "2025-04-24T08:19:43"
                                                 }
                                               ],
                                               "page": 1,
