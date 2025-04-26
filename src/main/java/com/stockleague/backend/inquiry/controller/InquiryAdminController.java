@@ -1,8 +1,12 @@
 package com.stockleague.backend.inquiry.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
+import com.stockleague.backend.inquiry.dto.request.InquiryAnswerCreateRequestDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryAnswerCreateResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
+import com.stockleague.backend.inquiry.service.InquiryAnswerService;
 import com.stockleague.backend.inquiry.service.InquiryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,10 +15,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class InquiryAdminController {
 
     private final InquiryService inquiryService;
+    private final InquiryAnswerService inquiryAnswerService;
 
     @GetMapping
     @Operation(summary = "문의사항 조회(관리자용)", description = "관리자가 전체 1:1문의 내역을 조회하는 API")
@@ -168,6 +177,90 @@ public class InquiryAdminController {
             @PathVariable Long inquiryId
     ) {
         InquiryDetailForAdminResponseDto result = inquiryService.getInquiryDetailForAdmin(inquiryId);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("{inquiryId}/answers")
+    @Operation(summary = "문의 답변", description = "관리자가 문의 답변을 작성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "문의 답변 완료",
+                    content = @Content(
+                            schema = @Schema(implementation = InquiryCreateResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "InquiryAnswerCreateSuccess",
+                                    summary = "문의 답변 등록 성공 예시",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "message": "답변이 등록되었습니다.",
+                                              "answerId": 456,
+                                              "status": "ANSWERED"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "입력 필드 누락",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "MissingFields",
+                                    summary = "제목 또는 내용 누락",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "내용을 모두 입력해야 합니다.",
+                                              "errorCode": "MISSING_FIELDS"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoAdminPermission",
+                                    summary = "관리자 권한 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "관리자 권한이 필요합니다.",
+                                              "errorCode": "ACCESS_DENIED"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "공지사항 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InquiryNotFound",
+                                    summary = "존재하지 않는 문의",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 문의를 찾을 수 없습니다.",
+                                                  "errorCode": "INQUIRY_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<InquiryAnswerCreateResponseDto> createInquiryAnswer(
+            @PathVariable Long inquiryId,
+            @Valid @RequestBody InquiryAnswerCreateRequestDto request,
+            Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        InquiryAnswerCreateResponseDto result =
+                inquiryAnswerService.createInquiryAnswer(request, userId, inquiryId);
 
         return ResponseEntity.ok(result);
     }

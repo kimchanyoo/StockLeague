@@ -64,7 +64,7 @@ public class NoticeAdminController {
                                     value = """
                                             {
                                               "success": false,
-                                              "message": "제목과 내용은 모두 입력해야 합니다.",
+                                              "message": "내용을 모두 입력해야 합니다.",
                                               "errorCode": "MISSING_FIELDS"
                                             }
                                             """
