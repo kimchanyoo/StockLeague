@@ -1,9 +1,10 @@
 package com.stockleague.backend.inquiry.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.inquiry.domain.InquiryStatus;
 import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
 import com.stockleague.backend.inquiry.service.InquiryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -160,6 +162,63 @@ public class InquiryController {
         Long userId = (Long) authentication.getPrincipal();
 
         InquiryPageResponseDto result = inquiryService.getInquiries(userId, page, size, status);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{inquiryId}")
+    @Operation(summary = "문의사항 상세 정보 조회(유저용)", description = "유저가 1:1문의 상세 정보를 조회하는 API")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "문의사항 상세 조회 성공",
+                    content = @Content(schema = @Schema(implementation = InquiryDetailForAdminResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "InquiryDetailSuccess",
+                                    summary = "문의 상세 조회 성공",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "inquiryId": 1002,
+                                              "userNickname": "스탁유저",
+                                              "title": "거래 오류 관련 문의",
+                                              "category": "거래",
+                                              "content": "매수가 정상적으로 안돼요",
+                                              "status": "ANSWERED",
+                                              "createdAt": "2025-03-18T14:00:00Z",
+                                              "updatedAt": "2025-03-18T15:00:00Z",
+                                              "answer": {
+                                                "answerId": 2,
+                                                "userId": 999,
+                                                "content": "확인하겠습니다.",
+                                                "createdAt": "2025-03-18T14:15:00Z"
+                                              }
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "공지사항 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InquiryNotFound",
+                                    summary = "존재하지 않는 문의",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 문의를 찾을 수 없습니다.",
+                                                  "errorCode": "INQUIRY_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<InquiryDetailForUserResponseDto> getInquiryDetailForAdmin(
+            @PathVariable Long inquiryId, Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        InquiryDetailForUserResponseDto result = inquiryService.getInquiryDetailForUser(userId, inquiryId);
 
         return ResponseEntity.ok(result);
     }

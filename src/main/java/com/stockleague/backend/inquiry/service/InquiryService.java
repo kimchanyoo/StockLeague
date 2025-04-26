@@ -9,6 +9,7 @@ import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryAnswerDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquirySummaryDto;
 import com.stockleague.backend.inquiry.repository.InquiryAnswerRepository;
@@ -121,5 +122,19 @@ public class InquiryService {
         }
 
         return InquiryDetailForAdminResponseDto.from(inquiry, answerDto);
+    }
+
+    public InquiryDetailForUserResponseDto getInquiryDetailForUser(Long userId, Long inquiryId) {
+        Inquiry inquiry = inquiryRepository.findByUserIdAndId(userId, inquiryId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INQUIRY_NOT_FOUND));
+
+        InquiryAnswer answer = inquiry.getAnswer();
+
+        InquiryAnswerDto answerDto = null;
+        if (answer != null) {
+            answerDto = InquiryAnswerDto.from(answer);
+        }
+
+        return InquiryDetailForUserResponseDto.from(inquiry, answerDto);
     }
 }
