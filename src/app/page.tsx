@@ -10,6 +10,7 @@ import TabMenu from "@/app/components/TabMenu";
 import StockItem from "@/app/components/StockItem";
 import { useRouter } from "next/navigation";
 import MainStockChart from "./components/MainStockChart";
+import Portfolio from "./components/Portfolio";
 
 // 랜덤 주식 데이터 생성 함수
 const generateDummyStockData = () => {
@@ -34,12 +35,19 @@ export default function Home() {
 
   const [visibleCount, setVisibleCount] = useState(20);
   const [stockData, setStockData] = useState<any[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // 로그인 상태 추가
 
   useEffect(() => {
     const data = generateDummyStockData();
     setStockData(data);
   }, []);
 
+  const handleGotoStockList = () => {
+    router.push("/stocks/stockList");
+  };
+  const handleGotoAccount = () => {
+    router.push("/user/account");
+  };
   const handleShowMore = () => {
     setVisibleCount((prev) => prev + 20);
   };
@@ -57,22 +65,30 @@ export default function Home() {
             <h1 className={styles.content}>
               <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
             </h1>
-            <button className={styles.gotoBtn}>종목시세 보러가기</button>
+            <button className={styles.gotoBtn} onClick={handleGotoStockList}>종목시세 보러가기</button>
           </div>
         </div>
 
-        <div className={styles.loginContainer}>
-          <div className={styles.signSection}>
-            <button className={styles.signBtn}><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
-            <button className={styles.signBtn} onClick={() => router.push("/auth/login")}><SignInIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>로그인</button>
+        {/* 로그인 여부에 따라 다르게 표시 */}
+        {!isLoggedIn ? (
+          <div className={styles.loginContainer}>
+            <div className={styles.signSection}>
+              <button className={styles.signBtn}><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
+              <button className={styles.signBtn} onClick={() => router.push("/auth/login")}><SignInIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>로그인</button>
+            </div>
+            <div className={styles.announcement}>
+              <h1 className={styles.announcementTitle}>공지사항<RightIcon/></h1>
+              <div className={styles.announcementContent}>이것은 첫 번째 공지사항 예시입니다.</div>
+              <div className={styles.announcementContent}>이것은 두 번째 공지사항 예시입니다.</div>
+              <div className={styles.announcementContent}>이것은 세 번째 공지사항 예시입니다.</div>
+            </div>
           </div>
-          <div className={styles.announcement}>
-            <h1 className={styles.announcementTitle}>공지사항<RightIcon/></h1>
-            <div className={styles.announcementContent}>이것은 첫 번째 공지사항 예시입니다.</div>
-            <div className={styles.announcementContent}>이것은 두 번째 공지사항 예시입니다.</div>
-            <div className={styles.announcementContent}>이것은 세 번째 공지사항 예시입니다.</div>
+        ) : (
+          <div className={styles.portfolioContainer} onClick={handleGotoAccount}>
+            <h1>보유자산</h1>
+            <Portfolio /> {/* 로그인하면 보유자산 컴포넌트 표시 */}
           </div>
-        </div>
+        )}
       </div>
 
       <h1 className={styles.stockTitle}>📈 오늘의 시세 📉</h1>
