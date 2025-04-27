@@ -2,11 +2,14 @@ package com.stockleague.backend.inquiry.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
+import com.stockleague.backend.inquiry.dto.request.InquiryUpdateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryUpdateResponseDto;
 import com.stockleague.backend.inquiry.service.InquiryService;
+import com.stockleague.backend.notice.dto.response.NoticeUpdateResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -19,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -219,6 +223,68 @@ public class InquiryController {
         Long userId = (Long) authentication.getPrincipal();
 
         InquiryDetailForUserResponseDto result = inquiryService.getInquiryDetailForUser(userId, inquiryId);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @PatchMapping("/{inquiryId}")
+    @Operation(summary = "문의 수정", description = "문의의 제목, 내용, 카테고리 등을 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "문의 수정 성공",
+                    content = @Content(schema = @Schema(implementation = NoticeUpdateResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "UpdateSuccess",
+                                    summary = "수정 성공",
+                                    value = """
+                                                {
+                                                  "success": true,
+                                                  "message": "문의가 성공적으로 수정되었습니다."
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "공지사항 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InquiryNotFound",
+                                    summary = "존재하지 않는 문의",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 문의를 찾을 수 없습니다.",
+                                                  "errorCode": "INQUIRY_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "이미 답변이 등록되어져 있어 수정 불가",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "AlreadyAnswer",
+                                    summary = "이미 답변이 등록됨",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "이미 답변이 등록된 문의입니다.",
+                                                  "errorCode": "INQUIRY_ALREADY_ANSWERED"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<InquiryUpdateResponseDto> updateInquiry(
+            @PathVariable Long inquiryId,
+            @Valid @RequestBody InquiryUpdateRequestDto requestDto,
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        InquiryUpdateResponseDto result = inquiryService.updateInquiry(userId, inquiryId, requestDto);
 
         return ResponseEntity.ok(result);
     }

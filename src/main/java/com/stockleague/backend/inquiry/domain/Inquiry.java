@@ -70,4 +70,16 @@ public class Inquiry {
     public void markAsAnswered() {
         this.status = InquiryStatus.ANSWERED;
     }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateCategory(String category) {
+        this.category = category;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
 }
