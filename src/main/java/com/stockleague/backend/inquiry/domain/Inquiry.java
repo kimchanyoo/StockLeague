@@ -82,4 +82,8 @@ public class Inquiry {
     public void updateContent(String content) {
         this.content = content;
     }
+
+    public void markAsDeleted() {
+        this.closedAt = LocalDateTime.now();
+    }
 }
