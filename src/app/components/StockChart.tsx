@@ -28,13 +28,14 @@ const data: { time: UTCTimestamp; open: number; high: number; low: number; close
 const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
-  const [maVisibility, setMaVisibility] = useState({
-    short: true,
-    mid: false,
-    long: false,
+  const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({
+    5: true,
+    20: false,
+    60: false,
   });
-  const toggleMA = (type: 'short' | 'mid' | 'long') => {
-    setMaVisibility(prev => ({ ...prev, [type]: !prev[type] }));
+  
+  const toggleMA = (period: number) => {
+    setMaVisibility(prev => ({ ...prev, [period]: !prev[period] }));
   };
 
   useEffect(() => {
@@ -97,9 +98,9 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       maSeries.setData(maData);
     };
 
-    if (maVisibility.short) addMovingAverage(5, '#FFA500');  // 주황 단기
-    if (maVisibility.mid) addMovingAverage(20, '#008000');   // 초록 중기
-    if (maVisibility.long) addMovingAverage(60, '#0000FF');  // 파랑 장기
+    if (maVisibility[5]) addMovingAverage(5, '#FFA500');  // 주황 단기
+    if (maVisibility[20]) addMovingAverage(20, '#008000');   // 초록 중기
+    if (maVisibility[60]) addMovingAverage(60, '#0000FF');  // 파랑 장기
 
     // 데이터 설정
     candlestickSeries.setData(data);
@@ -123,13 +124,19 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     volumeChart.timeScale().fitContent();
 
     // 차트 클린업
-    return () => chart.remove();
-  }, []);
+    return () => {
+      chart.remove();
+      volumeChart.remove();
+    };
+  }, [maVisibility]);
 
   return (
     <div className={styles.container}>
       <div className={styles.btnSection}>
+        <div className={styles.label}>시간 간격</div>
         <TimeIntervalSelector onIntervalChange={setInterval}/>
+        <h1>|</h1>
+        <div className={styles.label}>이동평균선 주기</div>
         <MovingAverageSelector selected={maVisibility} onToggle={toggleMA} />
       </div>
       {/* 차트 영역 */}
