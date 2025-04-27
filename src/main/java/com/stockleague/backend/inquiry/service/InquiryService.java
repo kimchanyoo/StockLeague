@@ -9,6 +9,7 @@ import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
 import com.stockleague.backend.inquiry.dto.request.InquiryUpdateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryAnswerDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryDeleteResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
@@ -161,5 +162,19 @@ public class InquiryService {
         }
 
         return InquiryUpdateResponseDto.from(inquiry);
+    }
+
+    @Transactional
+    public InquiryDeleteResponseDto deleteInquiry(Long userId, Long inquiryId) {
+        Inquiry inquiry = inquiryRepository.findByUserIdAndId(userId, inquiryId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INQUIRY_NOT_FOUND));
+
+        if (inquiry.getStatus() == InquiryStatus.ANSWERED) {
+            throw new GlobalException(GlobalErrorCode.INQUIRY_ALREADY_ANSWERED);
+        }
+
+        inquiry.markAsDeleted();
+
+        return InquiryDeleteResponseDto.from(inquiry);
     }
 }
