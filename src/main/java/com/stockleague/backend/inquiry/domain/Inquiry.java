@@ -61,14 +61,18 @@ public class Inquiry {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "closed_at")
-    private LocalDateTime closedAt;
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "answered_at")
+    private LocalDateTime answeredAt;
 
     @OneToOne(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
     private InquiryAnswer answer;
 
     public void markAsAnswered() {
         this.status = InquiryStatus.ANSWERED;
+        this.answeredAt = LocalDateTime.now();
     }
 
     public void updateTitle(String title) {
@@ -84,6 +88,6 @@ public class Inquiry {
     }
 
     public void markAsDeleted() {
-        this.closedAt = LocalDateTime.now();
+        this.deletedAt = LocalDateTime.now();
     }
 }

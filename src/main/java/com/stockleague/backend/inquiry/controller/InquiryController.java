@@ -246,6 +246,22 @@ public class InquiryController {
                             )
                     )
             ),
+            @ApiResponse(responseCode = "400", description = "이미 답변이 등록되어져 있어 수정 불가",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "AlreadyAnswer",
+                                    summary = "이미 답변이 등록됨",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "이미 답변이 등록된 문의입니다.",
+                                                  "errorCode": "INQUIRY_ALREADY_ANSWERED"
+                                                }
+                                            """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "404", description = "공지사항 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
@@ -257,22 +273,6 @@ public class InquiryController {
                                                   "success": false,
                                                   "message": "해당 문의를 찾을 수 없습니다.",
                                                   "errorCode": "INQUIRY_NOT_FOUND"
-                                                }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "이미 답변이 등록되어져 있어 수정 불가",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "AlreadyAnswer",
-                                    summary = "이미 답변이 등록됨",
-                                    value = """
-                                                {
-                                                  "success": false,
-                                                  "message": "이미 답변이 등록된 문의입니다.",
-                                                  "errorCode": "INQUIRY_ALREADY_ANSWERED"
                                                 }
                                             """
                             )
@@ -303,7 +303,23 @@ public class InquiryController {
                                                 {
                                                   "success": true,
                                                   "message": "문의가 성공적으로 수정되었습니다.",
-                                                  "closedAt": "2025-03-18T14:15:00Z"
+                                                  "deletedAt": "2025-03-18T14:15:00Z"
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "이미 답변이 등록되어져 있어 삭제 불가",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "AlreadyAnswer",
+                                    summary = "이미 답변이 등록됨",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "이미 답변이 등록된 문의입니다.",
+                                                  "errorCode": "INQUIRY_ALREADY_ANSWERED"
                                                 }
                                             """
                             )
@@ -320,22 +336,6 @@ public class InquiryController {
                                                   "success": false,
                                                   "message": "해당 문의를 찾을 수 없습니다.",
                                                   "errorCode": "INQUIRY_NOT_FOUND"
-                                                }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "이미 답변이 등록되어져 있어 수정 불가",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "AlreadyAnswer",
-                                    summary = "이미 답변이 등록됨",
-                                    value = """
-                                                {
-                                                  "success": false,
-                                                  "message": "이미 답변이 등록된 문의입니다.",
-                                                  "errorCode": "INQUIRY_ALREADY_ANSWERED"
                                                 }
                                             """
                             )
