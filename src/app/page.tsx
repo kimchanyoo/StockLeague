@@ -9,6 +9,7 @@ import SignInIcon from '@mui/icons-material/Login';
 import TabMenu from "@/app/components/TabMenu";
 import StockItem from "@/app/components/StockItem";
 import { useRouter } from "next/navigation";
+import MainStockChart from "./components/MainStockChart";
 
 // 랜덤 주식 데이터 생성 함수
 const generateDummyStockData = () => {
@@ -49,7 +50,9 @@ export default function Home() {
     <div className={styles.container}>
       <div className={styles.topSection}>
         <div className={styles.chartContainer}>
-          <div className={styles.chart}></div>
+          <div className={styles.chart}>
+            <MainStockChart/>
+          </div>
           <div className={styles.chartTitle}>
             <h1 className={styles.content}>
               <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
