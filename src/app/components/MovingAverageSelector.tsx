@@ -22,7 +22,8 @@ const MovingAverageSelector: React.FC<Props> = ({ selected, onToggle }) => {
           onClick={() => onToggle(period)}
           style={{
             padding: "6px 12px",
-            backgroundColor: selected[period] ? "#FFA500" : "#eee",
+            backgroundColor: selected[period] ? "#006ADD" : "#eee",
+            color: selected[period] ? "white" : "black",
             border: "1px solid #ccc",
             borderRadius: "4px",
             cursor: "pointer",

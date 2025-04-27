@@ -17,7 +17,7 @@ const TimeIntervalSelector: React.FC<TimeIntervalProps> = ({ onIntervalChange })
     <div>
       <select onChange={handleIntervalChange} value={timeInterval}  
       style={{
-      padding: "5px",
+      padding: "6px 12px",
       borderRadius: "5px",
       border: "1px solid #999",
       }}>
