@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import "./account.css";
+import Portfolio from "@/app/components/Portfolio";
 
 const dummyStocks = [
   {
@@ -61,7 +62,7 @@ export default function Account() {
           <div className="portfolio">
             <h2>보유자산 포트폴리오</h2>
             <div className="graph">
-
+              <Portfolio/>
             </div>
           </div>
         </div>
