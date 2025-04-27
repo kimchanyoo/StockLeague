@@ -6,12 +6,14 @@ import com.stockleague.backend.inquiry.domain.Inquiry;
 import com.stockleague.backend.inquiry.domain.InquiryAnswer;
 import com.stockleague.backend.inquiry.domain.InquiryStatus;
 import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
+import com.stockleague.backend.inquiry.dto.request.InquiryUpdateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryAnswerDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquirySummaryDto;
+import com.stockleague.backend.inquiry.dto.response.InquiryUpdateResponseDto;
 import com.stockleague.backend.inquiry.repository.InquiryRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -134,5 +137,29 @@ public class InquiryService {
         }
 
         return InquiryDetailForUserResponseDto.from(inquiry, answerDto);
+    }
+
+    @Transactional
+    public InquiryUpdateResponseDto updateInquiry(Long userId, Long inquiryId, InquiryUpdateRequestDto request) {
+        Inquiry inquiry = inquiryRepository.findByUserIdAndId(userId, inquiryId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INQUIRY_NOT_FOUND));
+
+        if (inquiry.getStatus() == InquiryStatus.ANSWERED) {
+            throw new GlobalException(GlobalErrorCode.INQUIRY_ALREADY_ANSWERED);
+        }
+
+        if (request.title() != null && !request.title().isBlank()) {
+            inquiry.updateTitle(request.title());
+        }
+
+        if (request.content() != null && !request.content().isBlank()) {
+            inquiry.updateContent(request.content());
+        }
+
+        if (request.category() != null && !request.category().isBlank()) {
+            inquiry.updateCategory(request.category());
+        }
+
+        return InquiryUpdateResponseDto.from(inquiry);
     }
 }
