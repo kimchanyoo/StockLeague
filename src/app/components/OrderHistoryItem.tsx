@@ -1,4 +1,5 @@
-// components/OrderHistoryItem.tsx
+"use client";
+
 import React from "react";
 import styles from "@/app/styles/components/OrderHistoryItem.module.css";
 
@@ -16,7 +17,7 @@ type OrderHistoryItemProps = {
   createdAt: string;
 };
 
-export default function OrderHistoryItem({
+const OrderHistoryItem: React.FC<OrderHistoryItemProps> = ({
   code,
   name,
   orderAmount,
@@ -28,7 +29,7 @@ export default function OrderHistoryItem({
   unexecutedQuantity,
   averageExecutedPrice,
   createdAt,
-}: OrderHistoryItemProps) {
+}) => {
   const typeClass =
     orderType === "매수" ? styles.orderType_buy : styles.orderType_sell;
 
@@ -50,4 +51,6 @@ export default function OrderHistoryItem({
       <div className={styles.createdAt}>{createdAt}</div>
     </div>
   );
-}
+};
+
+export default OrderHistoryItem;
