@@ -55,6 +55,13 @@
     font-size: 13px;
     color: #999999;
 }
+
+.inquiry-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
 .inquiry-status {
     font-weight: bold;
     padding: 8px 25px;
