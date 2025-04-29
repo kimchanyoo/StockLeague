@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import "./inquiry.css";
 import Link from 'next/link';
 import { useState } from 'react';
+import MoreVert from '@/app/components/MoreVert';
 
 const inquiries = Array.from({ length: 1044 }, (_, i) => ({
   id: `${i + 1}`,
@@ -50,8 +51,11 @@ export default function Inquiry() {
               <h2 className="inquiry-title">{item.title}</h2>
               <span className="inquiry-date">{item.date}</span>
             </div>
-            <div className={`inquiry-status ${item.status === 'pending' ? 'status-pending' : 'status-completed'}`}>
-              {item.status === 'pending' ? '답변전' : '답변완'}
+            <div className='inquiry-right' onClick={(e) => { e.stopPropagation();}}>
+              <div className={`inquiry-status ${item.status === 'pending' ? 'status-pending' : 'status-completed'}`}>
+                {item.status === 'pending' ? '답변전' : '답변완'}
+              </div>
+              <MoreVert/>
             </div>
           </div>
         ))}
