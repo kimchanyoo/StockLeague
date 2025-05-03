@@ -2,19 +2,22 @@
 
 import { usePathname } from "next/navigation";
 import Header from "@/app/components/Header";
+import AdminHeader from "@/app/components/AdminHeader";
 import Footer from "@/app/components/Footer";
 import "@/app/styles/globals.css";
 
-export default function RootLayout({children,}: Readonly<{children: React.ReactNode;}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
-  const isAuthPage = pathname.startsWith("/auth");
+  const isAdminPage = pathname.startsWith("/admin");
 
   return (
     <html lang="ko">
-      <body className={isAuthPage ?  "auth-page" : ""}>
+      <body>
         <div className="layout">
-          <Header />
+          {isAdminPage ? <AdminHeader /> : <Header />}
+          
           <main className="content">{children}</main>
+          
           <Footer />
         </div>
       </body>

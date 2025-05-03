@@ -1,0 +1,85 @@
+/* 헤더 스타일 */
+.header {
+    width: 100%;
+    background-color: white;
+    border-bottom: 1px solid #F5F5F5;
+}
+.headerInner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem 1.875rem;
+    border-bottom: 1px solid #F5F5F5;
+    background-color: white;
+}
+.centerHeader {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* 헤더 왼쪽 영역 */
+.leftHeader{
+    display: flex;
+    align-items: center;
+}
+/* 로고 스타일 */
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    margin-right: 100px;
+    cursor: pointer;
+}
+.stock {
+    font-size: 1rem; 
+    font-weight: bold;
+    letter-spacing: 0.3em;
+    color: black;
+}
+.league {
+    font-size: 0.75rem; 
+    color: #006ADD; 
+    letter-spacing: 0.5em; 
+}
+
+/* 헤더 오른른쪽 영역 */
+.rightHeader{
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+/* 버튼 스타일 */
+.signIn {
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+.signUp {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: white;
+    background-color: black;
+    padding: 0.4375rem;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    border-radius: 0.625rem;
+}
+.signIn:hover{
+    color: #6D6D6D;
+}
+.signUp:hover{
+    background-color: #6D6D6D;
+}
+.menuToggle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.3rem;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.menuToggle:hover {
+    background-color: #f0f0f0;
+}
