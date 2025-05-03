@@ -1,0 +1,15 @@
+/* layout 스타일 */
+.admin-layout {
+  display: flex;
+}
+
+.admin-container {
+  display: flex;
+  width: 100%;
+}
+
+.admin-content {
+  margin-left: 250px; /* 사이드바 너비만큼 여백 */
+  padding: 20px;
+  flex-grow: 1;
+}
