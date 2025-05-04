@@ -28,7 +28,6 @@ const AdminHeader = () => {
           <div className={styles.rightHeader}>
             {isLoggedIn ? (
               <>
-                <NotificationMenu/>
                 <UserMenu nickname={user.nickname} />
               </>
             ) : (
@@ -37,9 +36,6 @@ const AdminHeader = () => {
                 <a href="/auth/login" className={styles.signUp}>회원가입</a>
               </>
             )}
-              <div className={styles.menuToggle}>
-                  <MobileMenu />
-              </div>
           </div>
           
         </div>
