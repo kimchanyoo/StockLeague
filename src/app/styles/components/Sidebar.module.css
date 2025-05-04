@@ -13,15 +13,23 @@
 }
 
 .sidebar ul li {
-  padding: 20px;
   text-align: left;
 }
 
 .sidebar ul li a {
   color: #fff;
   text-decoration: none;
+  width: 100%;
+  display: block;
+  padding: 20px;
+
 }
 
 .sidebar ul li a:hover {
   background-color: #444;
+}
+
+.active {
+  background-color: #555;
+  font-weight: bold;
 }
