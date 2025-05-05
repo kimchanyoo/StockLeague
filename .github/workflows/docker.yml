@@ -46,6 +46,7 @@ jobs:
           port: 22
           source: "docker-compose.yml"
           target: "/home/ubuntu/"
+          overwrite: true
 
       - name: Create .env file on server
         uses: appleboy/ssh-action@v1.0.0
