@@ -161,6 +161,22 @@ public class NoticeAdminController {
                             )
                     )
             ),
+            @ApiResponse(responseCode = "403", description = "권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoAdminPermission",
+                                    summary = "관리자 권한 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "관리자 권한이 필요합니다.",
+                                              "errorCode": "ACCESS_DENIED"
+                                            }
+                                            """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "404", description = "공지사항 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
@@ -200,6 +216,22 @@ public class NoticeAdminController {
                                                   "message": "공지사항이 삭제 처리되었습니다.",
                                                   "deletedAt": "2025-04-21T15:45:37"
                                                 }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoAdminPermission",
+                                    summary = "관리자 권한 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "관리자 권한이 필요합니다.",
+                                              "errorCode": "ACCESS_DENIED"
+                                            }
                                             """
                             )
                     )
@@ -257,6 +289,22 @@ public class NoticeAdminController {
                                               "success": false,
                                               "message": "복원할 수 없는 상태입니다.",
                                               "errorCode": "INVALID_RESTORE_OPERATION"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoAdminPermission",
+                                    summary = "관리자 권한 없음",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "관리자 권한이 필요합니다.",
+                                              "errorCode": "ACCESS_DENIED"
                                             }
                                             """
                             )
