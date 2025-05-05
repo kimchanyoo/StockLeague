@@ -161,7 +161,7 @@ public class InquiryService {
             inquiry.updateCategory(request.category());
         }
 
-        return InquiryUpdateResponseDto.from(inquiry);
+        return InquiryUpdateResponseDto.from();
     }
 
     @Transactional
