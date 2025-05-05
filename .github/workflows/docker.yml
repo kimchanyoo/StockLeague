@@ -37,17 +37,6 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/stockleague-backend:dev .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/stockleague-backend:dev
 
-      - name: Upload docker-compose.yml to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          source: "docker-compose.yml"
-          target: "/home/ubuntu/"
-          overwrite: true
-
       - name: Create .env file on server
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -67,6 +56,17 @@ jobs:
             JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
             ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
             EOF
+
+      - name: Upload docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "docker-compose.yml"
+          target: "/home/ubuntu/"
+          overwrite: true
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
