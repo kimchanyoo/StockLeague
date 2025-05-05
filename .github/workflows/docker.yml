@@ -44,7 +44,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "docker-compose.yml,.env"
+          source: "docker-compose.yml"
           target: "/home/ubuntu/"
 
       - name: Deploy via SSH
@@ -58,3 +58,23 @@ jobs:
             docker stop stockleague-backend || true
             docker rm stockleague-backend || true
             docker-compose -f /home/ubuntu/docker-compose.yml up -d --force-recreate
+
+      - name: Create .env file on server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cat <<EOF > /home/ubuntu/.env
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
+            KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+            EOF
