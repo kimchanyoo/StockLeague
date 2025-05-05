@@ -81,7 +81,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            docker-compose -f /home/ubuntu/docker-compose.yml down
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/stockleague-backend:dev
-            docker stop stockleague-backend || true
-            docker rm stockleague-backend || true
             docker-compose -f /home/ubuntu/docker-compose.yml up -d --force-recreate
