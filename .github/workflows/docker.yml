@@ -37,7 +37,7 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/stockleague-backend:dev .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/stockleague-backend:dev
 
-      - name: Upload docker-compose.yml and .env to server
+      - name: Upload docker-compose.yml to server
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
