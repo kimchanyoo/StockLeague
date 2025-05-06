@@ -73,7 +73,8 @@ public class AuthController {
                                                        "message" : "소셜 로그인 성공",
                                                        "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "refreshToken": null,
-                                                       "isFirstLogin" : true
+                                                       "isFirstLogin" : true,
+                                                       "role" : null
                                                     }
                                                     """
                                     )
