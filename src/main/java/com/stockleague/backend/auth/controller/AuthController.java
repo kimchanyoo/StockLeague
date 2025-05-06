@@ -171,6 +171,9 @@ public class AuthController {
                                             {
                                                "success" : true,
                                                "message" : "추가 정보 입력이 완료되었습니다",
+                                               "accessToken" : "eyJhbGciOiJIUzI1...",
+                                               "refreshToken": "c82h3g2h3...",
+                                               "isFirstLogin" : false
                                             }
                                             """
                             )

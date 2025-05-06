@@ -51,8 +51,11 @@ public class AuthService {
 
             String accessToken = jwtProvider.createAccessToken(user.getId());
             String refreshToken = jwtProvider.createRefreshToken(user.getId());
+            String role = user.getRole().toString();
             redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(14));
-            return new OAuthLoginResponseDto(true, "회원가입 완료", false, accessToken, refreshToken);
+
+            return new OAuthLoginResponseDto(true, "추가 정보 입력이 완료되었습니다",
+                    false, accessToken, refreshToken, role);
 
         } catch (DataIntegrityViolationException e) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);

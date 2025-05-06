@@ -35,17 +35,18 @@ public class OAuthLoginService {
                     // 기존 유저 → 바로 로그인 처리
                     String accessToken = jwtProvider.createAccessToken(user.getId());
                     String refreshToken = jwtProvider.createRefreshToken(user.getId());
+                    String role = user.getRole().toString();
                     redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(14));
 
                     return new OAuthLoginResponseDto(true, "소셜 로그인 성공", false,
-                            accessToken, refreshToken);
+                            accessToken, refreshToken, role);
                 })
                 .orElseGet(() -> {
                     // 신규 유저 → accessToken 없이 isFirstLogin true 반환
                     String tempAccessToken = jwtProvider.createTempAccessToken(userInfo.getOauthId(),
                             userInfo.getProvider());
                     return new OAuthLoginResponseDto(true, "추가 정보 입력 필요", true,
-                            tempAccessToken, null);
+                            tempAccessToken, null, null);
                 });
     }
 }
