@@ -19,9 +19,9 @@ services:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     restart: always
 
   mysql:
@@ -48,6 +48,11 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   zookeeper:
     image: bitnami/zookeeper:3.9.3
@@ -71,6 +76,11 @@ services:
       ALLOW_PLAINTEXT_LISTENER: "yes"
     depends_on:
         - zookeeper
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
