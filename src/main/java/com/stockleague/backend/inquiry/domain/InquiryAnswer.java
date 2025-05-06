@@ -24,7 +24,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "inquiry_answer")
+@Table(name = "inquiry_answers")
 public class InquiryAnswer {
 
     @Id
