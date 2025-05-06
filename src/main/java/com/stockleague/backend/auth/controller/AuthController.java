@@ -59,7 +59,8 @@ public class AuthController {
                                                        "message" : "소셜 로그인 성공",
                                                        "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "refreshToken": "c82h3g2h3...",
-                                                       "isFirstLogin" : false
+                                                       "isFirstLogin" : false,
+                                                       "role" : "USER"
                                                     }
                                                     """
                                     ),
@@ -72,7 +73,8 @@ public class AuthController {
                                                        "message" : "소셜 로그인 성공",
                                                        "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "refreshToken": null,
-                                                       "isFirstLogin" : true
+                                                       "isFirstLogin" : true,
+                                                       "role" : null
                                                     }
                                                     """
                                     )
@@ -171,6 +173,10 @@ public class AuthController {
                                             {
                                                "success" : true,
                                                "message" : "추가 정보 입력이 완료되었습니다",
+                                               "accessToken" : "eyJhbGciOiJIUzI1...",
+                                               "refreshToken": "c82h3g2h3...",
+                                               "isFirstLogin" : false,
+                                               "role" : "USER"
                                             }
                                             """
                             )
