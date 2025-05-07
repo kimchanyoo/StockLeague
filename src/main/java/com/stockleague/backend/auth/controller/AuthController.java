@@ -60,6 +60,7 @@ public class AuthController {
                                                        "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "refreshToken": "c82h3g2h3...",
                                                        "isFirstLogin" : false,
+                                                       "nickname" : "테스트",
                                                        "role" : "USER"
                                                     }
                                                     """
@@ -74,6 +75,7 @@ public class AuthController {
                                                        "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "refreshToken": null,
                                                        "isFirstLogin" : true,
+                                                       "nickname" : null,
                                                        "role" : null
                                                     }
                                                     """
@@ -176,6 +178,7 @@ public class AuthController {
                                                "accessToken" : "eyJhbGciOiJIUzI1...",
                                                "refreshToken": "c82h3g2h3...",
                                                "isFirstLogin" : false,
+                                               "nickname" : "테스트",
                                                "role" : "USER"
                                             }
                                             """

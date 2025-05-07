@@ -10,16 +10,18 @@ public class OAuthLoginResponseDto {
     private boolean isFirstLogin;
     private String accessToken;
     private String refreshToken;
+    private String nickname;
     private String role;
 
     @Builder
     public OAuthLoginResponseDto(boolean success, String message, boolean firstLogin, String accessToken,
-                                 String refreshToken, String role) {
+                                 String refreshToken, String nickname, String role) {
         this.success = success;
         this.message = message;
         this.isFirstLogin = firstLogin;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.nickname = nickname;
         this.role = role;
     }
 }
