@@ -39,7 +39,7 @@
     width: 500px;
     max-width: 100%;
     height: 337px;
-    max-height: auto;
+    max-height: 100%;
     background-color: #E3EEFA;
     border-radius: 10px;
 }
@@ -73,7 +73,7 @@
     width: 400px; 
     max-width: 100%;
     height: 400px;
-    max-height: auto;
+    max-height: 100%;
     padding: 20px;
     background-color: #FFFFFF;
     border: 1px solid rgba(118, 118, 128, 0.12);
@@ -120,6 +120,28 @@
     cursor: pointer;
     font-size: 0.875rem;
 }
+.portfolioContainer {
+    width: 400px; 
+    max-width: 100%;
+    height: 400px;
+    max-height: 100%;
+    padding: 20px;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(118, 118, 128, 0.12);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.portfolioContainer h1 {
+    font-weight: bold;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+}
 
 /* 하단(종목목록) 스타일 */
 .stockTitle {
@@ -155,17 +177,23 @@
     font-weight: bold;
     cursor: pointer;
 }
-.kategorie {
-    width: 100%;
+.categorie {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
     background-color: #F5F5F5;
     color: #999999;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
     border-radius: 10px;
     padding: 1.5rem 4.6875rem ;
-    gap: 80px;
+    margin-top: 30px;
+    text-align: center;
+    align-items: center;
+    width: 100%;
+}
+.list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
 }
 .moreBtn {
     font-size: 1.5rem;

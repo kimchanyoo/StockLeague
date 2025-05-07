@@ -1,16 +1,15 @@
 import React from "react";
-import styles from "@/app/styles/components/Header.module.css";
-import DropdownMenu from "./DropdownMenu";
+import styles from "@/app/styles/components/AdminHeader.module.css";
 import MobileMenu from "./MobileMenu";
 import UserMenu from "./UserMenu";
 import NotificationMenu from "./NotificationMenu";
-import { useAuth } from "@/context/AuthContext";
 
-
-const Header = () => {
-  const { user } = useAuth(); // 사용자 정보를 가져옵니다.
-  const isLoggedIn = !!user?.nickname;
-
+const AdminHeader = () => {
+  // 임시 유저 (나중에 실제 로그인 정보로 대체)
+  const user = {
+    nickname: "관리자",
+  };
+  const isLoggedIn = !!user;
     return (
       <header className={styles.header}>
         <div className={styles.headerInner}>
@@ -23,14 +22,13 @@ const Header = () => {
           </div>
           
           <div className={styles.centerHeader}>
-            <DropdownMenu/>
+            관리자 페이지
           </div>
 
           <div className={styles.rightHeader}>
             {isLoggedIn ? (
               <>
-                <NotificationMenu/>
-                <UserMenu nickname={user!.nickname} />
+                <UserMenu nickname={user.nickname} />
               </>
             ) : (
               <>
@@ -38,13 +36,11 @@ const Header = () => {
                 <a href="/auth/login" className={styles.signUp}>회원가입</a>
               </>
             )}
-            <div className={styles.menuToggle}>
-              <MobileMenu />
-            </div>
           </div>
+          
         </div>
       </header>
     );
   };
 
-export default Header;
+  export default AdminHeader;

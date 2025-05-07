@@ -1,6 +1,6 @@
 "use client";
 
-import "@/app/stocks/stocks.css";
+import "./help.css";
 
 export default function HelpLayout({ children }: { children: React.ReactNode }) {
     return (

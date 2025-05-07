@@ -1,0 +1,25 @@
+.stock_item {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  width: 100%;
+  padding: 1.5rem 4.6875rem ;
+  border-bottom: 1px solid #e2e2e2;
+  align-items: center;
+  text-align: center;
+}
+
+.stock_item:hover {
+  background-color: #F5F5F5;
+}
+
+.stock_up {
+  color: #CB3030;
+}
+
+.stock_down {
+  color: #2D7CD1;
+}
+
+.stock_same {
+  color: gray;
+}
