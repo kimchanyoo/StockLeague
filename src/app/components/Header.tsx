@@ -4,13 +4,12 @@ import DropdownMenu from "./DropdownMenu";
 import MobileMenu from "./MobileMenu";
 import UserMenu from "./UserMenu";
 import NotificationMenu from "./NotificationMenu";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
-  // 임시 유저 (나중에 실제 로그인 정보로 대체)
-  const user = {
-    nickname: "김석환",
-  };
-  const isLoggedIn = !!user;
+  const { user } = useAuth(); // 사용자 정보를 가져옵니다.
+  const isLoggedIn = !!user?.nickname;
+
     return (
       <header className={styles.header}>
         <div className={styles.headerInner}>
@@ -30,7 +29,7 @@ export default function Header() {
             {isLoggedIn ? (
               <>
                 <NotificationMenu/>
-                <UserMenu nickname={user.nickname} />
+                <UserMenu nickname={user!.nickname} />
               </>
             ) : (
               <>
@@ -38,11 +37,10 @@ export default function Header() {
                 <a href="/auth/login" className={styles.signUp}>회원가입</a>
               </>
             )}
-              <div className={styles.menuToggle}>
-                  <MobileMenu />
-              </div>
+            <div className={styles.menuToggle}>
+              <MobileMenu />
+            </div>
           </div>
-          
         </div>
       </header>
     );
