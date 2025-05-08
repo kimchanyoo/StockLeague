@@ -61,7 +61,7 @@ server:
             force: true
 
 cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+    allowed-origins: ${ALLOWED_ORIGINS}
 
 kakao:
     client-id: ${KAKAO_CLIENT_ID}
