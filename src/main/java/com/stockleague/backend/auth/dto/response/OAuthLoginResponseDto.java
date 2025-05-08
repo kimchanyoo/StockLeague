@@ -21,6 +21,7 @@ public class OAuthLoginResponseDto {
         this.isFirstLogin = firstLogin;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.nickname = nickname;
         this.role = role;
     }
 }
