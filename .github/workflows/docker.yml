@@ -81,7 +81,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu
+            cd /home/ubuntu/app
+            docker-compose down --remove-orphans
             docker-compose pull stockleague-backend
-            docker-compose rm -f stockleague-backend
             docker-compose up -d --no-deps stockleague-backend
