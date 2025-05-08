@@ -60,23 +60,23 @@ const MobileMenu = () => {
               <div className={styles.menuTitle}>
                 <h1>종목/거래</h1>
                 <nav className={styles.menuLinks}>
-                  <a href="#">거래소</a>
-                  <a href="#">주식목록</a>
+                  <a href="/stocks/trade">거래소</a>
+                  <a href="/stocks/stockkList">주식목록</a>
                 </nav>
               </div>
               <div className={styles.menuTitle}>
                 <h1>고객지원/이용안내</h1>
                 <nav className={styles.menuLinks}>
-                  <a href="#">이용안내</a>
-                  <a href="#">공지사항</a>
-                  <a href="#">1:1문의하기</a>
+                  <a href="/help/guide">이용안내</a>
+                  <a href="/help/notice">공지사항</a>
+                  <a href="/help/inquiry">1:1문의하기</a>
                   <a href="#">FAQ</a>
                 </nav>
               </div>
               <div className={styles.menuTitle}>
                 <h1>랭킹</h1>
                 <nav className={styles.menuLinks}>
-                  <a href="#">일일랭킹</a>
+                  <a href="/rank">일일랭킹</a>
                 </nav>
               </div>
             </div>
