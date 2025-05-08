@@ -2,9 +2,11 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import styles from "@/app/styles/components/UserMenu.module.css";
+import { useAuth } from "@/context/AuthContext";
+
 
 const UserMenu = ({ nickname }: { nickname: string }) => {
-
+  const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -18,6 +20,10 @@ const UserMenu = ({ nickname }: { nickname: string }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLogout = () => {
+    logout();
+  }
+
   return (
     <div className={styles.userMenu} ref={menuRef}>
       <div className={styles.nickname} onClick={() => setOpen(!open)}>
@@ -29,7 +35,7 @@ const UserMenu = ({ nickname }: { nickname: string }) => {
           <a href="/user/account" className={styles.item}>내 계좌</a>
           <a href="/user/order-history" className={styles.item}>주문내역</a>
           <a href="/user/account-settings" className={styles.item}>계정관리</a>
-          <a href="/logout" className={styles.item}>로그아웃</a>
+          <div onClick={handleLogout} className={styles.item}>로그아웃</div>
         </div>
       )}
     </div>

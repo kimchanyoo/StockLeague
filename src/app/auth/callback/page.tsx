@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
+import { postOAuthLogin } from "@/lib/api/auth";
 
 export default function OAuthCallbackPage() {
   const searchParams = useSearchParams();
@@ -22,18 +22,8 @@ export default function OAuthCallbackPage() {
 
     const loginWithSocial = async () => {
       try {
-        const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/oauth/login`,
-          {
-            provider,
-            authCode,
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        // 서버 API 라우트를 통해 외부 API로 요청을 전달
+        const response = await postOAuthLogin({ provider, authCode });
 
         const { accessToken, refreshToken, isFirstLogin, user } = response.data;
 
@@ -43,12 +33,10 @@ export default function OAuthCallbackPage() {
         // 사용자 정보(닉네임 포함)를 상태에 저장
         setUser(user);
 
-        if (isFirstLogin) {
-          router.push("/auth/terms"); // 최초 로그인
-        } else {
-          router.push("/"); // 일반 로그인
-        }
+        router.push(isFirstLogin ? "/auth/terms" : "/");
       } catch (error: any) {
+        console.log("provider:", provider);
+        console.log("authCode:", authCode);
         alert("로그인에 실패했습니다.");
         router.push("/auth/login");
       }
