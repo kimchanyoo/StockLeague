@@ -37,7 +37,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/ubuntu_mysql_data
+      - mysql_data:/var/lib/mysql
     healthcheck:
       test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD} || exit 1" ]
       interval: 10s
