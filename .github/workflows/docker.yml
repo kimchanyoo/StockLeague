@@ -82,5 +82,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu
+            cd /home/ubuntu
             docker-compose pull stockleague-backend
-            docker-compose up -d --no-deps --force-recreate stockleague-backend
+            docker-compose rm -f stockleague-backend
+            docker-compose up -d stockleague-backend
