@@ -3,7 +3,7 @@
 import "./terms.css";
 import NextButton from "@/app/components/NextButton";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";
 
 export default function Terms() {
@@ -52,7 +52,11 @@ export default function Terms() {
               />
               <label htmlFor="agree">[필수] 만 14세 이상입니다.</label>
             </div>
-            <NextButton text="다음" onClick={handleNextClick} disabled={!isAgreed && isOverFifteen}/>
+            <NextButton 
+              text="다음" 
+              onClick={handleNextClick} 
+              disabled={!isAgreed && !isOverFifteen}
+            />
         </div>
     </div>
   );
