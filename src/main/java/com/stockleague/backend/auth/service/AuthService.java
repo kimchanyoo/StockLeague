@@ -12,6 +12,7 @@ import com.stockleague.backend.auth.oauth.info.OAuthUserInfo;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.global.handler.TokenCookieHandler;
+import com.stockleague.backend.global.validator.RedirectUriValidator;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.user.domain.OauthServerType;
 import com.stockleague.backend.user.domain.User;
@@ -47,6 +48,11 @@ public class AuthService {
                 .filter(c -> c.supports(OauthServerType.valueOf(requestDto.provider())))
                 .findFirst()
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.UNSUPPORTED_OAUTH_PROVIDER));
+
+        if(!RedirectUriValidator.isAllowed(requestDto.redirectUri())) {
+            log.warn("허용되지 않은 redirectUri 요청: {}", requestDto.redirectUri());
+            throw new GlobalException(GlobalErrorCode.INVALID_REDIRECT_URI);
+        }
 
         OAuthUserInfo userInfo = client.requestUserInfo(requestDto);
 
