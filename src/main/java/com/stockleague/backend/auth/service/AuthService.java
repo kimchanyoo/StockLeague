@@ -44,7 +44,7 @@ public class AuthService {
 
     public OAuthLoginResponseDto login(OAuthLoginRequestDto requestDto, HttpServletResponse response) {
         OAuthClient client = oauthClients.stream()
-                .filter(c -> c.supports(OauthServerType.valueOf(requestDto.getProvider())))
+                .filter(c -> c.supports(OauthServerType.valueOf(requestDto.provider())))
                 .findFirst()
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.UNSUPPORTED_OAUTH_PROVIDER));
 
@@ -82,7 +82,7 @@ public class AuthService {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
         }
 
-        if (!Boolean.TRUE.equals(requestDto.getIsOverFifteen())) {
+        if (!Boolean.TRUE.equals(requestDto.isOverFifteen())) {
             throw new GlobalException(GlobalErrorCode.AGE_RESTRICTION);
         }
 
@@ -90,10 +90,10 @@ public class AuthService {
             User user = userRepository.save(User.builder()
                     .oauthId(oauthId)
                     .provider(provider)
-                    .nickname(requestDto.getNickname())
+                    .nickname(requestDto.nickname())
                     .role(UserRole.USER)
-                    .agreedToTerms(requestDto.getAgreedToTerms())
-                    .isOverFifteen(requestDto.getIsOverFifteen())
+                    .agreedToTerms(requestDto.agreedToTerms())
+                    .isOverFifteen(requestDto.isOverFifteen())
                     .build()
             );
 
