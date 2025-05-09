@@ -53,7 +53,7 @@ public class KakaoOAuthClient implements OAuthClient {
                     .bodyValue("grant_type=authorization_code" +
                             "&client_id=" + kakaoProperties.getClientId() +
                             "&client_secret=" + kakaoProperties.getClientSecret() +
-                            "&redirect_uri=" + kakaoProperties.getRedirectUri() +
+                            "&redirect_uri=" + requestDto.redirectUri() +
                             "&code=" + requestDto.authCode())
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
