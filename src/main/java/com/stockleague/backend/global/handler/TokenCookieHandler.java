@@ -2,10 +2,12 @@ package com.stockleague.backend.global.handler;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class TokenCookieHandler {
 
     private static final String ACCESS_TOKEN_NAME = "access_token";
@@ -33,6 +35,8 @@ public class TokenCookieHandler {
 
         response.addHeader("Set-Cookie", accessCookie.toString());
         response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        log.info("[쿠키 설정] access_token 및 refresh_token 쿠키가 설정되었습니다.");
     }
 
     public void removeTokenCookies(HttpServletResponse response) {
@@ -54,5 +58,7 @@ public class TokenCookieHandler {
 
         response.addHeader("Set-Cookie", accessCookie.toString());
         response.addHeader("Set-Cookie", refreshCookie.toString());
+
+        log.info("[쿠키 제거] access_token 및 refresh_token 쿠키가 제거되었습니다.");
     }
 }
