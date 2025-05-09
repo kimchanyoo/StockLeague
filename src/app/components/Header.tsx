@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import styles from "@/app/styles/components/Header.module.css";
 import DropdownMenu from "./DropdownMenu";
 import MobileMenu from "./MobileMenu";
@@ -16,10 +17,10 @@ const Header = () => {
         <div className={styles.headerInner}>
 
           <div className={styles.leftHeader}>
-              <a href="/" className={styles.logo}>
+              <Link href="/" className={styles.logo}>
                   <div className={styles.stock}>STOCK</div>
                   <div className={styles.league}>League</div>
-              </a>
+              </Link>
           </div>
           
           <div className={styles.centerHeader}>
@@ -34,8 +35,8 @@ const Header = () => {
               </>
             ) : (
               <>
-                <a href="/auth/login" className={styles.signIn}>로그인</a>
-                <a href="/auth/login" className={styles.signUp}>회원가입</a>
+                <Link href="/auth/login" className={styles.signIn}>로그인</Link>
+                <Link href="/auth/login" className={styles.signUp}>회원가입</Link>
               </>
             )}
             <div className={styles.menuToggle}>

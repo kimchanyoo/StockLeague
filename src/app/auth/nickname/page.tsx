@@ -5,12 +5,17 @@ import NextButton from "@/app/components/NextButton";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";
-import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 
+// 쿠키에서 accessToken을 직접 읽어오는 함수
+const getAccessTokenFromCookie = (): string | null => {
+  const token = document.cookie.split('; ').find(row => row.startsWith('accessToken='));
+  return token ? token.split('=')[1] : null;
+};
+
 export default function Nickname() {
-  const { accessToken } = useAuth();
   const { data } = useSocialSignup();
+  const accessToken = getAccessTokenFromCookie();  // 쿠키에서 토큰 가져오기
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
