@@ -112,22 +112,22 @@ public class JwtProvider {
 
     // HTTP 요청에서 JWT 추출
     public String resolveToken(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-
-        for (Cookie cookie : request.getCookies()) {
-            if ("access_token".equals(cookie.getName())) {
-                return cookie.getValue();
+        // 1. 쿠키 우선
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
             }
         }
-        return null;
-    }
 
-    public Long getAuthenticatedUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
+        // 2. Swagger 테스트나 개발 편의용 헤더 처리
+        String bearer = request.getHeader("Authorization");
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
         }
-        return (Long) auth.getPrincipal();  // 저장된 값은 userId
+
+        return null;
     }
 
     // JWT 파싱
