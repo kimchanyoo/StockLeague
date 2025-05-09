@@ -2,18 +2,12 @@ package com.stockleague.backend.auth.controller;
 
 import com.stockleague.backend.auth.dto.request.AdditionalInfoRequestDto;
 import com.stockleague.backend.auth.dto.request.OAuthLoginRequestDto;
-import com.stockleague.backend.auth.dto.request.OAuthLogoutRequestDto;
-import com.stockleague.backend.auth.dto.request.RefreshTokenRequestDto;
 import com.stockleague.backend.auth.dto.response.OAuthLoginResponseDto;
 import com.stockleague.backend.auth.dto.response.OAuthLogoutResponseDto;
 import com.stockleague.backend.auth.dto.response.TokenReissueResponseDto;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.auth.service.AuthService;
-import com.stockleague.backend.auth.service.OAuthLoginService;
 import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.global.exception.GlobalErrorCode;
-import com.stockleague.backend.global.exception.GlobalException;
-import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.user.dto.response.NicknameCheckResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -41,8 +36,6 @@ public class AuthController {
 
     private final JwtProvider jwtProvider;
     private final AuthService authService;
-    private final TokenRedisService redisService;
-    private final OAuthLoginService oAuthLoginService;
 
     @PostMapping("/oauth/login")
     @Operation(summary = "소셜 로그인", description = "클라이언트로부터 받은 소셜 로그인 인가 코드를 바탕으로 사용자 인증 및 JWT 토큰 발급")
@@ -57,9 +50,8 @@ public class AuthController {
                                                     {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
-                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
-                                                       "refreshToken": "c82h3g2h3...",
                                                        "isFirstLogin" : false,
+                                                       "tempAccessToken" : null,
                                                        "nickname" : "테스트",
                                                        "role" : "USER"
                                                     }
@@ -72,9 +64,8 @@ public class AuthController {
                                                     {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
-                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
-                                                       "refreshToken": null,
                                                        "isFirstLogin" : true,
+                                                       "tempAccessToken" : "eyJhbGciOiJIUzI1...",
                                                        "nickname" : null,
                                                        "role" : null
                                                     }
@@ -116,8 +107,11 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<OAuthLoginResponseDto> socialLogin(@RequestBody @Valid OAuthLoginRequestDto request) {
-        return ResponseEntity.ok(oAuthLoginService.login(request));
+    public ResponseEntity<OAuthLoginResponseDto> socialLogin(
+            @RequestBody @Valid OAuthLoginRequestDto request,
+            HttpServletResponse response
+    ) {
+        return ResponseEntity.ok(authService.login(request, response));
     }
 
     @PostMapping("/logout")
@@ -155,12 +149,10 @@ public class AuthController {
     })
     public ResponseEntity<OAuthLogoutResponseDto> logout(
             HttpServletRequest request,
-            @RequestBody OAuthLogoutRequestDto requestDto
+            HttpServletResponse response
     ) {
-        String accessToken = jwtProvider.resolveToken(request);
-        String refreshToken = requestDto.refreshToken();
-        OAuthLogoutResponseDto response = authService.logout(accessToken, refreshToken);
-        return ResponseEntity.ok(response);
+        OAuthLogoutResponseDto result = authService.logout(request, response);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/oauth/complete")
@@ -175,9 +167,8 @@ public class AuthController {
                                             {
                                                "success" : true,
                                                "message" : "추가 정보 입력이 완료되었습니다",
-                                               "accessToken" : "eyJhbGciOiJIUzI1...",
-                                               "refreshToken": "c82h3g2h3...",
                                                "isFirstLogin" : false,
+                                               "tempAccessToken" : null,
                                                "nickname" : "테스트",
                                                "role" : "USER"
                                             }
@@ -220,11 +211,12 @@ public class AuthController {
     })
     public ResponseEntity<OAuthLoginResponseDto> completeSignup(
             HttpServletRequest request,
+            HttpServletResponse response,
             @Valid @RequestBody AdditionalInfoRequestDto requestDto
     ) {
         String token = jwtProvider.resolveToken(request);
-        OAuthLoginResponseDto response = authService.completeSignup(token, requestDto);
-        return ResponseEntity.ok(response);
+        OAuthLoginResponseDto result = authService.completeSignup(token, requestDto, response);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/token/refresh")
@@ -238,7 +230,7 @@ public class AuthController {
                                     value = """
                                             {
                                                "success" : true,
-                                               "accessToken" : "eyJhbGciOiJIUzI1...",
+                                               "message" : "토큰이 재발급되었습니다."
                                             }
                                             """
                             )
@@ -277,29 +269,10 @@ public class AuthController {
                     )
             )
     })
-    public ResponseEntity<?> refreshAccessToken(@RequestBody @Valid RefreshTokenRequestDto requestDto) {
-        String refreshToken = requestDto.getRefreshToken();
+    public ResponseEntity<TokenReissueResponseDto> refreshAccessToken(
+            HttpServletRequest request, HttpServletResponse response) {
 
-        if (!jwtProvider.validateToken(refreshToken)) {
-            throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        Long userId = jwtProvider.getUserId(refreshToken);
-
-        String savedToken = redisService.getRefreshToken(userId);
-
-        if (savedToken == null || !savedToken.equals(refreshToken)) {
-            throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        String newAccessToken = jwtProvider.createAccessToken(userId);
-
-        return ResponseEntity.ok(
-                TokenReissueResponseDto.builder()
-                        .success(true)
-                        .accessToken(newAccessToken)
-                        .build()
-        );
+        return ResponseEntity.ok(authService.reissueToken(request, response));
     }
 
     @GetMapping("/check-nickname")

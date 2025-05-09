@@ -1,5 +1,6 @@
 package com.stockleague.backend.user.controller;
 
+import com.stockleague.backend.auth.service.AuthService;
 import com.stockleague.backend.user.dto.request.UserProfileUpdateRequestDto;
 import com.stockleague.backend.user.dto.request.UserWithdrawRequestDto;
 import com.stockleague.backend.user.dto.response.UserProfileResponseDto;
@@ -13,6 +14,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     @GetMapping("/profile")
     @Operation(summary = "회원 정보 읽기", description = "사용자가 자신의 회원 정보를 읽을 수 있음")
@@ -140,7 +144,8 @@ public class UserController {
             )
     })
     public ResponseEntity<UserProfileUpdateResponseDto> updateUserProfile(
-            Authentication authentication, @RequestBody @Valid UserProfileUpdateRequestDto request) {
+            Authentication authentication,
+            @RequestBody @Valid UserProfileUpdateRequestDto request) {
         Long userId = (Long) authentication.getPrincipal();
         UserProfileUpdateResponseDto user = userService.updateUserProfile(userId, request);
 
@@ -204,9 +209,15 @@ public class UserController {
             )
     })
     public ResponseEntity<UserWithdrawResponseDto> withdrawUser(
-            Authentication authentication, @RequestBody @Valid UserWithdrawRequestDto request) {
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            HttpServletResponse response,
+            @RequestBody @Valid UserWithdrawRequestDto request) {
         Long userId = (Long) authentication.getPrincipal();
 
-        return ResponseEntity.ok(userService.deleteUser(userId, request));
+        UserWithdrawResponseDto result = userService.deleteUser(userId, request);
+        authService.clearUserTokens(userId, servletRequest, response);
+
+        return ResponseEntity.ok(result);
     }
 }

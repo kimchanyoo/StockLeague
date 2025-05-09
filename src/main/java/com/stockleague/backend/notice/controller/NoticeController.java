@@ -48,6 +48,21 @@ public class NoticeController {
                                             """
                             )
                     )
+            ),
+            @ApiResponse(responseCode = "400", description = "페이지네이션 파라미터 오류",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InvalidPagination",
+                                    summary = "잘못된 페이지네이션 파라미터",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "페이지 번호 또는 크기가 유효하지 않습니다.",
+                                              "errorCode": "INVALID_PAGINATION"
+                                            }
+                                            """
+                            )
+                    )
             )
     })
     public ResponseEntity<NoticePageResponseDto> searchNotice(
