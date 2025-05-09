@@ -5,9 +5,11 @@ import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -24,8 +26,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        // 요청 헤더에서 jwt추출
-        String token = jwtProvider.resolveToken(request);
+        // 쿠키에서 JWT 추출
+        String token = resolveToken(request);
 
         // 토큰 유효성 검사
         if(token != null && jwtProvider.validateToken(token)) {
@@ -48,5 +50,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+
+        return Arrays.stream(request.getCookies())
+                .filter(cookie -> "access_token".equals(cookie.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
     }
 }

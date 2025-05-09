@@ -1,7 +1,6 @@
 package com.stockleague.backend.global.config;
 
 import com.stockleague.backend.auth.jwt.JwtAuthenticationFilter;
-import com.stockleague.backend.auth.jwt.JwtLoggingFilter;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.handler.CustomAccessDeniedHandler;
 import com.stockleague.backend.infra.properties.CorsProperties;
@@ -37,11 +36,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtLoggingFilter jwtLoggingFilter() {
-        return new JwtLoggingFilter();
-    }
-
-    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CustomAccessDeniedHandler customAccessDeniedHandler)
             throws Exception {
         http
@@ -66,7 +60,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
                         .anyRequest().authenticated() // 나머지는 로그인한 사용자만 접근 가능
                 )
-                .addFilterBefore(jwtLoggingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

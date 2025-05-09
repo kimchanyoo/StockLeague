@@ -54,6 +54,11 @@ public class NoticeService {
     }
 
     public NoticePageResponseDto search(String keyword, int page, int size) {
+
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         Page<Notice> result = noticeRepository.findByTitleContainingOrContentContainingAndDeletedAtIsNull(
                 keyword, keyword, pageable
@@ -71,6 +76,7 @@ public class NoticeService {
         if (page < 1 || size < 1) {
             throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
         }
+
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(
                 Sort.Order.desc("isPinned"),
                 Sort.Order.desc("createdAt")

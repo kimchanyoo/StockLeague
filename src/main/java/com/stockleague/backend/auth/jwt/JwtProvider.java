@@ -9,12 +9,13 @@ import com.stockleague.backend.user.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -28,25 +29,12 @@ public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
 
-    @PostConstruct
-    public void init() {
-        String secret = jwtProperties.getSecret();
-
-        try {
-            byte[] keyBytes = Decoders.BASE64.decode(secret);
-            System.out.println("Base64 디코딩 성공: " + keyBytes.length + " bytes");
-        } catch (Exception e) {
-            System.out.println("Base64 디코딩 실패: " + e.getMessage());
-        }
-    }
-
     // JWT 서명용 키 생성
     private Key getSigningKey() {
         try{
             byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
             return Keys.hmacShaKeyFor(keyBytes);
         }catch(Exception e){
-            System.out.println("JWT Secret 디코딩 에러: " + e.getMessage());
             return null;
         }
     }
@@ -73,7 +61,7 @@ public class JwtProvider {
                 .compact();
     }
 
-    // 임시 access토큰 생성
+    // 임시 accessToken 생성
     public String createTempAccessToken(String oauthId, OauthServerType provider) {
         return Jwts.builder()
                 .setSubject(oauthId)
@@ -124,11 +112,22 @@ public class JwtProvider {
 
     // HTTP 요청에서 JWT 추출
     public String resolveToken(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
+        if (request.getCookies() == null) return null;
+
+        for (Cookie cookie : request.getCookies()) {
+            if ("access_token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
         }
         return null;
+    }
+
+    public Long getAuthenticatedUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
+        }
+        return (Long) auth.getPrincipal();  // 저장된 값은 userId
     }
 
     // JWT 파싱
@@ -159,6 +158,6 @@ public class JwtProvider {
         }
     }
 
-    // 내부 정적 클래스 (혹은 별도 파일)
+    // 내부 정적 클래스
     public record OauthTokenPayload(String oauthId, OauthServerType provider) {}
 }

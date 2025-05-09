@@ -11,23 +11,39 @@ public class TokenRedisService {
 
     private final StringRedisTemplate redisTemplate;
 
-    public void saveRefreshToken(Long userId, String refreshToken, Duration expiration) {
-        redisTemplate.opsForValue().set("refresh:" + userId, refreshToken, expiration);
-    }
+    private static final String REFRESH_PREFIX = "refresh:";
+    private static final String BLACKLIST_PREFIX = "BL:";
 
-    public String getRefreshToken(Long userId) {
-        return redisTemplate.opsForValue().get("refresh:" + userId);
+    public void saveRefreshToken(Long userId, String refreshToken, Duration expiration) {
+        String key = REFRESH_PREFIX + userId;
+        redisTemplate.opsForValue().set(key, refreshToken, expiration);
     }
 
     public void deleteRefreshToken(Long userId) {
-        redisTemplate.delete("refresh:" + userId);
+        redisTemplate.delete(REFRESH_PREFIX + userId);
     }
 
-    public void blacklistAccessToken(String token, long expiration) {
-        redisTemplate.opsForValue().set("BL:" + token, "logout", Duration.ofMillis(expiration));
+    public boolean isRefreshTokenValid(Long userId, String token) {
+        String saved = getRefreshToken(userId);
+        return saved != null && saved.equals(token);
     }
 
-    public boolean isBlacklisted(String accessToken) {
-        return redisTemplate.hasKey("BL:" + accessToken);
+    public void rotateRefreshToken(Long userId, String newToken, Duration expiration) {
+        deleteRefreshToken(userId);
+        saveRefreshToken(userId, newToken, expiration);
+    }
+
+    public void blacklistAccessToken(String token, long expirationMillis) {
+        redisTemplate.opsForValue().set(
+                BLACKLIST_PREFIX + token, "logout", Duration.ofMillis(expirationMillis));
+    }
+
+    public boolean isBlacklisted(String token) {
+        Boolean result = redisTemplate.hasKey(BLACKLIST_PREFIX + token);
+        return Boolean.TRUE.equals(result);
+    }
+
+    private String getRefreshToken(Long userId) {
+        return redisTemplate.opsForValue().get(REFRESH_PREFIX + userId);
     }
 }

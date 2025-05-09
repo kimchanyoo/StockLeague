@@ -54,7 +54,7 @@ public class KakaoOAuthClient implements OAuthClient {
                             "&client_id=" + kakaoProperties.getClientId() +
                             "&client_secret=" + kakaoProperties.getClientSecret() +
                             "&redirect_uri=" + kakaoProperties.getRedirectUri() +
-                            "&code=" + requestDto.getAuthCode())
+                            "&code=" + requestDto.authCode())
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                     })
