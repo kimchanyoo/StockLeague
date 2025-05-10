@@ -9,24 +9,72 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null; // ✅ user 상태
-  setUser: (user: User) => void; // setUser 함수 추가
-  logout: () => void; // 로그아웃 함수
+  user: User | null; // user 상태
+  accessToken: string | null; // accessToken 상태 추가
+  setUser: (user: User) => void;
+  setAccessToken: (token: string) => void; // setAccessToken 함수 추가
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null); // user 상태
+  const [accessToken, setAccessToken] = useState<string | null>(null); // accessToken 상태 추가
   const router = useRouter();
   
+  // 쿠키에서 accessToken을 읽는 함수
+  const getCookie = (name: string) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    const cookieValue = parts.pop()?.split(";").shift();
+    console.log("Retrieved cookie value: ", cookieValue);  // 쿠키 값 확인
+    return cookieValue;
+  }
+  return null;
+  };
+
+  // 로그인 시 accessToken 저장
+  const setAccessTokenHandler = (token: string) => {
+    setAccessToken(token);
+    document.cookie = `accessToken=${token}; path=/;`;
+  };
+
+  // 컴포넌트가 처음 렌더링될 때 쿠키에서 accessToken을 읽어오기
+  useEffect(() => {
+    const storedNickname = localStorage.getItem("nickname");
+
+    if (!storedNickname || storedNickname === "null") {
+      setUser(null);
+      setAccessToken(null); // 액세스 토큰 초기화
+      return;
+    }
+
+    setUser({ nickname: storedNickname });
+
+    const cookieToken = getCookie("accessToken");
+
+    if (cookieToken) {
+      setAccessToken(cookieToken); // 쿠키에서 가져온 accessToken을 상태에 설정
+    }
+  }, []);
+
+
+
   // 로그아웃 처리 함수
   const logout = async () => {
     try {
       // 백엔드 API에 로그아웃 요청
       if (user) {
-        await logoutAPI(user.nickname); // 로그아웃 API 호출 (refreshToken은 백엔드에서 처리)
+        const response = await logoutAPI(user.nickname);  // 로그아웃 API 호출 (nickname 사용)
+
+        // 응답 결과 확인
+        if (response.success) {
+          console.log("로그아웃 성공:", response.message);
+        }
       }
+
       // 쿠키에서 토큰 삭제
       document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
       document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
@@ -37,19 +85,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       router.push("/"); // 홈 화면으로 리디렉션
     } catch (error) {
       console.error("로그아웃 중 오류가 발생했습니다:", error);
+      alert("로그아웃 실패. 다시 시도해주세요.");
     }
   };
 
-  // useEffect 훅을 사용하여 초기 상태에서 user 데이터를 설정할 수 있음
-  useEffect(() => {
-    const storedNickname = localStorage.getItem("nickname");
-    if (storedNickname) {
-      setUser({ nickname: storedNickname }); // localStorage에서 닉네임을 가져와서 user 상태 설정
-    }
-  }, []);
-
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, accessToken, setAccessToken: setAccessTokenHandler, logout }}>
       {children}
     </AuthContext.Provider>
   );

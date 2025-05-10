@@ -13,8 +13,9 @@ export const postOAuthLogin = async ({
     provider,
     authCode,
     redirectUri,
+  }, {
+    withCredentials: true,
   });
-
   return res.data;
 };
 
