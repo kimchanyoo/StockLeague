@@ -82,6 +82,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/app
-            docker-compose down
+            docker-compose stop
             docker-compose pull
+            docker image prune -f
             docker-compose up -d
