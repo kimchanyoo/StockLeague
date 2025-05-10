@@ -59,3 +59,16 @@
     border-radius: 5px;
     cursor: pointer;
 }
+
+.error {
+    color: red;
+    font-size: 0.875rem;  
+    margin-top: -10%; 
+    margin-bottom: -5%; 
+}
+.success {
+    color: green;
+    font-size: 0.875rem;  
+    margin-top: -10%;
+    margin-bottom: -5%; 
+}

@@ -17,9 +17,7 @@ export default function OAuthCallbackPage() {
     const authCode = searchParams.get("code");
     const provider = (searchParams.get("provider") as Provider) || "KAKAO"; // 타입을 명시적으로 지정
     const redirectUri = `${process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI}`
-    console.log("AuthCode:", authCode);
-    console.log("Provider:", provider);
-    console.log("Redirect URI:", redirectUri);
+   
     if (!authCode) {
       alert("인가 코드가 없습니다.");
       router.push("/auth/login");
@@ -29,20 +27,22 @@ export default function OAuthCallbackPage() {
     const loginWithSocial = async () => {
       try {
         // 서버 API 라우트를 통해 외부 API로 요청을 전달
-        const response = await postOAuthLogin({ provider, authCode, redirectUri });
-
-        const { accessToken, refreshToken, isFirstLogin, user } = response.data;
-
+        const { accessToken, refreshToken, isFirstLogin, user } = await postOAuthLogin({
+          provider,
+          authCode,
+          redirectUri,
+        });
         // accessToken, refreshToken을 쿠키에 저장
         if (accessToken) {
-          document.cookie = `accessToken=${accessToken}; path=/; secure;`;
+          document.cookie = `accessToken=${accessToken}; path=/; secure; HttpOnly;`;
         }
 
         if (refreshToken) {
-          document.cookie = `refreshToken=${refreshToken}; path=/; secure;`;
+          document.cookie = `refreshToken=${refreshToken}; path=/; secure; HttpOnly;`;
         }
-
-        // 사용자 정보(닉네임 포함) 저장
+       
+        // 사용자 정보(닉네임 포함)를 상태 관리 또는 localStorage에 저장
+        localStorage.setItem("nickname", user.nickname); // localStorage에 닉네임 저장
         setUser(user);
 
         // 첫 로그인일 경우 약관 동의 페이지로 리디렉션, 아니면 홈 화면

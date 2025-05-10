@@ -30,6 +30,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // 쿠키에서 토큰 삭제
       document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
       document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+      // localStorage에서 사용자 정보 삭제
+      localStorage.removeItem("nickname");
       
       setUser(null); // 상태에서 user 제거
       router.push("/"); // 홈 화면으로 리디렉션
@@ -40,8 +42,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // useEffect 훅을 사용하여 초기 상태에서 user 데이터를 설정할 수 있음
   useEffect(() => {
-    // 만약 사용자 정보가 서버에서 받아오는 방식이라면 여기에 로직을 추가
-    // 예시: setUser(getUserFromServer());
+    const storedNickname = localStorage.getItem("nickname");
+    if (storedNickname) {
+      setUser({ nickname: storedNickname }); // localStorage에서 닉네임을 가져와서 user 상태 설정
+    }
   }, []);
 
   return (
