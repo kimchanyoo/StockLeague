@@ -71,7 +71,7 @@ public class JwtProvider {
                 .claim("type", "temp")
                 .claim("provider", provider.name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 5 * 60 * 1000)) // 5분 유효
+                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15분 유효
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -169,9 +169,6 @@ public class JwtProvider {
 
             return new OauthTokenPayload(oauthId, provider);
 
-        } catch (JwtException e) {
-            log.error("JWT 파싱 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage());
-            throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
         } catch (IllegalArgumentException | NullPointerException e) {
             log.error("Claim 파싱 오류: {}", e.getMessage());
             throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
