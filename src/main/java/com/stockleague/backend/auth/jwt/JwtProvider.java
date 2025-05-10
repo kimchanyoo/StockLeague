@@ -12,10 +12,10 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Date;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class JwtProvider {
 
@@ -33,8 +34,10 @@ public class JwtProvider {
     private Key getSigningKey() {
         try{
             byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
+            log.info("JWT key length: {}", keyBytes.length);
             return Keys.hmacShaKeyFor(keyBytes);
         }catch(Exception e){
+            log.error("JWT key decode error: {}", e.getMessage());
             return null;
         }
     }
@@ -132,28 +135,48 @@ public class JwtProvider {
 
     // JWT 파싱
     protected Claims parseClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException e) {
+            log.error("JWT 파싱 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
+        }
     }
 
     // 추가 정보 입력용 토큰 분석기
     public OauthTokenPayload parseTempToken(String token) {
-        try{
+        try {
             Claims claims = parseClaims(token);
 
-            String type = (String) claims.get("type");
-            if (!"temp".equals(type)) {
+            // type 필드 확인
+            Object typeObj = claims.get("type");
+            if (!(typeObj instanceof String type) || !"temp".equals(type)) {
+                throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
+            }
+
+            // provider 필드 확인
+            Object providerObj = claims.get("provider");
+            if (!(providerObj instanceof String providerStr)) {
                 throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
             }
 
             String oauthId = claims.getSubject();
-            OauthServerType provider = OauthServerType.valueOf((String) claims.get("provider"));
+            OauthServerType provider = OauthServerType.valueOf(providerStr);
 
             return new OauthTokenPayload(oauthId, provider);
-        }catch (Exception e){
+
+        } catch (JwtException e) {
+            log.error("JWT 파싱 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            log.error("Claim 파싱 오류: {}", e.getMessage());
+            throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
+        } catch (Exception e) {
+            log.error("기타 예외 발생: {}", e.getMessage());
             throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
         }
     }
