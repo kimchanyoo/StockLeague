@@ -21,11 +21,6 @@ const Header = () => {
   
   const isLoggedIn = !!user?.nickname;
 
-  useEffect(() => {
-      // user 상태 변경 시 헤더가 리렌더링되도록 설정
-      console.log("로그인 상태가 변경되었습니다.", user);
-    }, [user]);
-
     return (
       <header className={styles.header}>
         <div className={styles.headerInner}>
