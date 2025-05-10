@@ -82,6 +82,7 @@ public class JwtProvider {
             parseClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            log.warn("토큰 유효성 검사 실패: {}", e.getMessage());
             return false;
         }
     }
