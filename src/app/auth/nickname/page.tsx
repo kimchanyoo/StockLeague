@@ -49,6 +49,8 @@ export default function Nickname() {
         },
       });
 
+      console.log(response.data);  // 응답 데이터 확인
+
       if (response.data.available) {
         setIsAvailable(true);
         setError("");

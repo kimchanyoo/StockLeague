@@ -55,7 +55,7 @@ export default function Terms() {
             <NextButton 
               text="다음" 
               onClick={handleNextClick} 
-              disabled={!isAgreed && !isOverFifteen}
+              disabled={!isAgreed && isOverFifteen}
             />
         </div>
     </div>
