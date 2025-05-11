@@ -111,3 +111,21 @@
     cursor: not-allowed;
   }
   
+  .loginOverlay {
+    width: 90%;
+    background: rgba(255,255,255,0.95);
+    padding: 24px 32px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 10;
+  }
+  .loginBtn {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: #007aff;
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.85rem;
+  }

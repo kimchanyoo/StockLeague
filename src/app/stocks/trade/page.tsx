@@ -6,9 +6,11 @@ import StockOrder from "@/app/components/StockOrder";
 import StockSelector from "@/app/components/StockSelector";
 import StockChart from "@/app/components/StockChart";
 import Community from "@/app/components/Community";
+import { useAuth } from "@/context/AuthContext"; // 예시: 직접 만든 인증 Context
 
 export default function Trade() {
-  const isLoggedIn = true; // 나중에 실제 로그인 여부로 변경
+  const { user } = useAuth(); // 로그인 정보 가져오기
+  const isLoggedIn = !!user;  // user가 있으면 로그인된 상태
 
   const [activeTab, setActiveTab] = useState<"chart" | "community">("chart");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -26,7 +28,9 @@ export default function Trade() {
             <div className="btnGroup">
               <button className="bigBtn" onClick={() => setActiveTab('chart')}>차트</button>
               <button className="bigBtn" onClick={() => setActiveTab('community')}>커뮤니티</button>
-              <button className={`smallBtn ${isFavorite ? "active" : ''}`} onClick={() => setIsFavorite((prev) => !prev)}>★</button>
+              {isLoggedIn && (
+                <button className={`smallBtn ${isFavorite ? "active" : ''}`} onClick={() => setIsFavorite((prev) => !prev)}>★</button>
+              )}
             </div>
           </div>
           <div className="titleCantent">
