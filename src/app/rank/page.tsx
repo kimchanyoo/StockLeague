@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import "./rank.css";
 import DownIcon from '@mui/icons-material/ArrowDropDown';
+import { useAuth } from "@/context/AuthContext";
 
 const dummyRankData = Array.from({ length: 100 }, (_, i) => ({
   rank: i + 1,
@@ -19,6 +20,8 @@ const myRank = {
 };
 
 export default function Rank() {
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   const [visibleCount, setVisibleCount] = useState(20);
   const [myRankVisible, setMyRankVisible] = useState(true);
@@ -80,13 +83,23 @@ export default function Rank() {
             );
           })}
         </div>
-        {myRankVisible && (
+        {isLoggedIn ? (
+          myRankVisible && (
+            <div className="floatingMyRank">
+              <div className="rankItem highlight">
+                <div>{myRank.rank}</div>
+                <div>{myRank.nickname}</div>
+                <div>{myRank.totalAssets.toLocaleString()}원</div>
+                <div>{myRank.returnRate}%</div>
+              </div>
+            </div>
+          )
+        ) : (
           <div className="floatingMyRank">
-            <div className="rankItem highlight">
-              <div>{myRank.rank}</div>
-              <div>{myRank.nickname}</div>
-              <div>{myRank.totalAssets.toLocaleString()}원</div>
-              <div>{myRank.returnRate}%</div>
+            <div className="Non-login">
+              <div>
+                🔒 로그인 시, 랭킹이 표시됩니다.
+              </div>
             </div>
           </div>
         )}
