@@ -4,17 +4,9 @@ import "./notice.css";
 import SearchIcon from "@mui/icons-material/Search";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getNotices } from "@/lib/api/notice";
+import { getNotices, Notice} from "@/lib/api/notice";
 
-interface Notice {
-  noticeId: number;
-  title: string;
-  category: string;
-  isPinned: boolean;
-  createdAt: string;
-}
-
-export default function Notice() {
+export default function NoticeList() {
 
   const noticesPerPage = 10;
   const maxPageButtons = 10;
@@ -30,7 +22,7 @@ export default function Notice() {
   useEffect(() => {
     const fetchNotices = async () => {
       try {
-        const data = await getNotices(currentPage, noticesPerPage);
+        const data = await getNotices(currentPage, noticesPerPage, searchKeyword);
         setNotices(data.notices);
         setTotalCount(data.totalCount);
       } catch (error) {
@@ -39,7 +31,7 @@ export default function Notice() {
     };
 
     fetchNotices();
-  }, [currentPage]);
+  }, [currentPage, searchKeyword]);
 
   // 페이지네이션 버튼 범위
   const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;

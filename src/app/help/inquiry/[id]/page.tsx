@@ -1,29 +1,34 @@
 "use client";
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from "react";
+import { getInquiryDetail, InquiryDetailResponse } from '@/lib/api/inquiryDetail';  // API 함수 임포트
 import "./inquiryDetailPage.css";
-
-// 댓글 타입 정의
-type Comment = {
-  nickname: string;
-  text: string;
-  date: string;
-};
 
 export default function InquiryDetailPage() {
   const params = useParams();
   const { id } = params;
 
-  // 임시 데이터 예시
-  const inquiry = {
-    id,
-    type: '랭킹',
-    title: '랭킹 점수 반영 문제',
-    content: '랭킹 점수가 이상하게 계산됩니다.',
-    date: '2025-04-10',
-    status: 'pending',
-  };
+  const [inquiry, setInquiry] = useState<InquiryDetailResponse | null>(null);
+
+  useEffect(() => {
+    const fetchInquiryDetail = async () => {
+      try {
+        if (id) {
+          const data = await getInquiryDetail(Number(id));  // 백엔드에서 데이터 요청
+          setInquiry(data);  // 받아온 데이터를 상태에 저장
+        }
+      } catch (error) {
+        console.error("문의 상세 내용을 불러오는 데 실패했습니다:", error);
+      }
+    };
+
+    fetchInquiryDetail();
+  }, [id]);
+
+  if (!inquiry) {
+    return <div>로딩 중...</div>;  // 데이터가 로드될 때까지 로딩 표시
+  }
 
   return (
     <div className="container">
@@ -34,11 +39,11 @@ export default function InquiryDetailPage() {
         <div className="inquiry-title">
           <h1>문의내용</h1>
           <div className="inquiry-subTitle">
-            <p>문의 유형: <span>{inquiry.type}</span></p>
+            <p>문의 유형: <span>{inquiry.category}</span></p>
             <p>
               상태:{" "}
-              <span className={inquiry.status === "pending" ? "status-pending" : "status-completed"}>
-                {inquiry.status === "pending" ? "답변전" : "답변완"}
+              <span className={inquiry.status === "WAITING" ? "status-pending" : "status-completed"}>
+                {inquiry.status === "WAITING" ? "답변전" : "답변완"}
               </span>
             </p>
           </div>
@@ -47,16 +52,22 @@ export default function InquiryDetailPage() {
         <div className="inquiry-details">
           <div>
             <h1>{inquiry.title}</h1>
-            <p><strong>문의 날짜:</strong> {inquiry.date}</p>
+            <p><strong>문의 날짜:</strong> {new Date(inquiry.createdAt).toLocaleDateString()}</p>
           </div>
           <p>{inquiry.content}</p>
         </div>
-        
-        <label>답변내용</label>
-        <div className="answer-contents">
-          <p><strong>답변 날짜:</strong> {inquiry.date}</p>
-          <p>여기 답변 내용</p>
-        </div>
+
+        {inquiry.answer ? (
+          <>
+            <label>답변내용</label>
+            <div className="answer-contents">
+              <p><strong>답변 날짜:</strong> {new Date(inquiry.answer.createdAt).toLocaleDateString()}</p>
+              <p>{inquiry.answer.content}</p>
+            </div>
+          </>
+        ) : (
+          <p>답변이 아직 없습니다.</p> 
+        )}
       </div>
     </div>
   );

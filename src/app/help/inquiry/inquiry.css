@@ -111,6 +111,13 @@
     cursor: not-allowed;
   }
   
+  .no-inquiry {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.2rem;
+    color: #777;
+}
+
   .loginOverlay {
     width: 90%;
     background: rgba(255,255,255,0.95);
