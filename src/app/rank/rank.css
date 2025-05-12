@@ -71,3 +71,11 @@
     background-color: #E3EEFA;
     font-weight: bold;
 }
+.Non-login {
+    background-color: #E3EEFA;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}

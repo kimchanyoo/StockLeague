@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import Link from "next/link";
 import styles from "@/app/styles/components/Header.module.css";
 import DropdownMenu from "./DropdownMenu";
 import MobileMenu from "./MobileMenu";
@@ -8,7 +9,16 @@ import { useAuth } from "@/context/AuthContext";
 
 
 const Header = () => {
-  const { user } = useAuth(); // 사용자 정보를 가져옵니다.
+  const { user, setUser } = useAuth(); // 사용자 정보를 가져옵니다.
+
+  useEffect(() => {
+    // 페이지 초기화 시, localStorage에서 사용자 정보를 가져오기
+    const storedNickname = localStorage.getItem("nickname");
+    if (storedNickname) {
+      setUser({ nickname: storedNickname }); // localStorage에서 닉네임을 가져와 상태를 설정
+    }
+  }, [setUser]); // setUser가 변경될 때만 실행
+  
   const isLoggedIn = !!user?.nickname;
 
     return (
@@ -16,10 +26,10 @@ const Header = () => {
         <div className={styles.headerInner}>
 
           <div className={styles.leftHeader}>
-              <a href="/" className={styles.logo}>
+              <Link href="/" className={styles.logo}>
                   <div className={styles.stock}>STOCK</div>
                   <div className={styles.league}>League</div>
-              </a>
+              </Link>
           </div>
           
           <div className={styles.centerHeader}>
@@ -34,8 +44,8 @@ const Header = () => {
               </>
             ) : (
               <>
-                <a href="/auth/login" className={styles.signIn}>로그인</a>
-                <a href="/auth/login" className={styles.signUp}>회원가입</a>
+                <Link href="/auth/login" className={styles.signIn}>로그인</Link>
+                <Link href="/auth/login" className={styles.signUp}>회원가입</Link>
               </>
             )}
             <div className={styles.menuToggle}>

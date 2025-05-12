@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import MoreVert from "@/app/components/MoreVert";
 import { getInquiries, Inquiry } from "@/lib/api/inquiry";
+import { useAuth } from '@/context/AuthContext'; // 추가
 
 const inquiriesPerPage = 10;
 const maxPageButtons = 10;
@@ -13,6 +14,9 @@ const maxPageButtons = 10;
 export default function InquiryList() {
   const router = useRouter();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const { user } = useAuth(); // 로그인 정보 가져오기
+  const isLoggedIn = !!user;
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -41,6 +45,25 @@ export default function InquiryList() {
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
+  const pageNumbers = [];
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
+  // 로그인하지 않았을 때 안내문 표시
+  if (!isLoggedIn) {
+    return (
+      <div className="container">
+        <h1 className="title">1:1 문의</h1>
+        <div className="loginOverlay">
+          <p>로그인이 필요합니다.</p>
+          <Link href="/auth/login">
+            <button className="loginBtn">로그인하러 가기</button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container">
       <h1 className="title">

@@ -35,6 +35,12 @@
     height: 250px;
     border: 1px solid #767680;
     border-radius: 10px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 1rem;
+    white-space: pre-wrap;
+    background-color: #f9f9f9;
 }
 .agreeBox {
     display: flex;
