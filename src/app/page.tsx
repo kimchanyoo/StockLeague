@@ -11,6 +11,7 @@ import StockItem from "@/app/components/StockItem";
 import { useRouter } from "next/navigation";
 import MainStockChart from "./components/MainStockChart";
 import Portfolio from "./components/Portfolio";
+import { useAuth } from "@/context/AuthContext";
 
 // 랜덤 주식 데이터 생성 함수
 const generateDummyStockData = () => {
@@ -35,7 +36,9 @@ export default function Home() {
 
   const [visibleCount, setVisibleCount] = useState(20);
   const [stockData, setStockData] = useState<any[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // 로그인 상태 추가
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
+
 
   useEffect(() => {
     const data = generateDummyStockData();
