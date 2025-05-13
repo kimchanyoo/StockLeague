@@ -45,10 +45,6 @@ export default function InquiryList() {
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
-  const pageNumbers = [];
-  for (let i = startPage; i <= endPage; i++) {
-    pageNumbers.push(i);
-  }
   // 로그인하지 않았을 때 안내문 표시
   if (!isLoggedIn) {
     return (

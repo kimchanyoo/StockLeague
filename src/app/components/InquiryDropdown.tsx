@@ -6,16 +6,15 @@ interface Props {
   onSelect: (value: string) => void;
 }
 
+export const categories: Record<string, string> = {
+  exchange: "거래소",
+  ranking: "랭킹",
+  bug: "버그 신고",
+  etc: "기타",
+};
+
 const InquriyDropdown = ({ onSelect }: Props) => {
   const [category, setCategory] = useState('');
-
-  const categories = [
-    { value: "", label: "문의 유형 선택" }, // 기본값
-    { value: "exchange", label: "거래소" },
-    { value: "ranking", label: "랭킹" },
-    { value: "bug", label: "버그 신고" },
-    { value: "etc", label: "기타" },
-  ];
 
   useEffect(() => {
     onSelect(category); // 선택 변경 시 상위로 전달
@@ -28,9 +27,10 @@ const InquriyDropdown = ({ onSelect }: Props) => {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          {categories.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
+          <option value="">문의 유형 선택</option>
+          {Object.entries(categories).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
             </option>
           ))}
         </select>

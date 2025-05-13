@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { getInquiryDetail, InquiryDetailResponse } from '@/lib/api/inquiryDetail';  // API 함수 임포트
+import { categories } from "@/app/components/InquiryDropdown"
 import "./inquiryDetailPage.css";
 
 export default function InquiryDetailPage() {
@@ -39,7 +40,7 @@ export default function InquiryDetailPage() {
         <div className="inquiry-title">
           <h1>문의내용</h1>
           <div className="inquiry-subTitle">
-            <p>문의 유형: <span>{inquiry.category}</span></p>
+            <p>문의 유형: <span>{categories[inquiry.category] || inquiry.category}</span></p>
             <p>
               상태:{" "}
               <span className={inquiry.status === "WAITING" ? "status-pending" : "status-completed"}>

@@ -2,7 +2,7 @@
 
 import "./terms.css";
 import NextButton from "@/app/components/NextButton";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";
 
@@ -12,16 +12,29 @@ export default function Terms() {
   const [isAgreed, setIsAgreed] = useState(false);
   const [isOverFifteen, setIsOverFifteen] = useState(false);
   const { setData } = useSocialSignup();
+  const searchParams = useSearchParams();
+
+  const accessToken = searchParams.get("accessToken");
 
   const handleNextClick = () => {
-    if (isAgreed && isOverFifteen) {
+     if (isAgreed && isOverFifteen) {
+      if (!accessToken) {
+        alert("임시 토큰이 누락되었습니다. 다시 로그인해주세요.");
+        router.replace("/auth/login");
+        return;
+      }
+
       setData({
+        accessToken,
         agreedToTerms: true,
         isOverFifteen: true,
       });
-      router.push("/auth/nickname");
-    } 
-    else {
+
+      // 💾 Optional: localStorage 백업
+      localStorage.setItem("tempAccessToken", accessToken);
+
+      router.push(`/auth/nickname?accessToken=${accessToken}`);
+    } else {
       alert("모든 필수 항목에 동의해주세요.");
       
     }

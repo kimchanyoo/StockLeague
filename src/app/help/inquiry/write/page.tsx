@@ -3,13 +3,15 @@
 import { useState } from "react";
 import InquriyDropdown from "@/app/components/InquiryDropdown";
 import { createInquiry } from "@/lib/api/inquiryCreate"; // 경로는 프로젝트에 맞게 수정
+import { useRouter } from "next/navigation";
 import "./write.css";
 
 export default function Write() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(""); // InquiryDropdown에서 선택되도록 연동 필요
   const [content, setContent] = useState("");
-  
+  const router = useRouter();
+
   const handleSubmit = async () => {
     if (!title || !category || !content) {
       alert("모든 항목을 입력해주세요.");
@@ -19,7 +21,7 @@ export default function Write() {
       const result = await createInquiry({ title, category, content });
       if (result.success) {
         alert("문의가 성공적으로 등록되었습니다.");
-        // 이동 등 필요한 후처리
+        router.push("/help/inquiry");
       } else {
         alert(`실패: ${result.message}`);
       }
