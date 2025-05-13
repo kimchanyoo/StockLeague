@@ -61,33 +61,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
 
+  /// 로그아웃 처리 함수
+const logout = async () => {
+  try {
+    // 쿠키에서 refreshToken을 가져오기
+    const refreshToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("refreshToken"))
+      ?.split("=")[1];
 
-  // 로그아웃 처리 함수
-  const logout = async () => {
-    try {
-      // 백엔드 API에 로그아웃 요청
-      if (user) {
-        const response = await logoutAPI(user.nickname);  // 로그아웃 API 호출 (nickname 사용)
-
-        // 응답 결과 확인
-        if (response.success) {
-          console.log("로그아웃 성공:", response.message);
-        }
-      }
-
-      // 쿠키에서 토큰 삭제
+    // refreshToken이 없으면 자동으로 로그아웃 처리
+    if (!refreshToken) {
+      console.log("refreshToken이 없습니다. 자동으로 로그아웃 처리됩니다.");
+      // 상태 초기화
+      setUser(null);
+      setAccessToken(null);
+      localStorage.removeItem("nickname"); // localStorage에서 사용자 정보 삭제
       document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
       document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-      // localStorage에서 사용자 정보 삭제
-      localStorage.removeItem("nickname");
-      
-      setUser(null); // 상태에서 user 제거
-      router.push("/"); // 홈 화면으로 리디렉션
-    } catch (error) {
-      console.error("로그아웃 중 오류가 발생했습니다:", error);
-      alert("로그아웃 실패. 다시 시도해주세요.");
+
+      // 홈 화면으로 리디렉션
+      router.push("/");
+
+      return; // 토큰이 없으면 바로 로그아웃 처리
     }
-  };
+
+    // refreshToken이 있는 경우, 로그아웃 API 호출
+    const response = await logoutAPI(refreshToken);
+
+    // 응답 결과 확인
+    if (response.success) {
+      console.log("로그아웃 성공:", response.message);
+    } else {
+      throw new Error(response.message); // 실패 시 예외 처리
+    }
+
+    // 쿠키에서 토큰 삭제
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    
+    // localStorage에서 사용자 정보 삭제
+    localStorage.removeItem("nickname");
+
+    // 상태 초기화
+    setUser(null); 
+    setAccessToken(null);
+
+    // 홈 화면으로 리디렉션
+    router.push("/");
+
+  } catch (error) {
+    console.error("로그아웃 중 오류가 발생했습니다:", error);
+    alert("로그아웃 실패. 다시 시도해주세요.");
+  }
+};
 
   return (
     <AuthContext.Provider value={{ user, setUser, accessToken, setAccessToken: setAccessTokenHandler, logout }}>
