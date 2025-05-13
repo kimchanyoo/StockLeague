@@ -112,10 +112,6 @@ export const createInquiry = async ({
 // 문의 상세
 export const getInquiryDetail = async (inquiryId: number): Promise<InquiryDetailResponse> => {
   const token = getCookie("accessToken"); // 예: 쿠키에서 토큰 가져오기
-  
-  if (!token) {
-    throw new Error("인증 토큰이 없습니다.");
-  }
 
   const res = await axiosInstance.get(`/api/v1/inquiries/${inquiryId}`, {
     headers: {
@@ -130,20 +126,10 @@ export const getInquiryDetail = async (inquiryId: number): Promise<InquiryDetail
   }
 };
 
-//문의 수정
-export const updateInquiry = async (inquiryId: number, data: InquiryCreateRequest): Promise<{ success: boolean; message: string }> => {
-  const token = getCookie("accessToken");
-
-  if (!token) {
-    throw new Error("인증 토큰이 없습니다.");
-  }
-
+// 수정된 문의 수정
+export const updateInquiry = async (inquiryId: number, data: InquiryCreateRequest) => {
   try {
-    const res = await axiosInstance.patch(`/api/v1/inquiries/${inquiryId}`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await axiosInstance.patch(`/api/v1/inquiries/${inquiryId}`, data);
 
     return {
       success: res.data.success,
@@ -155,22 +141,10 @@ export const updateInquiry = async (inquiryId: number, data: InquiryCreateReques
   }
 };
 
-//문의 삭제
+// 수정된 문의 삭제
 export const deleteInquiry = async (inquiryId: number) => {
-  const token = getCookie("accessToken");
-
-  if (!token) {
-    throw new Error("인증 토큰이 없습니다.");
-  }
-
   try {
-    const res = await axiosInstance.patch(`/api/v1/inquiries/${inquiryId}/delete`, {},
-      {
-        headers: {
-        Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const res = await axiosInstance.patch(`/api/v1/inquiries/${inquiryId}/delete`, {});
 
     return {
       success: res.data.success,
@@ -178,5 +152,6 @@ export const deleteInquiry = async (inquiryId: number) => {
     };
   } catch (error) {
     console.error("문의 삭제 중 오류 발생:", error);
+    throw new Error("문의 삭제 중 문제가 발생했습니다.");
   }
 };

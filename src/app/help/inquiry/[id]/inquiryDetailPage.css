@@ -82,3 +82,14 @@
     flex-direction: column;
     justify-content: center;
 }
+
+.date {
+    color: #999999;
+    font-size: 14px;
+}
+.no-answer {
+    width: 100%;
+    text-align: center;
+    margin-top: 30px;
+    font-weight: bold;
+}

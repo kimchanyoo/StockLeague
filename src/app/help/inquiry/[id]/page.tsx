@@ -52,8 +52,8 @@ export default function InquiryDetailPage() {
 
         <div className="inquiry-details">
           <div>
-            <h1>{inquiry.title}</h1>
-            <p><strong>문의 날짜:</strong> {new Date(inquiry.createdAt).toLocaleDateString()}</p>
+            <h1><strong>{inquiry.title}</strong></h1>
+            <p className="date">문의 날짜: {new Date(inquiry.createdAt).toLocaleDateString()}</p>
           </div>
           <p>{inquiry.content}</p>
         </div>
@@ -62,12 +62,12 @@ export default function InquiryDetailPage() {
           <>
             <label>답변내용</label>
             <div className="answer-contents">
-              <p><strong>답변 날짜:</strong> {new Date(inquiry.answer.createdAt).toLocaleDateString()}</p>
+              <p className="date">답변 날짜: {new Date(inquiry.answer.createdAt).toLocaleDateString()}</p>
               <p>{inquiry.answer.content}</p>
             </div>
           </>
         ) : (
-          <p>답변이 아직 없습니다.</p> 
+          <p className="no-answer">답변이 아직 없습니다.</p> 
         )}
       </div>
     </div>
