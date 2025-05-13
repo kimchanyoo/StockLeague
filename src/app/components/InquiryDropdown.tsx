@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import styles from "@/app/styles/components/InquriyDropdown.module.css";
 
 interface Props {
+  value?: string;
   onSelect: (value: string) => void;
 }
 

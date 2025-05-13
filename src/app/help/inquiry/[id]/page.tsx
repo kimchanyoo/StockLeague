@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from "react";
-import { getInquiryDetail, InquiryDetailResponse } from '@/lib/api/inquiryDetail';  // API 함수 임포트
+import { getInquiryDetail, InquiryDetailResponse } from '@/lib/api/inquiry';  // API 함수 임포트
 import { categories } from "@/app/components/InquiryDropdown"
 import "./inquiryDetailPage.css";
 
