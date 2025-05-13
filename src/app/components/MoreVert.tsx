@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconButton, Menu, MenuItem } from '@mui/material';
 
-const MoreVert = () => {
+interface MoreVertProps {
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+const MoreVert = ({onEdit, onDelete} : MoreVertProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -16,12 +21,12 @@ const MoreVert = () => {
 
   const handleEdit = () => {
     handleClose();
-    console.log('수정 클릭됨');
+    onEdit();
   };
 
   const handleDelete = () => {
     handleClose();
-    console.log('삭제 클릭됨');
+    onDelete();
   };
 
   return (
@@ -60,8 +65,8 @@ const MoreVert = () => {
             }}
             >
             수정
-            </MenuItem>
-            <MenuItem
+        </MenuItem>
+        <MenuItem
             onClick={handleDelete}
             sx={{
                 justifyContent: 'center',

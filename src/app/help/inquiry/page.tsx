@@ -5,7 +5,7 @@ import "./inquiry.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import MoreVert from "@/app/components/MoreVert";
-import { getInquiries, Inquiry } from "@/lib/api/inquiry";
+import { getInquiries, Inquiry, deleteInquiry } from "@/lib/api/inquiry";
 import { useAuth } from '@/context/AuthContext'; // 추가
 
 const inquiriesPerPage = 10;
@@ -91,7 +91,26 @@ export default function InquiryList() {
                 >
                   {item.status === "WAITING" ? "답변전" : "답변완"}
                 </div>
-                <MoreVert />
+                <MoreVert 
+                  onEdit={() => router.push(`/help/inquiry/write?inquiryId=${item.inquiryId}`)} 
+                  onDelete={async () => {
+                    const confirmed = confirm("정말 삭제하시겠습니까?");
+                    if (!confirmed) return;
+
+                    try {
+                      await deleteInquiry(item.inquiryId);
+                      alert("삭제되었습니다.");
+
+                      // 삭제 후 목록 갱신
+                      const res = await getInquiries(currentPage, inquiriesPerPage);
+                      setInquiries(res.inquiries);
+                      setTotalCount(res.totalCount);
+                    } catch (error) {
+                      console.error("삭제 실패:", error);
+                      alert("삭제에 실패했습니다.");
+                    }
+                  }} 
+                />
               </div>
             </div>
           ))

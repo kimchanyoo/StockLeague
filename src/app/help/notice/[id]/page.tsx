@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation"; // useRouter 추가
-import { getNoticeDetail } from "@/lib/api/noticeDetail";
+import { getNoticeDetail } from "@/lib/api/notice";
 import { useEffect, useState } from "react";
 import "./noticeDetailPage.css"
 

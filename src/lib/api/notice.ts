@@ -16,6 +16,16 @@ export interface NoticeListResponse {
   totalCount: number;
 }
 
+export interface NoticeDetail {
+  success: boolean;
+  noticeId: number;
+  title: string;
+  category: string;
+  content: string;
+  createdAt: string;
+  isPinned: boolean;
+}
+
 export const getNotices = async (
   page: number, 
   size: number = 10,
@@ -28,4 +38,30 @@ export const getNotices = async (
     },
   }); 
   return res.data;
+};
+
+
+export const getNoticeDetail = async (noticeId: number): Promise<NoticeDetail> => {
+  const res = await axiosInstance.get(`/api/v1/notices/${noticeId}`);
+
+  if (res.data.success) {
+    return res.data;
+  } else {
+    throw new Error(res.data.message || "공지사항을 불러오지 못했습니다.");
+  }
+};
+
+export const getSearchedNotices = async (
+  keyword: string,
+  page: number = 1,
+  size: number = 10
+) => {
+  const res = await axiosInstance.get("/api/v1/notices/search", {
+    params: { keyword, page, size },
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return res.data.data;
 };
