@@ -11,6 +11,7 @@ const getCookie = (name: string) => {
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop()?.split(";").shift();
   return null;
+  
 };
 
 type Provider = "KAKAO" | "NAVER"; // 추가할 소셜 로그인 제공자

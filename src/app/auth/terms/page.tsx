@@ -23,6 +23,7 @@ export default function Terms() {
     } 
     else {
       alert("모든 필수 항목에 동의해주세요.");
+      
     }
   };
 

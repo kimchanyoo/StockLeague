@@ -54,6 +54,7 @@ export default function Nickname() {
         headers: {
           "Content-Type": "application/json",
         },
+        
       });
 
       console.log(response.data);  // 응답 데이터 확인
