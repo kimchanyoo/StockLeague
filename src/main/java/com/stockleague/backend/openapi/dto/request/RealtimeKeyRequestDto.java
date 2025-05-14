@@ -9,7 +9,7 @@ public record RealtimeKeyRequestDto(
         @JsonProperty("appkey")
         String appKey,
 
-        @JsonProperty("appsecret")
+        @JsonProperty("secretkey")
         String appSecret
 ) {
 }
