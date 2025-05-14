@@ -75,9 +75,9 @@ public class InquiryService {
                 : null;
 
         if (statusEnum == null) {
-            result = inquiryRepository.findByUserId(userId, pageable);
+            result = inquiryRepository.findByUserIdAndDeletedAtIsNull(userId, pageable);
         } else {
-            result = inquiryRepository.findByUserIdAndStatus(userId, statusEnum, pageable);
+            result = inquiryRepository.findByUserIdAndStatusAndDeletedAtIsNull(userId, statusEnum, pageable);
         }
 
         List<InquirySummaryDto> inquiries = result.getContent().stream()
