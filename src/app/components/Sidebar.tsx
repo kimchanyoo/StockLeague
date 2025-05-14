@@ -56,14 +56,6 @@ const Sidebar = () => {
             사용자 관리
           </Link>
         </li>
-        <li>
-          <Link
-            href="/admin/settings"
-            className={pathname.startsWith("/admin/settings") ? styles.active : ""}
-          >
-            설정
-          </Link>
-        </li>
       </ul>
     </div>
   );
