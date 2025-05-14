@@ -48,8 +48,7 @@ public class OpenApiService {
         return openApiClient.requestRealtimeKey()
                 .map((RealtimeKeyResponseDto response) -> {
                     String key = response.approvalKey();
-                    long ttl = response.expiresIn();
-                    redisService.saveRealTimeKey(key, ttl);
+                    redisService.saveRealTimeKey(key);
                     realtimeKeyCache.set(key);
                     log.info("실시간 접속키 발급 완료: {}", key);
                     return key;

@@ -26,8 +26,8 @@ public class OpenApiTokenRedisService {
         return Boolean.TRUE.equals(redisTemplate.hasKey(KEY));
     }
 
-    public void saveRealTimeKey(String approvalKey, long ttlSeconds) {
-        redisTemplate.opsForValue().set(REALTIME_KEY, approvalKey, Duration.ofSeconds(ttlSeconds));
+    public void saveRealTimeKey(String approvalKey) {
+        redisTemplate.opsForValue().set(REALTIME_KEY, approvalKey);
     }
 
     public String getRealTimeKey() {
