@@ -4,6 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record HashKeyRequestDto(
         @JsonProperty("data")
-        String jsonBody
+        Object data
 ) {
 }

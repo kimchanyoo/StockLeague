@@ -1,7 +1,5 @@
 package com.stockleague.backend.openapi.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockleague.backend.openapi.client.OpenApiClient;
 import com.stockleague.backend.openapi.dto.response.HashKeyResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -15,25 +13,13 @@ import reactor.core.publisher.Mono;
 public class HashKeyService {
 
     private final OpenApiClient openApiClient;
-    private final ObjectMapper objectMapper;
 
-    public Mono<String> generate(String jsonBody) {
-        log.info("hashKey 요청 시작");
+    public Mono<String> generate(Object requestData) {
+        log.info("HashKey 요청 시작: {}", requestData);
 
-        return openApiClient.requestHashKey(jsonBody)
+        return openApiClient.requestHashKey(requestData)
                 .map(HashKeyResponseDto::hash)
-                .doOnNext(hash -> log.info("hashKey 생성 완료: {}", hash))
-                .doOnError(e -> log.error("hashKey 생성 실패", e));
-    }
-
-
-    public Mono<String> generate(Object body) {
-        try {
-            String json = objectMapper.writeValueAsString(body);
-            return generate(json);
-        } catch (JsonProcessingException e) {
-            log.error("요청 객체 직렬화 실패", e);
-            return Mono.error(new IllegalArgumentException("요청 객체 직렬화 실패", e));
-        }
+                .doOnNext(hash -> log.info("HashKey 생성 완료: {}", hash))
+                .doOnError(e -> log.error("HashKey 생성 실패", e));
     }
 }
