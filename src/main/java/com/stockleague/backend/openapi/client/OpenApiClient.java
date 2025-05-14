@@ -6,6 +6,7 @@ import com.stockleague.backend.openapi.dto.request.RealtimeKeyRequestDto;
 import com.stockleague.backend.openapi.dto.response.OpenApiTokenResponseDto;
 import com.stockleague.backend.openapi.dto.response.RealtimeKeyResponseDto;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -36,16 +37,16 @@ public class OpenApiClient {
                 .bodyToMono(OpenApiTokenResponseDto.class);
     }
 
-    public Mono<RealtimeKeyResponseDto> requestRealtimeKey(String accessToken) {
+    public Mono<RealtimeKeyResponseDto> requestRealtimeKey() {
         RealtimeKeyRequestDto request = new RealtimeKeyRequestDto(
-                "client_credentials",
+                openApiProperties.getGrantType(),
                 openApiProperties.getAppKey(),
                 openApiProperties.getAppSecret()
         );
 
         return openApiWebClient.post()
                 .uri("/oauth2/approval")
-                .header("authorization", "Bearer " + accessToken)
+                .header(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(RealtimeKeyResponseDto.class);
