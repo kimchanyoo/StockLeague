@@ -5,6 +5,7 @@ import { logout as logoutAPI } from "@/lib/api/auth";
 // User 인터페이스 정의 (필요한 필드 추가 가능)
 interface User {
   nickname: string;
+  role: "USER" | "ADMIN";
   // 다른 사용자 정보가 있으면 여기에 추가
 }
 
@@ -44,14 +45,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // 컴포넌트가 처음 렌더링될 때 쿠키에서 accessToken을 읽어오기
   useEffect(() => {
     const storedNickname = localStorage.getItem("nickname");
+    const storedRole = localStorage.getItem("role");
 
-    if (!storedNickname || storedNickname === "null") {
+    if (!storedNickname || !storedRole) {
       setUser(null);
       setAccessToken(null); // 액세스 토큰 초기화
       return;
     }
 
-    setUser({ nickname: storedNickname });
+    setUser({ nickname: storedNickname, role: storedRole as "USER" | "ADMIN" }); 
 
     const cookieToken = getCookie("accessToken");
 
@@ -77,6 +79,7 @@ const logout = async () => {
       setUser(null);
       setAccessToken(null);
       localStorage.removeItem("nickname"); // localStorage에서 사용자 정보 삭제
+      localStorage.removeItem("role");     // localStorage에서 role 삭제
       document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
       document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
 
@@ -102,7 +105,8 @@ const logout = async () => {
     
     // localStorage에서 사용자 정보 삭제
     localStorage.removeItem("nickname");
-
+    localStorage.removeItem("role");
+    
     // 상태 초기화
     setUser(null); 
     setAccessToken(null);
