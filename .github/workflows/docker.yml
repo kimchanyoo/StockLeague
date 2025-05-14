@@ -90,3 +90,4 @@ jobs:
             docker-compose pull
             docker image prune -f
             docker-compose up -d
+            docker exec mysql chown -R 999:999 /var/lib/mysql || true

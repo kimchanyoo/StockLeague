@@ -1,8 +1,10 @@
 package com.stockleague.backend.openapi.client;
 
 import com.stockleague.backend.infra.properties.OpenApiProperties;
+import com.stockleague.backend.openapi.dto.request.HashKeyRequestDto;
 import com.stockleague.backend.openapi.dto.request.OpenApiTokenRequestDto;
 import com.stockleague.backend.openapi.dto.request.RealtimeKeyRequestDto;
+import com.stockleague.backend.openapi.dto.response.HashKeyResponseDto;
 import com.stockleague.backend.openapi.dto.response.OpenApiTokenResponseDto;
 import com.stockleague.backend.openapi.dto.response.RealtimeKeyResponseDto;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -50,5 +52,24 @@ public class OpenApiClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(RealtimeKeyResponseDto.class);
+    }
+
+    public Mono<HashKeyResponseDto> requestHashKey(String jsonBody) {
+        HashKeyRequestDto request = new HashKeyRequestDto(
+                jsonBody
+        );
+
+        return openApiWebClient.post()
+                .uri("/uapi/hashkey")
+                .header(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8")
+                .header("appKey", openApiProperties.getAppKey())
+                .header("appSecret", openApiProperties.getAppSecret())
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        clientResponse -> clientResponse.bodyToMono(String.class)
+                                .map(body -> new RuntimeException("HashKey 요청 실패: " + body))
+                )
+                .bodyToMono(HashKeyResponseDto.class);
     }
 }
