@@ -8,9 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
-    Page<Inquiry> findByUserId(Long userId, Pageable pageable);
+    Page<Inquiry> findByUserIdAndDeletedAtIsNull(Long userId, Pageable pageable);
 
-    Page<Inquiry> findByUserIdAndStatus(Long userId, InquiryStatus status, Pageable pageable);
+    Page<Inquiry> findByUserIdAndStatusAndDeletedAtIsNull(Long userId, InquiryStatus status, Pageable pageable);
 
     Page<Inquiry> findByStatus(InquiryStatus status, Pageable pageable);
 
