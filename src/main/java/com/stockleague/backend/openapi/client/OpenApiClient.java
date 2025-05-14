@@ -47,7 +47,7 @@ public class OpenApiClient {
         );
 
         return openApiWebClient.post()
-                .uri("/oauth2/approval")
+                .uri("/oauth2/Approval")
                 .header(HttpHeaders.CONTENT_TYPE, "application/json; charset=UTF-8")
                 .bodyValue(request)
                 .retrieve()
