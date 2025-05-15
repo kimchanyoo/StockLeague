@@ -14,6 +14,12 @@ spring:
         username: ${SPRING_DATASOURCE_USERNAME}
         password: ${SPRING_DATASOURCE_PASSWORD}
         driver-class-name: org.postgresql.Driver
+        hikari:
+            connection-timeout: 30000
+            maximum-pool-size: 10
+            minimum-idle: 2
+            idle-timeout: 600000
+            max-lifetime: 1800000
 
     jpa:
         hibernate:
@@ -30,6 +36,7 @@ spring:
         baseline-on-migrate: true
         validate-on-migrate: true
         out-of-order: false
+        connect-retries: 5
 
     kafka:
         bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
