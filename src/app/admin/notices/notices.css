@@ -69,9 +69,19 @@
   text-align: center;
 }
 .edit-button,
-.delete-button {
+.delete-button,
+.restore-button {
   padding: 4px 8px;
   cursor: pointer;
+}
+.notices-item.deleted {
+  opacity: 0.5;
+  pointer-events: none; /* 클릭 방지 */
+  background-color: #f0f0f0;
+}
+.notices-item.deleted button.restore-button {
+  pointer-events: all;
+  opacity: 1;
 }
 
 .notice-modal-overlay {

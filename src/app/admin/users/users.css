@@ -1,0 +1,82 @@
+.users-container {
+    width: 100%;
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.users-list {
+    width: 100%;
+    border: 1px solid rgba(118, 118, 128, 0.12);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.users-item {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 0.5rem;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+}
+
+.users-item.deactivated {
+  opacity: 0.5;
+  background-color: #f0f0f0;
+}
+
+.nickname {
+  font-weight: bold;
+  flex: 1;
+}
+
+.joinedAt,
+.status {
+  color: #555;
+  flex: 1;
+}
+
+.status .suspended {
+  color: red;
+  font-weight: bold;
+}
+
+.status .active {
+  color: green;
+}
+
+.user-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.user-actions select,
+.user-actions button {
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.user-actions button {
+  border: none;
+  cursor: pointer;
+}
+
+.user-actions button:hover {
+  opacity: 0.85;
+}
+
+.user-actions button:nth-child(2) {
+  background-color: #ff4d4f;
+  color: white;
+}

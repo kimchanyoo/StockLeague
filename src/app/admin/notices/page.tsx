@@ -9,6 +9,7 @@ interface Notice {
   content: string;
   date: string;
   category: string;
+  isDeleted?: boolean;
 }
 const inquiriesPerPage = 10;
 const maxPageButtons = 10;
@@ -68,9 +69,19 @@ export default function Notices() {
   };
 
   const handleDelete = (noticeId: number) => {
-    const filteredNotices = dummyNotices.filter(notice => notice.id !== noticeId);
-    setDummyNotices(filteredNotices); // 실제 삭제 처리
-    console.log(`공지사항 삭제: ${noticeId}`);
+    const updated = dummyNotices.map(notice =>
+      notice.id === noticeId ? { ...notice, isDeleted: true } : notice
+    );
+    setDummyNotices(updated);
+    console.log(`공지사항 회색 처리: ${noticeId}`);
+  };
+
+  const handleRestore = (noticeId: number) => {
+    const updated = dummyNotices.map(notice =>
+      notice.id === noticeId ? { ...notice, isDeleted: false } : notice
+    );
+    setDummyNotices(updated);
+    console.log(`공지사항 복구: ${noticeId}`);
   };
 
   const handlePageClick = (page: number) => {
@@ -109,28 +120,47 @@ export default function Notices() {
       <div className="notices-list">
         <h1>공지 목록</h1>
         {dummyNotices.map((notice) => (
-          <div key={notice.id} className="notices-item" onClick={() => setSelectedNotice(notice)}>
+          <div
+            key={notice.id}
+            className={`notices-item ${notice.isDeleted ? "deleted" : ""}`}
+            onClick={() => !notice.isDeleted && setSelectedNotice(notice)}
+          >
             <div className="notices">{notice.category}</div>
             <div className="notices-title">{notice.title}</div>
             <div className="notices-date">{notice.date}</div>
-            <button
-              className="edit-button"
-              onClick={(e) => {
-                e.stopPropagation(); // 상위 클릭 이벤트 방지
-                handleEdit(notice);  // 수정 로직 실행
-              }}
-            >
-              수정
-            </button>
-            <button 
-              className="delete-button"
-              onClick={(e) => {
-                e.stopPropagation(); 
-                handleDelete(notice.id);  // 삭제 로직 실행
-              }}
-            >
-              삭제
-            </button>
+
+            {!notice.isDeleted ? (
+              <>
+                <button
+                  className="edit-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(notice);
+                  }}
+                >
+                  수정
+                </button>
+                <button
+                  className="delete-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(notice.id);
+                  }}
+                >
+                  삭제
+                </button>
+              </>
+            ) : (
+              <button
+                className="restore-button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRestore(notice.id);
+                }}
+              >
+                복구
+              </button>
+            )}
           </div>
         ))}
       </div>
