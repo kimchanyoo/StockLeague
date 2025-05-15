@@ -27,7 +27,7 @@ services:
     restart: always
 
   postgres:
-    image: postgres:15
+    image: postgres:15.2
     container_name: postgres
     restart: always
     ports:
