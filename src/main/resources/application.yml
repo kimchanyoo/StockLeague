@@ -31,7 +31,7 @@ spring:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
 
     flyway:
-        enabled: true
+        enabled: false
         locations: classpath:db/migration
         baseline-on-migrate: true
         validate-on-migrate: true
