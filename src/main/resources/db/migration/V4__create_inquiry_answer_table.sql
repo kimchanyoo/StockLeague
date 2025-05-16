@@ -1,5 +1,5 @@
 CREATE TABLE inquiry_answers (
-    answer_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    answer_id    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     inquiry_id   BIGINT NOT NULL UNIQUE,
     user_id      BIGINT NOT NULL,
     content      TEXT NOT NULL,

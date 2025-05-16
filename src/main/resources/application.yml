@@ -13,14 +13,13 @@ spring:
         url: ${SPRING_DATASOURCE_URL}
         username: ${SPRING_DATASOURCE_USERNAME}
         password: ${SPRING_DATASOURCE_PASSWORD}
-        driver-class-name: com.mysql.cj.jdbc.Driver
+        driver-class-name: org.postgresql.Driver
         hikari:
-            maximum-pool-size: 20
-            minimum-idle: 5
             connection-timeout: 30000
+            maximum-pool-size: 10
+            minimum-idle: 2
             idle-timeout: 600000
             max-lifetime: 1800000
-            leak-detection-threshold: 30000
 
     jpa:
         hibernate:
@@ -29,14 +28,15 @@ spring:
         properties:
             hibernate:
                 format_sql: true
-                dialect: org.hibernate.dialect.MySQL8Dialect
+                dialect: org.hibernate.dialect.PostgreSQLDialect
 
     flyway:
-        enabled: true
+        enabled: false
         locations: classpath:db/migration
         baseline-on-migrate: true
         validate-on-migrate: true
         out-of-order: false
+        connect-retries: 5
 
     kafka:
         bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
