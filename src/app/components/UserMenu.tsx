@@ -20,8 +20,8 @@ const UserMenu = ({ nickname }: { nickname: string }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
   }
 
   return (

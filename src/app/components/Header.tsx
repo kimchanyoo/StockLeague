@@ -9,16 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 
 
 const Header = () => {
-  const { user, setUser } = useAuth(); // 사용자 정보를 가져옵니다.
-
-  useEffect(() => {
-    // 페이지 초기화 시, localStorage에서 사용자 정보를 가져오기
-    const storedNickname = localStorage.getItem("nickname");
-    if (storedNickname) {
-      setUser({ nickname: storedNickname }); // localStorage에서 닉네임을 가져와 상태를 설정
-    }
-  }, [setUser]); // setUser가 변경될 때만 실행
-  
+  const { user } = useAuth(); // 사용자 정보를 가져옵니다.
   const isLoggedIn = !!user?.nickname;
 
     return (

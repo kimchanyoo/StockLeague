@@ -1,88 +1,152 @@
 "use client";
 
 import "./notices.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getAdminNotices, getNoticeDetail, NoticeDetail, AdminNotice, createAdminNotice, updateAdminNotice, deleteAdminNotice, restoreAdminNotice, } from "@/lib/api/notice";
+import PushPinIcon from '@mui/icons-material/PushPin';
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
 
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  date: string;
-  category: string;
-  isDeleted?: boolean;
-}
-const inquiriesPerPage = 10;
+const noticesPerPage = 10;
 const maxPageButtons = 10;
 
 export default function Notices() {
+
   const [editMode, setEditMode] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(""); 
   const [currentContent, setCurrentContent] = useState("");
+  const [currentCategory, setCurrentCategory] = useState("일반");
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
-  const [dummyNotices, setDummyNotices] = useState<Notice[]>([
-    {
-      id: 1,
-      title: "공지사항 제목입니다",
-      content: "공지의 상세 내용입니다.\n여러 줄도 표시할 수 있어요.",
-      date: "2025-05-14",
-      category: "일반",
-    },
-    // 필요 시 추가
-  ]);
-  
+  const [selectedNotice, setSelectedNotice] = useState<NoticeDetail | null>(null);
+  const [notices, setNotices] = useState<AdminNotice[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(10);
-  const totalPages = Math.ceil(totalCount / inquiriesPerPage);
+  const [currentIsPinned, setCurrentIsPinned] = useState(false);
+
+  const totalPages = Math.ceil(totalCount / noticesPerPage);
+
+  // 페이지네이션
   const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
-  const handleEdit = (notice: any) => {
-    setEditMode(true);
-    setEditingId(notice.id);
-    setCurrentTitle(notice.title); 
-    setCurrentContent(notice.content); 
+  useEffect(() => {
+    const fetchAdminNotices = async () => {
+      try {
+        const data = await getAdminNotices({ page: currentPage, size: noticesPerPage });
+        if (data.success) {
+          setNotices(data.notices);
+          setTotalCount(data.totalCount);
+        } else {
+          console.error("공지사항 목록 조회 실패");
+        }
+      } catch (error) {
+        console.error("공지사항 API 오류", error);
+      }
+    }
+    fetchAdminNotices();
+  }, [currentPage]);
+
+  const handleEdit = async (notice: AdminNotice) => {
+    try {
+      const detail = await getNoticeDetail(notice.noticeId);
+      setEditMode(true);
+      setEditingId(detail.noticeId);
+      setCurrentTitle(detail.title);
+      setCurrentContent(detail.content);
+      setCurrentCategory(detail.category);
+      setCurrentIsPinned(detail.isPinned);
+    } catch (error) {
+      console.error("공지 상세 조회 실패", error);
+      alert("공지 상세를 불러오지 못했습니다.");
+    }
   };
 
   const handleCancel = () => {
     setEditMode(false);
     setEditingId(null);
+    setCurrentCategory("");
     setCurrentTitle("");
     setCurrentContent("");
   };
 
-  const handleSubmit = () => {
-    if (editMode) {
-      // 수정 API 호출
-      console.log("수정 내용:", currentContent);
-    } else {
-      // 등록 API 호출
-      console.log("새 공지:", currentContent);
+  const handleSubmit = async () => {
+    try {
+      if (editMode && editingId !== null) {
+        await updateAdminNotice(editingId, {
+        title: currentTitle,
+        content: currentContent,
+        category: currentCategory,
+        isPinned: currentIsPinned,
+        });
+        alert("공지 수정 완료");
+      } else {
+        await createAdminNotice({
+          title: currentTitle,
+          content: currentContent,
+          category: currentCategory,
+        });
+        alert("공지 작성 완료");
+      }
+
+      handleCancel();
+      setCurrentPage(1);
+    } catch (e) {
+      alert("저장 실패");
+      console.error(e);
     }
-
-    // 초기화
-    setCurrentTitle("");
-    setCurrentContent("");
-    setEditMode(false);
-    setEditingId(null);
   };
 
-  const handleDelete = (noticeId: number) => {
-    const updated = dummyNotices.map(notice =>
-      notice.id === noticeId ? { ...notice, isDeleted: true } : notice
-    );
-    setDummyNotices(updated);
-    console.log(`공지사항 회색 처리: ${noticeId}`);
+  const handlePinToggle = async (notice: AdminNotice) => {
+    try {
+      const updatedNotice = {
+        title: notice.title,
+        category: notice.category,
+        content: "", // content는 수정 API에 필요하니까, 따로 불러오거나 빈 문자열 넣어주세요
+        isPinned: !notice.isPinned,
+      };
+      await updateAdminNotice(notice.noticeId, updatedNotice);
+
+      // 로컬 상태도 업데이트
+      setNotices((prev) =>
+        prev.map((n) =>
+          n.noticeId === notice.noticeId ? { ...n, isPinned: !n.isPinned } : n
+        )
+      );
+      alert(`공지 ${!notice.isPinned ? "고정" : "고정 해제"} 완료`);
+    } catch (error) {
+      console.error(error);
+      alert("고정 상태 변경 실패");
+    }
   };
 
-  const handleRestore = (noticeId: number) => {
-    const updated = dummyNotices.map(notice =>
-      notice.id === noticeId ? { ...notice, isDeleted: false } : notice
-    );
-    setDummyNotices(updated);
-    console.log(`공지사항 복구: ${noticeId}`);
+  const handleSelectNotice = async (noticeId: number) => {
+    try {
+      const detail = await getNoticeDetail(noticeId);
+      setSelectedNotice(detail);
+    } catch (error) {
+      console.error("공지 상세 조회 실패", error);
+    }
   };
+
+  const handleDelete = async (noticeId: number) => {
+    try {
+      await deleteAdminNotice(noticeId);
+      setNotices(notices.map(n => n.noticeId === noticeId ? { ...n, isDeleted: true } : n));
+    } catch (e) {
+      alert("삭제 실패");
+      console.error(e);
+    }
+  };
+
+  const handleRestore = async (noticeId: number) => {
+    try {
+      await restoreAdminNotice(noticeId);
+      setNotices(notices.map(n => n.noticeId === noticeId ? { ...n, isDeleted: false } : n));
+    } catch (e) {
+      alert("복구 실패");
+      console.error(e);
+    }
+  }
 
   const handlePageClick = (page: number) => {
     setCurrentPage(page);
@@ -93,12 +157,26 @@ export default function Notices() {
     <div className="notices-container">
       <div className="notices-write">
         <h1>{editMode ? "공지 수정" : "공지 작성"}</h1>
-        <input 
-          placeholder="공지 제목을 작성하세요."
-          className="notices-mainTitle"
-          value={currentTitle}
-          onChange={(e) => setCurrentTitle(e.target.value)}
-        />
+        <div className="notices-top">
+          <input 
+            placeholder="공지 제목을 작성하세요."
+            className="notices-mainTitle"
+            value={currentTitle}
+            onChange={(e) => setCurrentTitle(e.target.value)}
+          />
+          <label className="category-label">
+            카테고리:
+            <select
+              className="category-select"
+              value={currentCategory}
+              onChange={(e) => setCurrentCategory(e.target.value)}
+            >
+              <option value="일반">일반</option>
+              <option value="이벤트">이벤트</option>
+              <option value="점검">점검</option>
+            </select>
+          </label>
+        </div>
         <textarea
           placeholder="공지 내용을 작성하세요."
           rows={5}
@@ -119,34 +197,38 @@ export default function Notices() {
       </div>
       <div className="notices-list">
         <h1>공지 목록</h1>
-        {dummyNotices.map((notice) => (
+        {notices.map((notice) => (
           <div
-            key={notice.id}
+            key={notice.noticeId}
             className={`notices-item ${notice.isDeleted ? "deleted" : ""}`}
-            onClick={() => !notice.isDeleted && setSelectedNotice(notice)}
+            onClick={() => {
+              if (!notice.isDeleted) handleSelectNotice(notice.noticeId);
+            }}
           >
             <div className="notices">{notice.category}</div>
             <div className="notices-title">{notice.title}</div>
-            <div className="notices-date">{notice.date}</div>
+            <div className="notices-date">{notice.createdAt}</div>
 
             {!notice.isDeleted ? (
               <>
                 <button
-                  className="edit-button"
+                  className={`pin-button ${notice.isPinned ? "pinned" : ""}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleEdit(notice);
+                    handlePinToggle(notice);
                   }}
+                  title={notice.isPinned ? "고정 해제" : "고정"}
                 >
+                  {notice.isPinned ? (
+                    <PushPinIcon style={{ color: 'red' }} />
+                  ) : (
+                    <PushPinOutlinedIcon style={{ color: 'gray' }} />
+                  )}
+                </button>
+                <button className="edit-button" onClick={(e) => { e.stopPropagation(); handleEdit(notice); }}>
                   수정
                 </button>
-                <button
-                  className="delete-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(notice.id);
-                  }}
-                >
+                <button className="delete-button" onClick={(e) => { e.stopPropagation(); handleDelete(notice.noticeId); }}>
                   삭제
                 </button>
               </>
@@ -155,7 +237,7 @@ export default function Notices() {
                 className="restore-button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleRestore(notice.id);
+                  handleRestore(notice.noticeId);
                 }}
               >
                 복구
@@ -189,10 +271,7 @@ export default function Notices() {
 
       {selectedNotice && (
         <div className="notice-modal-overlay" onClick={() => setSelectedNotice(null)}>
-          <div
-            className="notice-modal"
-            onClick={(e) => e.stopPropagation()} // 클릭 전파 방지
-          >
+          <div className="notice-modal" onClick={(e) => e.stopPropagation()}>
             <h2>{selectedNotice.title}</h2>
             <div className="notice-modal-content">
               {selectedNotice.content.split("\n").map((line, idx) => (
@@ -200,7 +279,7 @@ export default function Notices() {
               ))}
             </div>
             <div className="notice-modal-footer">
-              <span>{selectedNotice.date}</span>
+              <span>{new Date(selectedNotice.createdAt).toLocaleDateString()}</span>
               <button onClick={() => setSelectedNotice(null)}>닫기</button>
             </div>
           </div>

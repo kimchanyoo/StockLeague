@@ -1,15 +1,15 @@
 import axiosInstance from "./axiosInstance"; // 인증 포함된 인스턴스
 
+// 사용자용
 export interface Inquiry {
   inquiryId: number;
   userNickname: string;
   category: string;
   title: string;
-  status: "WAITING" | "COMPLETE";
+  status: "WAITING" | "ANSWERED";
   createdAt: string;
   updatedAt: string;
 }
-
 export interface InquiryListResponse {
   success: boolean;
   inquiries: Inquiry[];
@@ -17,20 +17,17 @@ export interface InquiryListResponse {
   size: number;
   totalCount: number;
 }
-
 export interface InquiryCreateRequest {
   title: string;
   category: string;
   content: string;
 }
-
 export interface InquiryAnswer {
   answerId: number;
   userId: number;
   content: string;
   createdAt: string;
 }
-
 export interface InquiryDetailResponse {
   success: boolean;
   inquiryId: number;
@@ -38,29 +35,71 @@ export interface InquiryDetailResponse {
   title: string;
   category: string;
   content: string;
-  status: "WAITING" | "ANSWERED" | "COMPLETE";
+  status: "WAITING" | "ANSWERED";
   createdAt: string;
   updatedAt: string;
-  answer?: InquiryAnswer;
+  answers?: InquiryAnswer;
 }
 
-// 쿠키에서 accessToken을 추출하는 함수
-const getCookie = (name: string) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift();
-  return null;
-};
+// 관리자용
+export interface AdminInquiryAnswer {
+  answerId: number;
+  userId: number; 
+  content: string;
+  createdAt: string; 
+}
+export interface AdminInquiryDetailResponse {
+  success: boolean;
+  inquiryId: number;
+  userId: string;      
+  userNickname: string;
+  title: string;
+  category: string;
+  content: string;
+  status: "WAITING" | "ANSWERED";
+  createdAt: string;
+  updatedAt: string;
+  answers?: AdminInquiryAnswer;
+  message?: string;     
+  errorCode?: string;   
+}
+export interface AdminInquiry {
+  inquiryId: number;
+  userNickname: string;
+  category: string;
+  title: string;
+  status: "WAITING" | "ANSWERED";
+  createdAt: string;
+  updatedAt: string;
+}
+export interface AdminInquiryListResponse {
+  success: boolean;
+  inquiries: AdminInquiry[];
+  page: number;
+  size: number;
+  totalCount: number;
+  message?: string;   
+  errorCode?: string; 
+}
+export interface AdminAnswerRequest {
+  content: string;
+}
+export interface AdminAnswerResponse {
+  success: boolean;
+  message: string;
+  answerId?: number;
+  status?: "ANSWERED";
+  errorCode?: string;
+}
+
+// ─────────────────────────────
+// 문의 API
+// ─────────────────────────────
 
 // 문의 목록
 export const getInquiries = async ( page: number, size: number = 10, status?: string ): Promise<InquiryListResponse> => {
-  const token = getCookie("accessToken"); // 예: 쿠키에서 토큰 가져오기
-
   const res = await axiosInstance.get("/api/v1/inquiries", {
     params: { page, size, status },
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
   return res.data;
 };
@@ -71,25 +110,12 @@ export const createInquiry = async ({
   category,
   content,
 }: InquiryCreateRequest) => {
-  const token = getCookie("accessToken"); // 쿠키에서 accessToken을 가져옵니다.
-
-  if (!token) {
-    throw new Error("인증 토큰이 없습니다.");
-  }
-
-   try {
-    const res = await axiosInstance.post("/api/v1/inquiries",
-      {
-        title,
-        category,
-        content,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, 
-        },
-      }
-    );
+  try {
+    const res = await axiosInstance.post("/api/v1/inquiries", {
+      title,
+      category,
+      content,
+    });
 
     if (res.data.success) {
       return {
@@ -111,13 +137,7 @@ export const createInquiry = async ({
 
 // 문의 상세
 export const getInquiryDetail = async (inquiryId: number): Promise<InquiryDetailResponse> => {
-  const token = getCookie("accessToken"); // 예: 쿠키에서 토큰 가져오기
-
-  const res = await axiosInstance.get(`/api/v1/inquiries/${inquiryId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const res = await axiosInstance.get(`/api/v1/inquiries/${inquiryId}`);
 
   if (res.data.success) {
     return res.data;
@@ -126,7 +146,7 @@ export const getInquiryDetail = async (inquiryId: number): Promise<InquiryDetail
   }
 };
 
-// 수정된 문의 수정
+// 문의 수정
 export const updateInquiry = async (inquiryId: number, data: InquiryCreateRequest) => {
   try {
     const res = await axiosInstance.patch(`/api/v1/inquiries/${inquiryId}`, data);
@@ -141,7 +161,7 @@ export const updateInquiry = async (inquiryId: number, data: InquiryCreateReques
   }
 };
 
-// 수정된 문의 삭제
+// 문의 삭제
 export const deleteInquiry = async (inquiryId: number) => {
   try {
     const res = await axiosInstance.patch(`/api/v1/inquiries/${inquiryId}/delete`, {});
@@ -153,5 +173,69 @@ export const deleteInquiry = async (inquiryId: number) => {
   } catch (error) {
     console.error("문의 삭제 중 오류 발생:", error);
     throw new Error("문의 삭제 중 문제가 발생했습니다.");
+  }
+};
+
+// 관리자용 문의 조회
+export const getAdminInquiries = async (
+  page: number = 1,
+  size: number = 10,
+  status?: string
+): Promise<AdminInquiryListResponse> => {
+  try {
+    const params: Record<string, any> = { page, size };
+    if (status) params.status = status;
+
+    const res = await axiosInstance.get("/api/v1/admin/inquiries", {
+      params,
+    });
+
+    if (res.data.success) {
+      return res.data as AdminInquiryListResponse;
+    } else {
+      throw new Error(res.data.message || "문의 내역을 불러오지 못했습니다.");
+    }
+  } catch (error: any) {
+    console.error("관리자 문의 목록 조회 중 오류 발생:", error);
+    throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
+  }
+};
+
+// 관리자용 문의 상세 조회
+export const getAdminInquiryDetail = async (
+  inquiryId: number
+): Promise<AdminInquiryDetailResponse> => {
+  try {
+    const res = await axiosInstance.get(`/api/v1/admin/inquiries/${inquiryId}`);
+
+    if (res.data.success) {
+      return res.data as AdminInquiryDetailResponse;
+    } else {
+      // 실패 케이스 (권한없음, 문의없음 등)
+      throw new Error(res.data.message || "문의사항을 불러오지 못했습니다.");
+    }
+  } catch (error: any) {
+    console.error("관리자 문의 상세 조회 중 오류 발생:", error);
+    // 에러 객체에 message가 없으면 기본 메시지 반환
+    throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
+  }
+};
+
+// 관리자용 문의 답변
+export const createInquiryAnswer = async (
+  inquiryId: number,
+  data: AdminAnswerRequest
+): Promise<AdminAnswerResponse> => {
+  try {
+    const res = await axiosInstance.post(`/api/v1/admin/inquiries/${inquiryId}/answers`, data);
+
+    if (res.data.success) {
+      return res.data as AdminAnswerResponse;
+    } else {
+      throw new Error(res.data.message || "답변 등록에 실패했습니다.");
+    }
+  } catch (error: any) {
+    console.error("문의 답변 등록 중 오류 발생:", error);
+    throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
   }
 };
