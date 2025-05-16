@@ -26,7 +26,8 @@ public class UserService {
         return new UserProfileResponseDto(
                 true,
                 "회원 정보를 가져오는데 성공했습니다.",
-                user.getNickname()
+                user.getNickname(),
+                user.getRole().toString()
         );
     }
 
