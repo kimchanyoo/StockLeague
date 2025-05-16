@@ -18,7 +18,7 @@ const InquriyDropdown = ({ onSelect }: Props) => {
   const [category, setCategory] = useState('');
 
   useEffect(() => {
-    onSelect(category); // 선택 변경 시 상위로 전달
+    onSelect(category); 
   }, [category, onSelect]);
 
   return (

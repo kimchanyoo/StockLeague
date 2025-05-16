@@ -1,14 +1,11 @@
 import React from "react";
 import styles from "@/app/styles/components/AdminHeader.module.css";
-import MobileMenu from "./MobileMenu";
 import UserMenu from "./UserMenu";
-import NotificationMenu from "./NotificationMenu";
+import { useAuth } from "@/context/AuthContext";
 
 const AdminHeader = () => {
   // 임시 유저 (나중에 실제 로그인 정보로 대체)
-  const user = {
-    nickname: "관리자",
-  };
+  const { user } = useAuth(); // 사용자 정보를 가져옵니다.
   const isLoggedIn = !!user;
     return (
       <header className={styles.header}>

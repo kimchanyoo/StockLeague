@@ -58,12 +58,14 @@ export default function InquiryDetailPage() {
           <p>{inquiry.content}</p>
         </div>
 
-        {inquiry.answer ? (
+        {inquiry.answers ? (
           <>
             <label>답변내용</label>
             <div className="answer-contents">
-              <p className="date">답변 날짜: {new Date(inquiry.answer.createdAt).toLocaleDateString()}</p>
-              <p>{inquiry.answer.content}</p>
+              <p className="date">
+                답변 날짜: {new Date(inquiry.answers.createdAt).toLocaleDateString()}
+              </p>
+              <p>{inquiry.answers.content}</p>
             </div>
           </>
         ) : (

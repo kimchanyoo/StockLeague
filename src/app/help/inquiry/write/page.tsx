@@ -13,10 +13,10 @@ export default function Write() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-  const inquiryId = searchParams.get("inquiryId"); // 있으면 수정 모드
+  const inquiryId = searchParams.get("inquiryId"); 
   const isEdit = Boolean(inquiryId);
 
-   // ✅ 수정 모드: 기존 데이터 불러오기
+  
   useEffect(() => {
     if (isEdit && inquiryId) {
       getInquiryDetail(Number(inquiryId)).then((data) => {

@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getNotices, Notice} from "@/lib/api/notice";
 
-export default function NoticeList() {
+const noticesPerPage = 10;
+const maxPageButtons = 10;
 
-  const noticesPerPage = 10;
-  const maxPageButtons = 10;
+export default function NoticeList() {
 
   const [notices, setNotices] = useState<Notice[]>([]);
   const [currentPage, setCurrentPage] = useState(1);

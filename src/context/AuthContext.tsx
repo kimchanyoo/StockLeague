@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { logout as logoutAPI } from "@/lib/api/auth";
+import { logout as logoutAPI, fetchUserProfile } from "@/lib/api/auth";
 
 // User 인터페이스 정의 (필요한 필드 추가 가능)
 interface User {
@@ -10,7 +10,7 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null; // user 상태
+  user: User | undefined; // user 상태
   accessToken: string | null; // accessToken 상태 추가
   setUser: (user: User) => void;
   setAccessToken: (token: string) => void; // setAccessToken 함수 추가
@@ -20,7 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null); // user 상태
+  const [user, setUser] = useState<User | undefined>(undefined); // user 상태
   const [accessToken, setAccessToken] = useState<string | null>(null); // accessToken 상태 추가
   const router = useRouter();
   
@@ -44,76 +44,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 컴포넌트가 처음 렌더링될 때 쿠키에서 accessToken을 읽어오기
   useEffect(() => {
-    const storedNickname = localStorage.getItem("nickname");
-    const storedRole = localStorage.getItem("role");
+    const loadUser = async () => {
+      try {
+        const res = await fetchUserProfile(); // API 호출
 
-    if (!storedNickname || !storedRole) {
-      setUser(null);
-      setAccessToken(null); // 액세스 토큰 초기화
-      return;
-    }
+        if (res.success) {
+          setUser({ nickname: res.nickname, role: res.role }); // role 설정
+          const cookieToken = getCookie("accessToken");
+          if (cookieToken) setAccessToken(cookieToken);
+        } else {
+          setUser(undefined);
+          setAccessToken(null);
+        }
+      } catch (err) {
+        console.error("유저 정보 불러오기 실패:", err);
+        setUser(undefined);
+        setAccessToken(null);
+      }
+    };
 
-    setUser({ nickname: storedNickname, role: storedRole as "USER" | "ADMIN" }); 
-
-    const cookieToken = getCookie("accessToken");
-
-    if (cookieToken) {
-      setAccessToken(cookieToken); // 쿠키에서 가져온 accessToken을 상태에 설정
-    }
+    loadUser();
   }, []);
 
 
   /// 로그아웃 처리 함수
 const logout = async () => {
   try {
-    // 쿠키에서 refreshToken을 가져오기
-    const refreshToken = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("refreshToken"))
-      ?.split("=")[1];
+    const response = await logoutAPI(); // 인자 없이 호출
 
-    // refreshToken이 없으면 자동으로 로그아웃 처리
-    if (!refreshToken) {
-      console.log("refreshToken이 없습니다. 자동으로 로그아웃 처리됩니다.");
-      // 상태 초기화
-      setUser(null);
-      setAccessToken(null);
-      localStorage.removeItem("nickname"); // localStorage에서 사용자 정보 삭제
-      localStorage.removeItem("role");     // localStorage에서 role 삭제
-      document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-      document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-
-      // 홈 화면으로 리디렉션
-      router.push("/");
-
-      return; // 토큰이 없으면 바로 로그아웃 처리
-    }
-
-    // refreshToken이 있는 경우, 로그아웃 API 호출
-    const response = await logoutAPI(refreshToken);
-
-    // 응답 결과 확인
     if (response.success) {
       console.log("로그아웃 성공:", response.message);
     } else {
-      throw new Error(response.message); // 실패 시 예외 처리
+      throw new Error(response.message);
     }
 
-    // 쿠키에서 토큰 삭제
+    // 쿠키 삭제 (수동 삭제 필요하면)
     document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-    
-    // localStorage에서 사용자 정보 삭제
-    localStorage.removeItem("nickname");
-    localStorage.removeItem("role");
-    
-    // 상태 초기화
-    setUser(null); 
+
+    setUser(undefined);
     setAccessToken(null);
-
-    // 홈 화면으로 리디렉션
     router.push("/");
-
   } catch (error) {
     console.error("로그아웃 중 오류가 발생했습니다:", error);
     alert("로그아웃 실패. 다시 시도해주세요.");

@@ -14,6 +14,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 // 더미 데이터
 const data = [
@@ -40,6 +42,7 @@ const initialUsers = [
 ];
 
 export default function Admin() {
+  
   const [admins, setAdmins] = useState(initialAdmins);
   const [users] = useState(initialUsers);
 
