@@ -49,7 +49,8 @@ public class UserController {
                                             {
                                                 "success" : true,
                                                 "message" : "회원 정보를 가져오는데 성공했습니다.",
-                                                "nickname" : "소셜유저"
+                                                "nickname" : "소셜유저",
+                                                "role" : "ADMIN"
                                             }
                                             """
                             )
