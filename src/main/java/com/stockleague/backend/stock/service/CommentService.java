@@ -6,13 +6,16 @@ import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.CommentCreateRequestDto;
+import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
 import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
+import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.repository.CommentLikeRepository;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +55,7 @@ public class CommentService {
 
     @Transactional
     public CommentLikeResponseDto toggleCommentLike(Long commentId, Long userId) {
+
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
 
@@ -80,5 +84,25 @@ public class CommentService {
                         like.getIsLiked(), comment.getLikeCount());
             }
         }
+    }
+
+    @Transactional
+    public CommentUpdateResponseDto updateComment(CommentUpdateRequestDto request,
+                                                  Long commentId, Long userId) {
+
+        if (request.content().isBlank()) {
+            throw new GlobalException(GlobalErrorCode.MISSING_FIELDS);
+        }
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        if(!Objects.equals(comment.getUser().getId(), userId)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_COMMENT_OWNER);
+        }
+
+        comment.updateContent(request.content());
+
+        return CommentUpdateResponseDto.from();
     }
 }
