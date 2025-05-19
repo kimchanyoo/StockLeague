@@ -45,7 +45,7 @@ public class CommentService {
             throw new GlobalException(GlobalErrorCode.MISSING_FIELDS);
         }
 
-        Stock stock = stockRepository.findByTicker(ticker)
+        Stock stock = stockRepository.findByStockTicker(ticker)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.STOCK_NOT_FOUND));
 
         User user = userRepository.findById(userId)
@@ -136,7 +136,7 @@ public class CommentService {
             throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
         }
 
-        Stock stock = stockRepository.findByTicker(ticker)
+        Stock stock = stockRepository.findByStockTicker(ticker)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.STOCK_NOT_FOUND));
 
         PageRequest pageable = PageRequest.of(
