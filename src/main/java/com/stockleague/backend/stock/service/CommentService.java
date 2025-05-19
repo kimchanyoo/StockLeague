@@ -8,6 +8,7 @@ import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.CommentCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
 import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.repository.CommentLikeRepository;
@@ -104,5 +105,20 @@ public class CommentService {
         comment.updateContent(request.content());
 
         return CommentUpdateResponseDto.from();
+    }
+
+    @Transactional
+    public CommentDeleteResponseDto deleteComment(Long commentId, Long userId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        if(!Objects.equals(comment.getUser().getId(), userId)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_COMMENT_OWNER);
+        }
+
+        commentRepository.delete(comment);
+
+        return CommentDeleteResponseDto.from();
     }
 }
