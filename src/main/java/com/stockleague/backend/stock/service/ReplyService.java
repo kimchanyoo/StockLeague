@@ -7,6 +7,7 @@ import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.ReplyCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.ReplyUpdateRequestDto;
 import com.stockleague.backend.stock.dto.response.ReplyCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.ReplyDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyUpdateResponseDto;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
@@ -72,5 +73,25 @@ public class ReplyService {
         reply.updateContent(request.content());
 
         return ReplyUpdateResponseDto.from();
+    }
+
+    @Transactional
+    public ReplyDeleteResponseDto deleteReply(Long replyId, Long userId) {
+
+        Comment reply = commentRepository.findById(replyId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        if(!Objects.equals(reply.getUser().getId(), userId)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_COMMENT_OWNER);
+        }
+
+        Comment parent = reply.getParent();
+        if (parent != null) {
+            parent.removeReply(reply);
+        }
+
+        commentRepository.delete(reply);
+
+        return ReplyDeleteResponseDto.from();
     }
 }

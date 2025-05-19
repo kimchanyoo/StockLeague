@@ -229,16 +229,16 @@ public class CommentController {
                             )
                     )
             ),
-            @ApiResponse(responseCode = "403", description = "댓글 수정 권한 없음",
+            @ApiResponse(responseCode = "403", description = "댓글 삭제 권한 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "InvalidCommentOwner",
-                                    summary = "자신이 작성하지 않은 댓글을 수정하려는 경우",
+                                    summary = "자신이 작성하지 않은 댓글을 삭제하려는 경우",
                                     value = """
                                             {
                                               "success": false,
-                                              "message": "자신이 작성한 댓글만 수정할 수 있습니다.",
+                                              "message": "자신이 작성한 댓글만 관리할 수 있습니다.",
                                               "errorCode": "INVALID_COMMENT_OWNER"
                                             }
                                             """
@@ -296,11 +296,11 @@ public class CommentController {
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "InvalidCommentOwner",
-                                    summary = "자신이 작성하지 않은 댓글을 수정하려는 경우",
+                                    summary = "자신이 작성하지 않은 댓글을 삭제하려는 경우",
                                     value = """
                                             {
                                               "success": false,
-                                              "message": "자신이 작성한 댓글만 수정할 수 있습니다.",
+                                              "message": "자신이 작성한 댓글만 관리할 수 있습니다.",
                                               "errorCode": "INVALID_COMMENT_OWNER"
                                             }
                                             """

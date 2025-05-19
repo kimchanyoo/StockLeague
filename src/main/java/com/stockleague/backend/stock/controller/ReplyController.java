@@ -3,7 +3,9 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.request.ReplyCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.ReplyUpdateRequestDto;
+import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.ReplyDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyUpdateResponseDto;
 import com.stockleague.backend.stock.service.ReplyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -174,7 +177,7 @@ public class ReplyController {
                                     value = """
                                             {
                                               "success": false,
-                                              "message": "자신이 작성한 댓글만 수정할 수 있습니다.",
+                                              "message": "자신이 작성한 댓글만 관리할 수 있습니다.",
                                               "errorCode": "INVALID_COMMENT_OWNER"
                                             }
                                             """
@@ -206,6 +209,67 @@ public class ReplyController {
         Long userId = (Long) authentication.getPrincipal();
 
         ReplyUpdateResponseDto result = replyService.updateReply(request, replyId, userId);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/comment/replies/{replyId}")
+    @Operation(summary = "대댓글 삭제", description = "사용자가 자신이 작성한 대댓글을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "대댓글 삭제 성공",
+                    content = @Content(schema = @Schema(implementation = ReplyDeleteResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "ReplyDeleteSuccess",
+                                    summary = "대댓글 삭제 성공",
+                                    value = """
+                                                {
+                                                  "success": true,
+                                                  "message": "대댓글이 삭제되었습니다."
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "403", description = "댓글 삭제 권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InvalidCommentOwner",
+                                    summary = "자신이 작성하지 않은 댓글을 삭제하려는 경우",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "자신이 작성한 댓글만 관리할 수 있습니다.",
+                                              "errorCode": "INVALID_COMMENT_OWNER"
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "댓글이 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "CommentNotFound",
+                                    summary = "해당 댓글 정보가 존재하지 않을 경우",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 댓글을 찾을 수 없습니다.",
+                                                  "errorCode": "COMMENT_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<ReplyDeleteResponseDto> deleteReply(
+            @PathVariable Long replyId,
+            Authentication authentication
+    ){
+        Long userId = (Long) authentication.getPrincipal();
+
+        ReplyDeleteResponseDto result = replyService.deleteReply(replyId, userId);
 
         return ResponseEntity.ok(result);
     }
