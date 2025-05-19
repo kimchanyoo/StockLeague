@@ -6,6 +6,7 @@ import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
 import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
+import com.stockleague.backend.stock.dto.response.CommentListResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,11 +22,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -36,7 +39,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @PostMapping("/stocks/{ticker}/comments")
+    @PostMapping("/stocks/{ticker}/comment")
     @Operation(summary = "댓글 작성", description = "특정 주식 종목에 댓글을 작성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "댓글 작성 성공",
@@ -331,6 +334,79 @@ public class CommentController {
         Long userId = (Long) authentication.getPrincipal();
 
         CommentDeleteResponseDto result = commentService.deleteComment(commentId, userId);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/stocks/{ticker}/comments")
+    @Operation(summary = "댓글 목록 조회", description = "특정 종목에 작성된 댓글들을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = CommentListResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "CommentListSuccess",
+                                    summary = "댓글 목록 반환 예시",
+                                    value = """
+                                        {
+                                          "success": true,
+                                          "data": {
+                                            "comments": [
+                                              {
+                                                "commentId": 101,
+                                                "userNickname": "투자왕",
+                                                "content": "이 종목은 진짜 가나요?",
+                                                "createdAt": "2025-03-18T10:20:30",
+                                                "isAuthor": false,
+                                                "likeCount": 7,
+                                                "isLiked": true,
+                                                "replyCount": 3
+                                              },
+                                              {
+                                                "commentId": 102,
+                                                "userNickname": "찐주주",
+                                                "content": "어제 매수했어요!",
+                                                "createdAt": "2025-03-18T11:00:00",
+                                                "isAuthor": true,
+                                                "likeCount": 3,
+                                                "isLiked": false,
+                                                "replyCount": 1
+                                              }
+                                            ],
+                                            "page": 1,
+                                            "size": 10,
+                                            "totalCount": 51
+                                          }
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "해당 종목이 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "StockNotFound",
+                                    summary = "종목을 찾을 수 없는 경우",
+                                    value = """
+                                        {
+                                          "success": false,
+                                          "message": "해당 종목을 찾을 수 없습니다.",
+                                          "errorCode": "STOCK_NOT_FOUND"
+                                        }
+                                        """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<CommentListResponseDto> getCommentsByTicker(
+            @PathVariable String ticker,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication
+    ) {
+        Long userId = (authentication != null) ? (Long) authentication.getPrincipal() : null;
+
+        CommentListResponseDto result = commentService.getComments(ticker, userId, page, size);
 
         return ResponseEntity.ok(result);
     }

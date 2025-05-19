@@ -331,7 +331,7 @@ public class ReplyController {
             @PathVariable Long commentId,
             Authentication authentication
     ) {
-        Long userId = (Long) authentication.getPrincipal();
+        Long userId = (authentication != null) ? (Long) authentication.getPrincipal() : null;
 
         ReplyListResponseDto result = replyService.getReplies(commentId, userId);
 

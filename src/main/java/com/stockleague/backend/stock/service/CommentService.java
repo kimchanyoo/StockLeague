@@ -10,14 +10,22 @@ import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
 import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
+import com.stockleague.backend.stock.dto.response.CommentListResponseDto;
+import com.stockleague.backend.stock.dto.response.CommentSummaryDto;
 import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.repository.CommentLikeRepository;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,5 +128,35 @@ public class CommentService {
         commentRepository.delete(comment);
 
         return CommentDeleteResponseDto.from();
+    }
+
+    public CommentListResponseDto getComments(String ticker, Long userId, int page, int size) {
+
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        Stock stock = stockRepository.findByTicker(ticker)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.STOCK_NOT_FOUND));
+
+        PageRequest pageable = PageRequest.of(
+                page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Comment> commentPage = commentRepository.findByStockIdAndParentIsNull(stock.getId(), pageable);
+
+        List<Comment> comments = commentPage.getContent();
+
+        List<Long> commentIds = comments.stream().map(Comment::getId).toList();
+        List<Long> likedIds = userId != null && !commentIds.isEmpty()
+                ? commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIds(userId, commentIds)
+                : List.of();
+
+        Set<Long> likedSet = new HashSet<>(likedIds);
+
+        List<CommentSummaryDto> commentList = comments.stream()
+                .map(comment -> CommentSummaryDto.from(comment, userId, likedSet.contains(comment.getId())))
+                .toList();
+
+        return new CommentListResponseDto(true, commentList, page, size, commentPage.getTotalElements());
     }
 }
