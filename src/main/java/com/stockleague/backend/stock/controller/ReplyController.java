@@ -3,9 +3,9 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.request.ReplyCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.ReplyUpdateRequestDto;
-import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.ReplyListResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyUpdateResponseDto;
 import com.stockleague.backend.stock.service.ReplyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,13 +31,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/stocks")
+@RequestMapping("/api/v1")
 @Tag(name = "Reply", description = "주식 대댓글 관련 API")
 public class ReplyController {
 
     private final ReplyService replyService;
 
-    @PostMapping("/{ticker}/comments/{commentId}/reply")
+    @PostMapping("/{ticker}/comments/{commentId}/replies")
     @Operation(summary = "대댓글 작성", description = "특정 댓글에 대댓글을 작성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "대댓글 작성 성공",
@@ -135,7 +136,7 @@ public class ReplyController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    @PatchMapping("/comment/replies/{replyId}")
+    @PatchMapping("/replies/{replyId}")
     @Operation(summary = "대댓글 수정", description = "자신이 작성한 대댓글을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "대댓글 수정 성공",
@@ -213,7 +214,7 @@ public class ReplyController {
         return ResponseEntity.ok(result);
     }
 
-    @DeleteMapping("/comment/replies/{replyId}")
+    @DeleteMapping("/replies/{replyId}")
     @Operation(summary = "대댓글 삭제", description = "사용자가 자신이 작성한 대댓글을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "대댓글 삭제 성공",
@@ -266,10 +267,73 @@ public class ReplyController {
     public ResponseEntity<ReplyDeleteResponseDto> deleteReply(
             @PathVariable Long replyId,
             Authentication authentication
-    ){
+    ) {
         Long userId = (Long) authentication.getPrincipal();
 
         ReplyDeleteResponseDto result = replyService.deleteReply(replyId, userId);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/comments/{commentId}/replies")
+    @Operation(summary = "대댓글 목록 조회", description = "특정 댓글에 작성된 모든 대댓글을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "대댓글 목록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ReplyListResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "ReplyListSuccess",
+                                    summary = "대댓글 목록 반환 예시",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "data": [
+                                                {
+                                                  "replyId": 1001,
+                                                  "commentId": 456,
+                                                  "userNickname": "주식고수",
+                                                  "content": "저도 그렇게 생각합니다.",
+                                                  "createdAt": "2025-05-21T14:00:00",
+                                                  "isAuthor": true,
+                                                  "likeCount": 4,
+                                                  "isLiked": true
+                                                },
+                                                {
+                                                  "replyId": 1002,
+                                                  "commentId": 456,
+                                                  "userNickname": "개미투자자",
+                                                  "content": "좋은 정보 감사합니다!",
+                                                  "createdAt": "2025-05-21T14:10:00",
+                                                  "isAuthor": false,
+                                                  "likeCount": 2,
+                                                  "isLiked": false
+                                                }
+                                              ]
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "해당 댓글이 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "success": false,
+                                      "message": "해당 댓글을 찾을 수 없습니다.",
+                                      "errorCode": "COMMENT_NOT_FOUND"
+                                    }
+                                    """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<ReplyListResponseDto> getReplyList(
+            @PathVariable Long commentId,
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        ReplyListResponseDto result = replyService.getReplies(commentId, userId);
 
         return ResponseEntity.ok(result);
     }

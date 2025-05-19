@@ -8,12 +8,18 @@ import com.stockleague.backend.stock.dto.request.ReplyCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.ReplyUpdateRequestDto;
 import com.stockleague.backend.stock.dto.response.ReplyCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.ReplyDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.ReplyListResponseDto;
+import com.stockleague.backend.stock.dto.response.ReplySummaryDto;
 import com.stockleague.backend.stock.dto.response.ReplyUpdateResponseDto;
+import com.stockleague.backend.stock.repository.CommentLikeRepository;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +31,7 @@ public class ReplyService {
     private final UserRepository userRepository;
     private final StockRepository stockRepository;
     private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     public ReplyCreateResponseDto createReply(ReplyCreateRequestDto request,
                                               String ticker, Long commentId, Long userId) {
@@ -93,5 +100,26 @@ public class ReplyService {
         commentRepository.delete(reply);
 
         return ReplyDeleteResponseDto.from();
+    }
+
+    public ReplyListResponseDto getReplies(Long commentId, Long userId) {
+
+        commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        List<Comment> replies = commentRepository.findByParentId(commentId);
+
+        List<Long> replyIds = replies.stream().map(Comment::getId).toList();
+
+        List<Long> likedIds = replyIds.isEmpty() ? List.of() :
+                commentLikeRepository.findLikedCommentIdsByUserIdAndCommentIds(userId, replyIds);
+
+        Set<Long> likedSet = new HashSet<>(likedIds);
+
+        List<ReplySummaryDto> result = replies.stream()
+                .map(reply -> ReplySummaryDto.from(reply, userId, likedSet.contains(reply.getId())))
+                .toList();
+
+        return ReplyListResponseDto.from(result);
     }
 }

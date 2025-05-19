@@ -30,13 +30,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/stocks")
+@RequestMapping("/api/v1")
 @Tag(name = "Comment", description = "주식 댓글 관련 API")
 public class CommentController {
 
     private final CommentService commentService;
 
-    @PostMapping("/{ticker}/comments")
+    @PostMapping("/stocks/{ticker}/comments")
     @Operation(summary = "댓글 작성", description = "특정 주식 종목에 댓글을 작성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "댓글 작성 성공",
@@ -116,7 +116,7 @@ public class CommentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
-    @PostMapping("/{commentId}/like")
+    @PostMapping("/comments/{commentId}/like")
     @Operation(summary = "댓글 좋아요 토글", description = "특정 댓글에 대해 좋아요를 누르거나 취소합니다. 유튜브 스타일 토글 방식입니다.")
     @ApiResponses(value = {
             @ApiResponse(
