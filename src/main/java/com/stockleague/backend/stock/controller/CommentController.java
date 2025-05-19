@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/stocks")
-@Tag(name = "Comment", description = "주식 커뮤니티 관련 API")
+@Tag(name = "Comment", description = "주식 댓글 관련 API")
 public class CommentController {
 
     private final CommentService commentService;
@@ -40,7 +40,7 @@ public class CommentController {
     @Operation(summary = "댓글 작성", description = "특정 주식 종목에 댓글을 작성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "댓글 작성 성공",
-                    content = @Content(schema = @Schema(implementation = CommentCreateRequestDto.class),
+                    content = @Content(schema = @Schema(implementation = CommentCreateResponseDto.class),
                             examples = @ExampleObject(
                                     name = "CommentCreateSuccess",
                                     summary = "댓글 등록 완료",
@@ -90,7 +90,7 @@ public class CommentController {
             ),
             @ApiResponse(responseCode = "404", description = "해당 사용자가 없음",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = org.springframework.web.ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "UserNotFound",
                                     summary = "존재하지 않는 사용자",
@@ -170,7 +170,7 @@ public class CommentController {
             ),
             @ApiResponse(responseCode = "404", description = "해당 사용자가 없음",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = org.springframework.web.ErrorResponse.class),
+                            schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(
                                     name = "UserNotFound",
                                     summary = "존재하지 않는 사용자",

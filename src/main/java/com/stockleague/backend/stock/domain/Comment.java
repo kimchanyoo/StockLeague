@@ -45,7 +45,11 @@ public class Comment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "parent_id", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
@@ -70,6 +74,19 @@ public class Comment {
 
     public void decreaseLikeCount() {
         this.likeCount = Math.max(0, this.likeCount - 1);
+    }
+
+    public void addReply(Comment reply) {
+        if (!this.replies.contains(reply)) {
+            this.replies.add(reply);
+            reply.parent = this;
+            this.replyCount++;
+        }
+    }
+
+    public void removeReply(Comment reply) {
+        this.replies.remove(reply);
+        this.replyCount = Math.max(0, this.replyCount - 1);
     }
 
     public void updateContent(String content) {

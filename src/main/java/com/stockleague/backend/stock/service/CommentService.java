@@ -7,10 +7,12 @@ import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.CommentCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
+import com.stockleague.backend.stock.dto.request.ReplyCreateRequestDto;
 import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
+import com.stockleague.backend.stock.dto.response.ReplyCreateResponseDto;
 import com.stockleague.backend.stock.repository.CommentLikeRepository;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
@@ -120,5 +122,34 @@ public class CommentService {
         commentRepository.delete(comment);
 
         return CommentDeleteResponseDto.from();
+    }
+
+    public ReplyCreateResponseDto createReply(ReplyCreateRequestDto request,
+                                              String ticker, Long commentId, Long userId) {
+
+        if (request.content().isBlank()) {
+            throw new GlobalException(GlobalErrorCode.MISSING_FIELDS);
+        }
+
+        Stock stock = stockRepository.findByTicker(ticker)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.STOCK_NOT_FOUND));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        Comment parent = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        Comment reply = Comment.builder()
+                .stock(stock)
+                .user(user)
+                .content(request.content())
+                .build();
+
+        parent.addReply(reply);
+
+        commentRepository.save(reply);
+
+        return ReplyCreateResponseDto.from(reply);
     }
 }
