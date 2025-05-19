@@ -200,7 +200,7 @@ public class CommentController {
     @Operation(summary = "댓글 수정", description = "자신이 작성한 댓글을 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 수정 성공",
-                    content = @Content(schema = @Schema(implementation = CommentUpdateRequestDto.class),
+                    content = @Content(schema = @Schema(implementation = CommentUpdateResponseDto.class),
                             examples = @ExampleObject(
                                     name = "CommentUpdateSuccess",
                                     summary = "댓글 수정 완료",
@@ -208,6 +208,22 @@ public class CommentController {
                                             {
                                               "success": true,
                                               "message": "댓글이 성공적으로 수정되었습니다."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "요청 데이터 오류",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "MissingFields",
+                                    summary = "필수 입력값 누락",
+                                    value = """
+                                            {
+                                              "success": false,
+                                              "message": "내용을 모두 입력해야 합니다.",
+                                              "errorCode": "MISSING_FIELDS"
                                             }
                                             """
                             )
