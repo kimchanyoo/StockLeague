@@ -3,11 +3,13 @@
 import React, { createContext, useContext, useState } from "react";
 import { useAuth } from "@/context/AuthContext"; // AuthContext 가져오기
 
+type Role = "USER" | "ADMIN"; // 또는 enum
 interface SocialSignupData {
   agreedToTerms: boolean;
   isOverFifteen: boolean;
   nickname: string;
   accessToken?: string; 
+  role?: Role; // 추가
 }
 
 interface SocialSignupContextType {
@@ -25,16 +27,18 @@ export const SocialSignupProvider = ({ children }: { children: React.ReactNode }
     setState((prev) => ({ ...prev, ...newData }));
   };
   
-  const handleLoginSuccess = (accessToken: string) => {
+  const handleLoginSuccess = (accessToken: string, nickname: string, role: Role = "USER") => {
     setData({
       accessToken,
-      agreedToTerms: true, // 예시로 약관 동의 여부 설정
-      isOverFifteen: true, // 예시로 15세 이상 여부 설정
-      nickname: data.nickname || "", // 데이터에서 nickname을 가져옴
+      agreedToTerms: true,
+      isOverFifteen: true,
+      nickname,
+      role,
     });
     // 로그인 후 AuthContext에 데이터 설정
     setAccessToken(accessToken); // AuthContext에 accessToken 설정
-    setUser({ nickname: data.nickname || "" }); // AuthContext에 사용자 정보 설정
+      setUser({ nickname, role });
+
   };
   
   return (
