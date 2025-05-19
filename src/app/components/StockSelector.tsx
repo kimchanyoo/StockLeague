@@ -4,7 +4,6 @@ import React, {useState} from "react";
 import styles from "@/app/styles/components/StockSelector.module.css";
 import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
-import { color } from "framer-motion";
 import MiniStockList from "./MiniStockList";
 
 const dummyStocks = [
