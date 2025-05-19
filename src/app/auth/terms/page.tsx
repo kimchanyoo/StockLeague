@@ -59,7 +59,7 @@ export default function Terms() {
             <div className="agreeBox">
               <input
                 type="checkbox"
-                id="agree"
+                id="agreeTerms"
                 checked={isAgreed}
                 onChange={(e) => setIsAgreed(e.target.checked)}
                 className="mr-2"
@@ -69,7 +69,7 @@ export default function Terms() {
             <div className="agreeBox">
               <input
                 type="checkbox"
-                id="agree"
+                id="overFifteen"
                 checked={isOverFifteen}
                 onChange={(e) => setIsOverFifteen(e.target.checked)}
                 className="mr-2"
