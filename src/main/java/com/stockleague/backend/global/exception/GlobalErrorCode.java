@@ -44,6 +44,7 @@ public enum GlobalErrorCode {
     // 주식 관련
     INVALID_MARKET_TYPE(HttpStatus.BAD_REQUEST, "잘못된 시장 유형이 입력되었습니다."),
     STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 종목을 찾을 수 없습니다."),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
 
     // 잘못된 필드값 입력
     MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다.");
