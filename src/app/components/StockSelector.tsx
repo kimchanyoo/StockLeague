@@ -1,21 +1,45 @@
 "use client";
 
-import React, {useState} from "react";
+import {useState, useEffect} from "react";
 import styles from "@/app/styles/components/StockSelector.module.css";
 import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
 import MiniStockList from "./MiniStockList";
+import { getTopStocks, Stock } from "@/lib/api/stock"; 
 
-const dummyStocks = [
-  { id: 1, name: '삼성전자', stockCode: '005930', currentPrice: 72000, priceChange: 1.8 },
-  { id: 2, name: '카카오', stockCode: '035720', currentPrice: 51000, priceChange: -2.3 },
-  { id: 3, name: '네이버', stockCode: '035420', currentPrice: 182000, priceChange: 0.0 },
-];
+type Props = {
+  onSelect: (stock: Stock) => void;
+};
 
-const StockSelector = () => {
-    
+
+const StockSelector = ({onSelect}: Props) => {
   const [selectedFilter, setSelectedFilter] = useState('전체종목');
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchStocks = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getTopStocks();
+        if (res.success) {
+          setStocks(res.stocks);
+        } else {
+          setError("종목 리스트를 불러오는 데 실패했습니다.");
+        }
+      } catch (err) {
+        setError("서버 요청 중 오류가 발생했습니다.");
+      }
+      setLoading(false);
+    };
+
+    fetchStocks();
+  }, []);
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>{error}</div>;
+  
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -33,7 +57,7 @@ const StockSelector = () => {
         </div>
       </div>
       <div className={styles.miniStockList}>
-        <MiniStockList stocks={dummyStocks}/>
+        <MiniStockList stocks={stocks} onSelect={onSelect}/>
       </div>
     </div>
   );

@@ -1,20 +1,14 @@
 "use client";
 
+import { Stock } from "@/lib/api/stock";
 import styles from "@/app/styles/components/MiniStockList.module.css";
 
-type StockType = {
-  id: number;
-  name: string;
-  currentPrice: number;
-  stockCode: string;
-  priceChange: number;
+type Props = {
+  stocks: Stock[];
+  onSelect: (stock: Stock) => void;
 };
 
-type StockListProps = {
-  stocks: StockType[];
-};  
-
-const MiniStockList = ({ stocks }:StockListProps) => {
+const MiniStockList = ({ stocks, onSelect }:Props) => {
 
   // 등락률에 따라 색상 변경 함수
   const getPriceChangeColor = (priceChange: number) => {
@@ -26,19 +20,17 @@ const MiniStockList = ({ stocks }:StockListProps) => {
   return (
     <div className={styles.stockList}>
       {stocks.map((stock) => (
-        <div key={stock.id} className={styles.stockCard}>
+        <div key={stock.stockId} className={styles.stockCard} onClick={() => onSelect(stock)}>
           <div className={styles.row}>
-            <span className={styles.name}>{stock.name}</span>
-            <span className={`${styles.price} ${styles[getPriceChangeColor(stock.priceChange)]}`}>
-              {stock.currentPrice.toLocaleString()} 원
+            <span className={styles.name}>{stock.stockName}</span>
+            <span className={`${styles.price} ${styles[getPriceChangeColor(stock.priceChange ?? 0)]}`}>
+              {(stock.currentPrice ?? 0).toLocaleString()} 원
             </span>
           </div>
           <div className={styles.row}>
-            <span className={styles.code}>{stock.stockCode}</span>
-            <span
-              className={`${styles.change} ${styles[getPriceChangeColor(stock.priceChange)]}`}
-            >
-              {stock.priceChange > 0 ? `+${stock.priceChange}%` : `${stock.priceChange}%`}
+            <span className={styles.code}>{stock.stockTicker}</span>
+            <span className={`${styles.change} ${styles[getPriceChangeColor(stock.priceChange ?? 0)]}`}>
+              {stock.priceChange && stock.priceChange > 0 ? `+${stock.priceChange}%` : `${stock.priceChange ?? 0}%`}
             </span>
           </div>
         </div>

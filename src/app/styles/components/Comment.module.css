@@ -87,6 +87,7 @@
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
+    margin-bottom: 10px;
   }
   
   .reportModal {
@@ -128,3 +129,6 @@
     color: white;
   }
   
+  .noComments {
+    text-align: center;
+  }

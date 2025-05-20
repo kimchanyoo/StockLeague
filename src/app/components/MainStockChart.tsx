@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { createChart } from "lightweight-charts";
+import { createChart, UTCTimestamp, LineData } from "lightweight-charts";
 
 const MainStockChart: React.FC = () => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
@@ -12,38 +12,25 @@ const MainStockChart: React.FC = () => {
       const chart = createChart(chartContainerRef.current, {
         width: chartContainerRef.current.clientWidth,
         height: chartContainerRef.current.clientHeight,
-        lineWidth: 2,
-        crosshair: {
-          mode: 0,
-        },
-        // y축을 왼쪽에 배치
-        leftPriceScale: {
-          visible: true, // 왼쪽 y축을 보이도록 설정
-        },
-        // y축 오른쪽 없애기
-        rightPriceScale: {
-          visible: false,
-        },
+        crosshair: { mode: 0 },
+        leftPriceScale: { visible: true },
+        rightPriceScale: { visible: false },
         layout: {
-          backgroundColor: 'transparent',
+          background: { color : 'transparent' },
         },
       });
 
-      const lineSeries = chart.addLineSeries({
-        color: "#4A90E2", // 라인 색상
-        lineWidth: 2, // 라인 두께
-      });
+      const lineSeries = chart.addLineSeries({ color: "#4A90E2", lineWidth: 2, });
 
       // 주식 데이터 (예시)
-      const stockData = [
-        { time: 1640995200, value: 10000 },
-        { time: 1641081600, value: 10200 },
-        { time: 1641168000, value: 10150 },
-        { time: 1641254400, value: 10300 },
-        { time: 1641340800, value: 10450 },
-        { time: 1641427200, value: 10500 },
+      const stockData: LineData[] = [
+        { time: 1640995200 as UTCTimestamp, value: 10000 },
+        { time: 1641081600 as UTCTimestamp, value: 10200 },
+        { time: 1641168000 as UTCTimestamp, value: 10150 },
+        { time: 1641254400 as UTCTimestamp, value: 10300 },
+        { time: 1641340800 as UTCTimestamp, value: 10450 },
+        { time: 1641427200 as UTCTimestamp, value: 10500 },
       ];
-
       // 데이터를 차트에 추가
       lineSeries.setData(stockData);
 
