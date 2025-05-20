@@ -7,6 +7,7 @@ import StockSelector from "@/app/components/StockSelector";
 import StockChart from "@/app/components/StockChart";
 import Community from "@/app/components/Community";
 import { useAuth } from "@/context/AuthContext"; // 예시: 직접 만든 인증 Context
+import { Stock } from "@/lib/api/stock";
 
 export default function Trade() {
   const { user } = useAuth(); // 로그인 정보 가져오기
@@ -14,17 +15,23 @@ export default function Trade() {
 
   const [activeTab, setActiveTab] = useState<"chart" | "community">("chart");
   const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+
+  // 대비 계산
+  const diff = selectedStock && selectedStock.currentPrice != null && selectedStock.prevPrice != null
+    ? selectedStock.currentPrice - selectedStock.prevPrice
+    : null;
 
   return (
     <div className="container">
       <div className="stockList_section">
-        <StockSelector/>
+        <StockSelector onSelect={setSelectedStock}/>
       </div>
       
       <div className="stockChart_section">
         <div className="topSection">
           <div className="chartTitle">
-            <label>여기 종목 이름</label>
+            <label>{selectedStock?.stockName ?? "종목 선택"}</label>
             <div className="btnGroup">
               <button className="bigBtn" onClick={() => setActiveTab('chart')}>차트</button>
               <button className="bigBtn" onClick={() => setActiveTab('community')}>커뮤니티</button>
@@ -34,18 +41,18 @@ export default function Trade() {
             </div>
           </div>
           <div className="titleCantent">
-            <h1>종목번호</h1>
-            <h1>KOSPI</h1>
-            <span>종목가격</span>
-            <h2>등락률</h2>
-            <h2>대비</h2>
+            <h1>{selectedStock?.stockTicker ?? "종목번호"}</h1>
+            <h1>{selectedStock?.marketType ?? "KOSPI"}</h1>
+            <span>{selectedStock?.currentPrice?.toLocaleString() ?? "종목가격"}</span>
+            <h2>{selectedStock?.priceChange ?? "등락률"}</h2>
+            <h2>{diff != null ? `${diff > 0 ? "+" : ""}${diff.toLocaleString()}원` : "대비"}</h2>
             <h1>거래량</h1>
             <h3>거래량 얼마</h3>
             <h1>거래대금</h1>
             <h3>거래대금 얼마</h3>
           </div>
         </div>
-        {activeTab === "chart" ? (<StockChart activeTab={activeTab} setActiveTab={setActiveTab} />) : (<Community/>)}
+        {activeTab === "chart" ? (<StockChart activeTab={activeTab} setActiveTab={setActiveTab} />) : (<Community ticker={selectedStock?.stockTicker ?? ""}/>)}
       </div>
       
       <div className="stockOrder_section">

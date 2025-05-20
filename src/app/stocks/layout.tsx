@@ -1,6 +1,6 @@
 "use client";
 
-import "@/app/stocks/stocks.css";
+import "./stocks.css";
 
 export default function StocksLayout({ children }: { children: React.ReactNode }) {
     return (
