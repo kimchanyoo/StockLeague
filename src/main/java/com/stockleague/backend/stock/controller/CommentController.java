@@ -342,8 +342,7 @@ public class CommentController {
                                     value = """
                                             {
                                               "success": true,
-                                              "data": {
-                                                "comments": [
+                                              "comments": [
                                                   {
                                                     "commentId": 101,
                                                     "userNickname": "투자왕",
@@ -365,10 +364,9 @@ public class CommentController {
                                                     "replyCount": 1
                                                   }
                                                 ],
-                                                "page": 1,
-                                                "size": 10,
-                                                "totalCount": 51
-                                              }
+                                              "page": 1,
+                                              "size": 10,
+                                              "totalCount": 51
                                             }
                                             """
                             )
