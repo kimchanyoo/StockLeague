@@ -34,7 +34,17 @@ public class ReportController {
     @Operation(summary = "댓글/대댓글 신고", description = "댓글 또는 대댓글을 신고합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "신고 성공",
-                    content = @Content(schema = @Schema(implementation = CommentReportResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = CommentReportResponseDto.class),
+                    examples = @ExampleObject(name = "CommentCreateSuccess",
+                            summary = "댓글 등록 완료",
+                            value = """
+                                            {
+                                              "success": true,
+                                              "message": "신고가 정상적으로 접수되었습니다.",
+                                            }
+                                            """
+                    ))
+            ),
             @ApiResponse(responseCode = "400", description = "잘못된 요청",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject(name = "Missing Fields",
