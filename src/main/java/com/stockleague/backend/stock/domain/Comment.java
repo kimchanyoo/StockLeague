@@ -68,6 +68,9 @@ public class Comment {
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "target", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommentReport> commentReports = new ArrayList<>();
+
     public void increaseLikeCount() {
         this.likeCount++;
     }

@@ -2,6 +2,7 @@ package com.stockleague.backend.user.domain;
 
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
+import com.stockleague.backend.stock.domain.CommentReport;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -66,6 +67,12 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommentReport> reportsFiled = new ArrayList<>();
+
+    @OneToMany(mappedBy = "processedBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommentReport> reportsProcessed = new ArrayList<>();
 
     // 비즈니스 메서드
     public void updateNickname(String newNickname) {
