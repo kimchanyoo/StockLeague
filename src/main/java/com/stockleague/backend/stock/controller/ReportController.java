@@ -187,7 +187,7 @@ public class ReportController {
                                               "status": "RESOLVED",
                                               "createdAt": "2025-05-20T15:30:00",
                                               "processedAt": "2025-05-21T10:15:00",
-                                              "actionTaken": "BLOCK_COMMENT"
+                                              "actionTaken": "DELETED"
                                             }
                                             """)
                     )
