@@ -12,6 +12,6 @@ public enum Status {
         return Arrays.stream(Status.values())
                 .filter(type -> type.name().equalsIgnoreCase(status))
                 .findFirst()
-                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INVALID_TARGET_TYPE));
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INVALID_STATUS_TYPE));
     }
 }

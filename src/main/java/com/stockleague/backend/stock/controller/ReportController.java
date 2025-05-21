@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.request.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.response.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentReportListResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentReportResponseDto;
 import com.stockleague.backend.stock.service.ReportService;
@@ -39,8 +40,8 @@ public class ReportController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "신고 성공",
                     content = @Content(schema = @Schema(implementation = CommentReportResponseDto.class),
-                            examples = @ExampleObject(name = "CommentCreateSuccess",
-                                    summary = "댓글 등록 완료",
+                            examples = @ExampleObject(name = "ReportCreateSuccess",
+                                    summary = "신고 완료",
                                     value = """
                                             {
                                               "success": true,
@@ -158,6 +159,61 @@ public class ReportController {
             @Valid @RequestBody CommentReportListRequestDto request
     ) {
         CommentReportListResponseDto result = reportService.listReports(request, page, size);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/admin/{reportId}")
+    @Operation(summary = "신고 상세 조회", description = "신고 ID를 기반으로 신고 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "신고 상세 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = CommentReportDetailResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "ReportDetailSuccess",
+                                    summary = "신고 조회 성공",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "message": "신고 내용 불러오기에 성공했습니다.",
+                                              "reportId": 1,
+                                              "targetType": "COMMENT",
+                                              "targetId": 100,
+                                              "reporterNickname": "신고자1",
+                                              "processedByNickname": "관리자A",
+                                              "reason": "욕설 포함",
+                                              "additionalInfo": "지속적인 비방이 있습니다.",
+                                              "status": "RESOLVED",
+                                              "createdAt": "2025-05-20T15:30:00",
+                                              "processedAt": "2025-05-21T10:15:00",
+                                              "actionTaken": "BLOCK_COMMENT"
+                                            }
+                                            """)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 신고가 존재하지 않음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "ReportNotFound",
+                                    summary = "해당 신고 정보가 존재하지 않을 경우",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 신고을 찾을 수 없습니다.",
+                                                  "errorCode": "REPORT_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<CommentReportDetailResponseDto> getReportDetail(
+            @PathVariable Long reportId
+    ) {
+        CommentReportDetailResponseDto result = reportService.getReport(reportId);
 
         return ResponseEntity.ok(result);
     }

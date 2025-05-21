@@ -4,10 +4,10 @@ import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentReport;
-import com.stockleague.backend.stock.domain.Status;
 import com.stockleague.backend.stock.domain.TargetType;
 import com.stockleague.backend.stock.dto.request.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.response.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentReportListResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentReportResponseDto;
 import com.stockleague.backend.stock.dto.response.CommentReportSummaryDto;
@@ -85,5 +85,13 @@ public class ReportService {
                 reportPage.getTotalElements(),
                 reportPage.getTotalPages()
         );
+    }
+
+    public CommentReportDetailResponseDto getReport(Long reportId) {
+
+        CommentReport report = commentReportRepository.findByReportId(reportId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.REPORT_NOT_FOUND));
+
+        return CommentReportDetailResponseDto.from(report);
     }
 }
