@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.request.comment.CommentCreateRequestDto;
 import com.stockleague.backend.stock.dto.request.comment.CommentUpdateRequestDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentAdminDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.comment.CommentCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.comment.CommentDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.comment.CommentLikeResponseDto;
@@ -398,6 +399,48 @@ public class CommentController {
         Long userId = (authentication != null) ? (Long) authentication.getPrincipal() : null;
 
         CommentListResponseDto result = commentService.getComments(ticker, userId, page, size);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/admin/comments/{commentId}")
+    @Operation(summary = "댓글 강제 삭제", description = "관리자가 신고받은 댓글을 강제 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "댓글 강제 삭제 성공",
+                    content = @Content(schema = @Schema(implementation = CommentAdminDeleteResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "forceDeleteCommentByAdminSuccess",
+                                    summary = "댓글 강제 삭제 성공",
+                                    value = """
+                                                {
+                                                  "success": true,
+                                                  "message": "댓글이 삭제 처리되었습니다."
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "댓글이 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "CommentNotFound",
+                                    summary = "해당 댓글 정보가 존재하지 않을 경우",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 댓글을 찾을 수 없습니다.",
+                                                  "errorCode": "COMMENT_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<CommentAdminDeleteResponseDto> forceDeleteCommentByAdmin(
+            @PathVariable Long commentId
+    ) {
+        CommentAdminDeleteResponseDto result = commentService.forceDeleteCommentByAdmin(commentId);
 
         return ResponseEntity.ok(result);
     }
