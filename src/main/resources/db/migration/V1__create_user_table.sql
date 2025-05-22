@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    ser_id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     role            VARCHAR(10) NOT NULL,
     nickname        VARCHAR(10) NOT NULL,
     agreed_to_terms BOOLEAN NOT NULL,

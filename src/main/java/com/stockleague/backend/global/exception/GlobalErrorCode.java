@@ -22,7 +22,6 @@ public enum GlobalErrorCode {
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
 
     // 문의 및 공지사항 작성 관련
-    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다."),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 문의를 찾을 수 없습니다."),
     INQUIRY_ALREADY_ANSWERED(HttpStatus.BAD_REQUEST, "이미 답변이 등록된 문의입니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
@@ -40,7 +39,16 @@ public enum GlobalErrorCode {
 
     // 유저 관련
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
-    INVALID_WITHDRAW_CONFIRM_MESSAGE(HttpStatus.BAD_REQUEST, "탈퇴 문구가 일치하지 않습니다.");
+    INVALID_WITHDRAW_CONFIRM_MESSAGE(HttpStatus.BAD_REQUEST, "탈퇴 문구가 일치하지 않습니다."),
+
+    // 주식 관련
+    INVALID_MARKET_TYPE(HttpStatus.BAD_REQUEST, "잘못된 시장 유형이 입력되었습니다."),
+    STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 종목을 찾을 수 없습니다."),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
+    INVALID_COMMENT_OWNER(HttpStatus.UNAUTHORIZED, "자신이 작성한 댓글만 관리할 수 있습니다."),
+
+    // 잘못된 필드값 입력
+    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다.");
 
     private final HttpStatus status;
     private final String message;
