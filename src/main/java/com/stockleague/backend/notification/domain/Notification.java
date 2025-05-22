@@ -47,9 +47,11 @@ public class Notification {
     @Column(name = "message", nullable = false)
     private String message;
 
+    @Builder.Default
     @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
