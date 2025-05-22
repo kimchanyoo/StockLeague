@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.response;
+package com.stockleague.backend.stock.dto.response.report;
 
 import com.stockleague.backend.stock.domain.ActionTaken;
 import com.stockleague.backend.stock.domain.CommentReport;

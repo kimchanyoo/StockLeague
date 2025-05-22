@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.request;
+package com.stockleague.backend.stock.dto.request.report;
 
 
 import jakarta.validation.constraints.NotBlank;

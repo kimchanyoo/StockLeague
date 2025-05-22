@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.response;
+package com.stockleague.backend.stock.dto.response.stock;
 
 import com.stockleague.backend.stock.domain.MarketType;
 import com.stockleague.backend.stock.domain.Stock;

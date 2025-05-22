@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.response;
+package com.stockleague.backend.stock.dto.response.report;
 
 public record CommentReportResponseDto(
         boolean success,

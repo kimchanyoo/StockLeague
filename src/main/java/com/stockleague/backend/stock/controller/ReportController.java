@@ -1,11 +1,11 @@
 package com.stockleague.backend.stock.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.stock.dto.request.CommentReportListRequestDto;
-import com.stockleague.backend.stock.dto.request.CommentReportRequestDto;
-import com.stockleague.backend.stock.dto.response.CommentReportDetailResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentReportListResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentReportResponseDto;
+import com.stockleague.backend.stock.dto.request.report.CommentReportListRequestDto;
+import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
 import com.stockleague.backend.stock.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

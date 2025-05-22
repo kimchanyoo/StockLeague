@@ -1,12 +1,12 @@
 package com.stockleague.backend.stock.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.stock.dto.request.ReplyCreateRequestDto;
-import com.stockleague.backend.stock.dto.request.ReplyUpdateRequestDto;
-import com.stockleague.backend.stock.dto.response.ReplyCreateResponseDto;
-import com.stockleague.backend.stock.dto.response.ReplyDeleteResponseDto;
-import com.stockleague.backend.stock.dto.response.ReplyListResponseDto;
-import com.stockleague.backend.stock.dto.response.ReplyUpdateResponseDto;
+import com.stockleague.backend.stock.dto.request.reply.ReplyCreateRequestDto;
+import com.stockleague.backend.stock.dto.request.reply.ReplyUpdateRequestDto;
+import com.stockleague.backend.stock.dto.response.reply.ReplyCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.reply.ReplyDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.reply.ReplyListResponseDto;
+import com.stockleague.backend.stock.dto.response.reply.ReplyUpdateResponseDto;
 import com.stockleague.backend.stock.service.ReplyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

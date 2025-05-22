@@ -1,13 +1,13 @@
 package com.stockleague.backend.stock.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.stock.dto.request.CommentCreateRequestDto;
-import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
-import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentListResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
+import com.stockleague.backend.stock.dto.request.comment.CommentCreateRequestDto;
+import com.stockleague.backend.stock.dto.request.comment.CommentUpdateRequestDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentLikeResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentListResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
