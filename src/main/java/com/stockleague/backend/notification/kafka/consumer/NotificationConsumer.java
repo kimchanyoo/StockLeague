@@ -1,10 +1,11 @@
-package com.stockleague.backend.notification.consumer;
+package com.stockleague.backend.notification.kafka.consumer;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notification.domain.Notification;
 import com.stockleague.backend.notification.dto.NotificationEvent;
 import com.stockleague.backend.notification.repository.NotificationRepository;
+import com.stockleague.backend.notification.service.NotificationWebSocketService;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class NotificationConsumer {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final NotificationWebSocketService webSocketService;
 
     @KafkaListener(
             topics = "user-notification",
@@ -49,6 +51,8 @@ public class NotificationConsumer {
                     .build();
 
             notificationRepository.save(notification);
+
+            webSocketService.sendNotification(user.getId(), notification);
         } else {
             log.info("중복 알림 감지됨 - 저장 생략");
         }

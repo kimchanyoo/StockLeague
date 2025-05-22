@@ -1,4 +1,4 @@
-package com.stockleague.backend.notification.producer;
+package com.stockleague.backend.notification.kafka.producer;
 
 import com.stockleague.backend.notification.dto.NotificationEvent;
 import lombok.RequiredArgsConstructor;
