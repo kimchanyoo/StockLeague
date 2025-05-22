@@ -52,7 +52,7 @@ public class ReportService {
                 .build();
 
         commentReportRepository.save(commentReport);
-        comment.increaseLikeCount();
+        comment.increaseReportCount();
 
         return CommentReportResponseDto.from();
     }
