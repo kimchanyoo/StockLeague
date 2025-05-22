@@ -5,7 +5,7 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notification.domain.Notification;
 import com.stockleague.backend.notification.dto.NotificationEvent;
 import com.stockleague.backend.notification.repository.NotificationRepository;
-import com.stockleague.backend.notification.service.NotificationWebSocketService;
+import com.stockleague.backend.infra.webSocket.NotificationWebSocketService;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

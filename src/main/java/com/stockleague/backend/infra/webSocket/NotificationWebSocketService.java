@@ -1,4 +1,4 @@
-package com.stockleague.backend.notification.service;
+package com.stockleague.backend.infra.webSocket;
 
 import com.stockleague.backend.notification.domain.Notification;
 import com.stockleague.backend.notification.dto.NotificationResponseDto;
