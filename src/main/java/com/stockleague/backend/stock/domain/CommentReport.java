@@ -72,7 +72,10 @@ public class CommentReport {
     private LocalDateTime processedAt;
 
     @Builder.Default
+    @Column(name = "warning_sent", nullable = false)
+    private boolean warningSent = false;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "action_taken", length = 20)
-    private ActionTaken actionTaken = ActionTaken.NONE;
+    private ActionTaken actionTaken;
 }

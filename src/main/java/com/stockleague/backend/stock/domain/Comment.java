@@ -61,6 +61,9 @@ public class Comment {
     @Column(name = "reply_count", nullable = false)
     private int replyCount = 0;
 
+    @Column(name = "report_count", nullable = false)
+    private int reportCount = 0;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -70,6 +73,10 @@ public class Comment {
 
     @OneToMany(mappedBy = "target", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentReport> commentReports = new ArrayList<>();
+
+    public void increaseReportCount() {
+        reportCount++;
+    }
 
     public void increaseLikeCount() {
         this.likeCount++;
