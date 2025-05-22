@@ -1,8 +1,8 @@
 package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.stock.domain.Stock;
-import com.stockleague.backend.stock.dto.response.StockListResponseDto;
-import com.stockleague.backend.stock.dto.response.StockSummaryDto;
+import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockSummaryDto;
 import com.stockleague.backend.stock.repository.StockRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

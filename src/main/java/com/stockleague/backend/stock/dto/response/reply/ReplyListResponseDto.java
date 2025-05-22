@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.response;
+package com.stockleague.backend.stock.dto.response.reply;
 
 import java.util.List;
 

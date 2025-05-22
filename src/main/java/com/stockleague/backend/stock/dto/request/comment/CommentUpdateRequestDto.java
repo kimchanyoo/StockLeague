@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.request;
+package com.stockleague.backend.stock.dto.request.comment;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

@@ -46,6 +46,10 @@ public enum GlobalErrorCode {
     STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 종목을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
     INVALID_COMMENT_OWNER(HttpStatus.UNAUTHORIZED, "자신이 작성한 댓글만 관리할 수 있습니다."),
+    INVALID_TARGET_TYPE(HttpStatus.BAD_REQUEST, "잘못된 신고 대상이 입력되었습니다."),
+    INVALID_STATUS_TYPE(HttpStatus.BAD_REQUEST, "잘못된 진행 상태가 입력되었습니다."),
+    INVALID_ACTION_TYPE(HttpStatus.BAD_REQUEST, "잘못된 처리 결과가 입력되었습니다."),
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
 
     // 잘못된 필드값 입력
     MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다.");

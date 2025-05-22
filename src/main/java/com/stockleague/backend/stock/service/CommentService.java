@@ -5,14 +5,15 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;
-import com.stockleague.backend.stock.dto.request.CommentCreateRequestDto;
-import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
-import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentListResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentSummaryDto;
-import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
+import com.stockleague.backend.stock.dto.request.comment.CommentCreateRequestDto;
+import com.stockleague.backend.stock.dto.request.comment.CommentUpdateRequestDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentAdminDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentLikeResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentListResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentSummaryDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.repository.CommentLikeRepository;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
@@ -158,5 +159,16 @@ public class CommentService {
                 .toList();
 
         return new CommentListResponseDto(true, commentList, page, size, commentPage.getTotalElements());
+    }
+
+    @Transactional
+    public CommentAdminDeleteResponseDto forceDeleteCommentByAdmin(Long commentId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        commentRepository.delete(comment);
+
+        return CommentAdminDeleteResponseDto.from();
     }
 }

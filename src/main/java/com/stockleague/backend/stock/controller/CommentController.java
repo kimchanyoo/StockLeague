@@ -1,13 +1,14 @@
 package com.stockleague.backend.stock.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.stock.dto.request.CommentCreateRequestDto;
-import com.stockleague.backend.stock.dto.request.CommentUpdateRequestDto;
-import com.stockleague.backend.stock.dto.response.CommentCreateResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentDeleteResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentLikeResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentListResponseDto;
-import com.stockleague.backend.stock.dto.response.CommentUpdateResponseDto;
+import com.stockleague.backend.stock.dto.request.comment.CommentCreateRequestDto;
+import com.stockleague.backend.stock.dto.request.comment.CommentUpdateRequestDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentAdminDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentDeleteResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentLikeResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentListResponseDto;
+import com.stockleague.backend.stock.dto.response.comment.CommentUpdateResponseDto;
 import com.stockleague.backend.stock.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -78,7 +79,7 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "종목 정보 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
+                            examples = {@ExampleObject(
                                     name = "StockNotFound",
                                     summary = "해당 티커에 대한 주식 정보가 존재하지 않을 경우",
                                     value = """
@@ -88,23 +89,19 @@ public class CommentController {
                                                   "errorCode": "STOCK_NOT_FOUND"
                                                 }
                                             """
-                            )
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "해당 사용자가 없음",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "UserNotFound",
-                                    summary = "존재하지 않는 사용자",
-                                    value = """
-                                            {
-                                                "success" : false,
-                                                "message" : "해당 사용자를 찾을 수 없습니다.",
-                                                "errorCode": "USER_NOT_FOUND"
-                                            }
-                                            """
-                            )
+                            ),
+                                    @ExampleObject(
+                                            name = "UserNotFound",
+                                            summary = "존재하지 않는 사용자",
+                                            value = """
+                                                    {
+                                                        "success" : false,
+                                                        "message" : "해당 사용자를 찾을 수 없습니다.",
+                                                        "errorCode": "USER_NOT_FOUND"
+                                                    }
+                                                    """
+                                    )
+                            }
                     )
             )
     })
@@ -158,33 +155,30 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "댓글이 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "CommentNotFound",
-                                    summary = "해당 댓글 정보가 존재하지 않을 경우",
-                                    value = """
-                                                {
-                                                  "success": false,
-                                                  "message": "해당 댓글을 찾을 수 없습니다.",
-                                                  "errorCode": "COMMENT_NOT_FOUND"
-                                                }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(responseCode = "404", description = "해당 사용자가 없음",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "UserNotFound",
-                                    summary = "존재하지 않는 사용자",
-                                    value = """
-                                            {
-                                                "success" : false,
-                                                "message" : "해당 사용자를 찾을 수 없습니다.",
-                                                "errorCode": "USER_NOT_FOUND"
-                                            }
-                                            """
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "CommentNotFound",
+                                            summary = "해당 댓글 정보가 존재하지 않을 경우",
+                                            value = """
+                                                        {
+                                                          "success": false,
+                                                          "message": "해당 댓글을 찾을 수 없습니다.",
+                                                          "errorCode": "COMMENT_NOT_FOUND"
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "UserNotFound",
+                                            summary = "존재하지 않는 사용자",
+                                            value = """
+                                                    {
+                                                        "success" : false,
+                                                        "message" : "해당 사용자를 찾을 수 없습니다.",
+                                                        "errorCode": "USER_NOT_FOUND"
+                                                    }
+                                                    """
+                                    )
+                            }
                     )
             )
     })
@@ -347,37 +341,35 @@ public class CommentController {
                                     name = "CommentListSuccess",
                                     summary = "댓글 목록 반환 예시",
                                     value = """
-                                        {
-                                          "success": true,
-                                          "data": {
-                                            "comments": [
-                                              {
-                                                "commentId": 101,
-                                                "userNickname": "투자왕",
-                                                "content": "이 종목은 진짜 가나요?",
-                                                "createdAt": "2025-03-18T10:20:30",
-                                                "isAuthor": false,
-                                                "likeCount": 7,
-                                                "isLiked": true,
-                                                "replyCount": 3
-                                              },
-                                              {
-                                                "commentId": 102,
-                                                "userNickname": "찐주주",
-                                                "content": "어제 매수했어요!",
-                                                "createdAt": "2025-03-18T11:00:00",
-                                                "isAuthor": true,
-                                                "likeCount": 3,
-                                                "isLiked": false,
-                                                "replyCount": 1
-                                              }
-                                            ],
-                                            "page": 1,
-                                            "size": 10,
-                                            "totalCount": 51
-                                          }
-                                        }
-                                        """
+                                            {
+                                              "success": true,
+                                              "comments": [
+                                                  {
+                                                    "commentId": 101,
+                                                    "userNickname": "투자왕",
+                                                    "content": "이 종목은 진짜 가나요?",
+                                                    "createdAt": "2025-03-18T10:20:30",
+                                                    "isAuthor": false,
+                                                    "likeCount": 7,
+                                                    "isLiked": true,
+                                                    "replyCount": 3
+                                                  },
+                                                  {
+                                                    "commentId": 102,
+                                                    "userNickname": "찐주주",
+                                                    "content": "어제 매수했어요!",
+                                                    "createdAt": "2025-03-18T11:00:00",
+                                                    "isAuthor": true,
+                                                    "likeCount": 3,
+                                                    "isLiked": false,
+                                                    "replyCount": 1
+                                                  }
+                                                ],
+                                              "page": 1,
+                                              "size": 10,
+                                              "totalCount": 51
+                                            }
+                                            """
                             )
                     )
             ),
@@ -388,12 +380,12 @@ public class CommentController {
                                     name = "StockNotFound",
                                     summary = "종목을 찾을 수 없는 경우",
                                     value = """
-                                        {
-                                          "success": false,
-                                          "message": "해당 종목을 찾을 수 없습니다.",
-                                          "errorCode": "STOCK_NOT_FOUND"
-                                        }
-                                        """
+                                            {
+                                              "success": false,
+                                              "message": "해당 종목을 찾을 수 없습니다.",
+                                              "errorCode": "STOCK_NOT_FOUND"
+                                            }
+                                            """
                             )
                     )
             )
@@ -407,6 +399,48 @@ public class CommentController {
         Long userId = (authentication != null) ? (Long) authentication.getPrincipal() : null;
 
         CommentListResponseDto result = commentService.getComments(ticker, userId, page, size);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/admin/comments/{commentId}")
+    @Operation(summary = "댓글 강제 삭제", description = "관리자가 신고받은 댓글을 강제 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "댓글 강제 삭제 성공",
+                    content = @Content(schema = @Schema(implementation = CommentAdminDeleteResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "forceDeleteCommentByAdminSuccess",
+                                    summary = "댓글 강제 삭제 성공",
+                                    value = """
+                                                {
+                                                  "success": true,
+                                                  "message": "댓글이 삭제 처리되었습니다."
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "댓글이 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "CommentNotFound",
+                                    summary = "해당 댓글 정보가 존재하지 않을 경우",
+                                    value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 댓글을 찾을 수 없습니다.",
+                                                  "errorCode": "COMMENT_NOT_FOUND"
+                                                }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<CommentAdminDeleteResponseDto> forceDeleteCommentByAdmin(
+            @PathVariable Long commentId
+    ) {
+        CommentAdminDeleteResponseDto result = commentService.forceDeleteCommentByAdmin(commentId);
 
         return ResponseEntity.ok(result);
     }

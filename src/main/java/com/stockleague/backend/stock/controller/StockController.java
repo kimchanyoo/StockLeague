@@ -1,6 +1,6 @@
 package com.stockleague.backend.stock.controller;
 
-import com.stockleague.backend.stock.dto.response.StockListResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
 import com.stockleague.backend.stock.service.StockService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -52,7 +52,8 @@ public class StockController {
                                                 }
                                               ]
                                             }
-                                            """)
+                                            """
+                                    )
                             )
                     )
             }

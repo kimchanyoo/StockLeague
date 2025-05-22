@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.dto.response;
+package com.stockleague.backend.stock.dto.response.comment;
 
 import com.stockleague.backend.stock.domain.Comment;
 import java.time.format.DateTimeFormatter;

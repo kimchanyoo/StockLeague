@@ -36,32 +36,30 @@ public class NoticeController {
                     content = @Content(schema = @Schema(implementation = NoticePageResponseDto.class))),
             @ApiResponse(responseCode = "400", description = "검색어 누락",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "MissingKeyword",
-                                    summary = "키워드 없음",
-                                    value = """
-                                            {
-                                              "success": false,
-                                              "message": "검색어를 입력해주세요.",
-                                              "errorCode": "MISSING_KEYWORD"
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @ApiResponse(responseCode = "400", description = "페이지네이션 파라미터 오류",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "InvalidPagination",
-                                    summary = "잘못된 페이지네이션 파라미터",
-                                    value = """
-                                            {
-                                              "success": false,
-                                              "message": "페이지 번호 또는 크기가 유효하지 않습니다.",
-                                              "errorCode": "INVALID_PAGINATION"
-                                            }
-                                            """
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "MissingKeyword",
+                                            summary = "키워드 없음",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "message": "검색어를 입력해주세요.",
+                                                      "errorCode": "MISSING_KEYWORD"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "InvalidPagination",
+                                            summary = "잘못된 페이지네이션 파라미터",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "message": "페이지 번호 또는 크기가 유효하지 않습니다.",
+                                                      "errorCode": "INVALID_PAGINATION"
+                                                    }
+                                                    """
+                                    )
+                            }
                     )
             )
     })
