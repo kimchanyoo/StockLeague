@@ -5,6 +5,8 @@ import com.stockleague.backend.stock.domain.Reason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -46,6 +48,7 @@ public class UserWarning {
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "reason", nullable = false)
     private Reason reason;
 
