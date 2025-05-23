@@ -15,16 +15,19 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
 }
 
 .reports-item {
   border-bottom: 1px solid #ddd;
   width: 100%;
-  padding: 10px;
+  padding: 20px;
   cursor: pointer;
-  margin-top: 10px;
-  display: flex;
-  flex-direction: row;
-  gap: 30px;
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  text-align: center;
+}
+
+.reports-item:hover {
+  background-color: #f9f9f9;
 }
