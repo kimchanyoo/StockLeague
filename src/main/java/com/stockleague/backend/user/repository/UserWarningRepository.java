@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserWarningRepository extends JpaRepository<UserWarning, Long> {
 
-    List<UserWarning> findAllByUser(User user);
+    List<UserWarning> findAllByWarnedUser(User user);
 }
