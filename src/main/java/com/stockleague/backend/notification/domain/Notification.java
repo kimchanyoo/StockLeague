@@ -1,4 +1,4 @@
-package com.stockleague.backend.stock.domain;
+package com.stockleague.backend.notification.domain;
 
 import com.stockleague.backend.user.domain.User;
 import jakarta.persistence.Column;
@@ -27,55 +27,59 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "notifications")
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "comment_reports")
-public class CommentReport {
+public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "report_id")
+    @Column(name = "notification_id")
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
-    private TargetType targetType;
+    @Column(name = "type", nullable = false)
+    private NotificationType type;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_id")
-    private Comment target;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id", nullable = false)
-    private User reporter;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "processed_by_id")
-    private User processedBy;
-
-    @Column(name = "reason", nullable = false)
-    private String reason;
-
-    @Column(name = "additional_info", columnDefinition = "TEXT")
-    private String additionalInfo;
+    @Column(name = "message", nullable = false)
+    private String message;
 
     @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private Status status = Status.PENDING;
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead = false;
+
+    @Builder.Default
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "processed_at")
-    private LocalDateTime processedAt;
-
-    @Builder.Default
-    @Column(name = "warning_sent", nullable = false)
-    private boolean warningSent = false;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "action_taken", length = 20)
-    private ActionTaken actionTaken;
+    @Column(name = "target", nullable = false)
+    private TargetType target;
+
+    @Column(name = "target_id")
+    private Long targetId;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public void markAsRead() {
+        this.isRead = true;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void close() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

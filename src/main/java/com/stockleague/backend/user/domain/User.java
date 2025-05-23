@@ -1,5 +1,6 @@
 package com.stockleague.backend.user.domain;
 
+import com.stockleague.backend.notification.domain.Notification;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.CommentReport;
@@ -62,17 +63,25 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikes = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentReport> reportsFiled = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "processedBy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentReport> reportsProcessed = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Notification> notifications = new ArrayList<>();
 
     // 비즈니스 메서드
     public void updateNickname(String newNickname) {

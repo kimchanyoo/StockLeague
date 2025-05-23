@@ -47,6 +47,7 @@ public class Stock {
     @Column(name = "market_type", nullable = false)
     private MarketType marketType;
 
+    @Builder.Default
     @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 }

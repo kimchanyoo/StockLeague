@@ -49,27 +49,40 @@ public class Comment {
     @JoinColumn(name = "parent_id")
     private Comment parent;
 
+    @Builder.Default
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
 
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Builder.Default
     @Column(name = "like_count", nullable = false)
     private int likeCount = 0;
 
+    @Builder.Default
     @Column(name = "reply_count", nullable = false)
     private int replyCount = 0;
+
+    @Builder.Default
+    @Column(name = "report_count", nullable = false)
+    private int reportCount = 0;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikes = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "target", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentReport> commentReports = new ArrayList<>();
+
+    public void increaseReportCount() {
+        reportCount++;
+    }
 
     public void increaseLikeCount() {
         this.likeCount++;

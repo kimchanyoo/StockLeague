@@ -52,7 +52,10 @@ public enum GlobalErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
 
     // 잘못된 필드값 입력
-    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다.");
+    MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다."),
+
+    // 알림 관련
+    INVALID_NOTIFICATION_TYPE(HttpStatus.BAD_REQUEST, "잘못된 알림 유형이 입력되었습니다.");
 
     private final HttpStatus status;
     private final String message;

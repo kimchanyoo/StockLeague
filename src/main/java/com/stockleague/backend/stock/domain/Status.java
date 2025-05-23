@@ -6,7 +6,9 @@ import java.util.Arrays;
 
 public enum Status {
     PENDING,
-    RESOLVED;
+    REJECTED,
+    WARNING_SENT,
+    COMMENT_DELETED;
 
     public static Status from(String status) {
         return Arrays.stream(Status.values())

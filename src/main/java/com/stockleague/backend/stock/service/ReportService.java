@@ -52,6 +52,7 @@ public class ReportService {
                 .build();
 
         commentReportRepository.save(commentReport);
+        comment.increaseReportCount();
 
         return CommentReportResponseDto.from();
     }
@@ -89,7 +90,7 @@ public class ReportService {
 
     public CommentReportDetailResponseDto getReport(Long reportId) {
 
-        CommentReport report = commentReportRepository.findByReportId(reportId)
+        CommentReport report = commentReportRepository.findById(reportId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.REPORT_NOT_FOUND));
 
         return CommentReportDetailResponseDto.from(report);
