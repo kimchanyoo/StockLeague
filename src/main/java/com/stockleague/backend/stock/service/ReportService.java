@@ -102,7 +102,7 @@ public class ReportService {
                 .map(ReportDetailDto::from
                 ).toList();
 
-        List<WarningHistoryDto> warnings = userWarningRepository.findAllByUser(user).stream()
+        List<WarningHistoryDto> warnings = userWarningRepository.findAllByWarnedUser(user).stream()
                 .map(WarningHistoryDto::from
                 ).toList();
 
