@@ -64,6 +64,14 @@ public class User {
     private LocalDateTime createdAt;
 
     @Builder.Default
+    @Column(name = "warning_count", nullable = false)
+    private Integer warningCount = 0;
+
+    @Builder.Default
+    @Column(name = "is_banned", nullable = false)
+    private Boolean isBanned = false;
+
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
