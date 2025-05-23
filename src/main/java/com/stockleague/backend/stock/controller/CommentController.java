@@ -271,7 +271,7 @@ public class CommentController {
         return ResponseEntity.ok(result);
     }
 
-    @DeleteMapping("/comments/{commentId}")
+    @PatchMapping("/comments/{commentId}")
     @Operation(summary = "댓글 삭제", description = "사용자가 자신이 작성한 댓글을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 삭제 성공",
@@ -403,7 +403,7 @@ public class CommentController {
         return ResponseEntity.ok(result);
     }
 
-    @DeleteMapping("/admin/comments/{commentId}")
+    @PatchMapping("/admin/comments/{commentId}")
     @Operation(summary = "댓글 강제 삭제", description = "관리자가 신고받은 댓글을 강제 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 강제 삭제 성공",

@@ -107,7 +107,7 @@ public class ReplyService {
         commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
 
-        List<Comment> replies = commentRepository.findByParentId(commentId);
+        List<Comment> replies = commentRepository.findByParentIdAndDeletedAtIsNull(commentId);
 
         List<Long> replyIds = replies.stream().map(Comment::getId).toList();
 

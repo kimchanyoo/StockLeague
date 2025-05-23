@@ -126,7 +126,7 @@ public class CommentService {
             throw new GlobalException(GlobalErrorCode.INVALID_COMMENT_OWNER);
         }
 
-        commentRepository.delete(comment);
+        comment.markAsDeleted();
 
         return CommentDeleteResponseDto.from();
     }
@@ -143,7 +143,7 @@ public class CommentService {
         PageRequest pageable = PageRequest.of(
                 page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Comment> commentPage = commentRepository.findByStockIdAndParentIsNull(stock.getId(), pageable);
+        Page<Comment> commentPage = commentRepository.findByStockIdAndParentIsNullAndDeletedAtIsNull(stock.getId(), pageable);
 
         List<Comment> comments = commentPage.getContent();
 
@@ -167,7 +167,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
 
-        commentRepository.delete(comment);
+        comment.markAsDeleted();
 
         return CommentAdminDeleteResponseDto.from();
     }
