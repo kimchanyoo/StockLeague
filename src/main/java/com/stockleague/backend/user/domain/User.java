@@ -91,6 +91,14 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> notifications = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "warnedUser")
+    private List<UserWarning> receivedWarnings = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "admin")
+    private List<UserWarning> issuedWarnings = new ArrayList<>();
+
     // 비즈니스 메서드
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;

@@ -257,7 +257,7 @@ public class CommentController {
                                             """
                             )
                     )
-            ),
+            )
     })
     public ResponseEntity<CommentUpdateResponseDto> updateComment(
             @Valid @RequestBody CommentUpdateRequestDto request,

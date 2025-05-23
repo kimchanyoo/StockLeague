@@ -1,6 +1,7 @@
 package com.stockleague.backend.stock.domain;
 
 import com.stockleague.backend.user.domain.User;
+import com.stockleague.backend.user.domain.UserWarning;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -77,8 +78,12 @@ public class Comment {
     private List<CommentLike> commentLikes = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "target", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentReport> commentReports = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserWarning> warnings = new ArrayList<>();
 
     public void increaseReportCount() {
         reportCount++;
