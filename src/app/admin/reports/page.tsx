@@ -5,20 +5,23 @@ import ReportDetailModal from "@/app/components/ReportDetailModal";
 import "./reports.css";
 
 // 타입 임시 정의
+type Reporter = {
+  id: string;
+  nickname: string;
+  reason: string;
+  description?: string;
+};
 type ReportDetail = {
   id: string;
-  commentId: string; // 추가
+  commentId: string;
   commentContent: string;
   commentAuthor: string;
   commentAuthorId: string;
+  commentCreatedAt: string;
+  community: string;
   warnings: number;
-  reporterCount: number; // 추가
-  reporters: {
-    id: string;
-    nickname: string;
-    reason: string;
-    description?: string;
-  }[];
+  accountStatus: "정상" | "정지" | "경고";
+  reporters: Reporter[];
 };
 
 const dummyReports: ReportDetail[] = [
@@ -28,8 +31,10 @@ const dummyReports: ReportDetail[] = [
     commentContent: "이거 좀 과한 댓글인데요?",
     commentAuthor: "닉네임",
     commentAuthorId: "u001",
+    commentCreatedAt: "2025-05-23 15:10",
+    community: "삼성전자",
     warnings: 0,
-    reporterCount: 1,
+    accountStatus: "정상",
     reporters: [
       {
         id: "u123",
@@ -45,8 +50,10 @@ const dummyReports: ReportDetail[] = [
     commentContent: "진짜 수준 떨어지네",
     commentAuthor: "badUser",
     commentAuthorId: "u002",
+    commentCreatedAt: "2025-05-22 13:45",
+    community: "LG에너지솔루션",
     warnings: 1,
-    reporterCount: 2,
+    accountStatus: "경고",
     reporters: [
       {
         id: "u456",
@@ -83,10 +90,10 @@ const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
             className="reports-item"
             onClick={() => handleClick(report)}
           >
-            <div>댓글 ID: {report.commentId} | </div>
-            <div>작성자: {report.commentAuthor} | </div>
-            <div>신고 수: {report.reporterCount} | </div>
-            <div>경고: {report.warnings} | </div>
+            <div>댓글 ID: {report.commentId}</div>
+            <div>작성자: {report.commentAuthor}</div>
+            <div>신고 수: {report.reporters.length}</div>
+            <div>경고: {report.warnings}</div>
           </div>
         ))}
       </div>

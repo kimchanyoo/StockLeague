@@ -1,6 +1,9 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
+import styles from "@/app/styles/components/ReportDetailModal.module.css"
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 
 type Reporter = {
   id: string;
@@ -11,10 +14,14 @@ type Reporter = {
 
 type ReportDetail = {
   id: string;
+  commentId: string;
   commentContent: string;
   commentAuthor: string;
   commentAuthorId: string;
+  commentCreatedAt: string;
+  community: string;
   warnings: number;
+  accountStatus: "정상" | "정지" | "경고";
   reporters: Reporter[];
 };
 
@@ -23,71 +30,147 @@ type Props = {
   onClose: () => void;
   report: ReportDetail | null;
 };
+type ActionType = "none" | "댓글삭제" | "경고부여" | "반려처리" | "계정정지";
 
 const ReportDetailModal = ({ open, onClose, report }: Props) => {
+  const [showReporters, setShowReporters] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<ActionType>("none");
+  const [suspendDays, setSuspendDays] = useState<number>(1);
+  
   if (!open || !report) return null;
 
-  const handleBackgroundClick = (e: React.MouseEvent) => {
+  const handleOverlayClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).id === "modal-overlay") {
       onClose();
+    }
+  };
+
+  const handleActionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedAction(e.target.value as ActionType);
+    if (e.target.value !== "계정정지") {
+      setSuspendDays(1);
     }
   };
 
   return (
     <div
       id="modal-overlay"
-      onClick={handleBackgroundClick}
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+      onClick={handleOverlayClick}
+      className={styles.overlay}
     >
       <div
-        className="bg-white p-6 rounded-lg w-full max-w-xl shadow-lg"
+        className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold mb-4">신고 상세</h2>
+        <h2 className={styles.title}>신고 상세</h2>
 
-        <div className="mb-4">
-          <p><strong>댓글 내용:</strong> {report.commentContent}</p>
+        <div className={styles.textSection}>
+          <p><strong>댓글 ID:</strong> {report.commentId}</p>
           <p><strong>작성자:</strong> {report.commentAuthor} (ID: {report.commentAuthorId})</p>
-          <p><strong>누적 경고:</strong> {report.warnings}회</p>
+          <p><strong>작성일:</strong> {report.commentCreatedAt}</p>
+          <p><strong>작성 커뮤니티:</strong> {report.community}</p>
+          <p><strong>댓글 내용:</strong> {report.commentContent}</p>
         </div>
 
-        <div className="mb-4">
-          <h3 className="font-semibold mb-2">신고자 목록</h3>
-          <ul className="space-y-2 text-sm">
-            {report.reporters.map((r) => (
-              <li key={r.id} className="border p-2 rounded-md bg-gray-50">
-                <p><strong>닉네임:</strong> {r.nickname}</p>
-                <p><strong>사유:</strong> {r.reason}</p>
-                {r.description && <p><strong>설명:</strong> {r.description}</p>}
-              </li>
-            ))}
-          </ul>
+        <div className={styles.textSection}>
+          <h3 className={styles.title}>사용자 정보</h3>
+          <p><strong>닉네임:</strong> {report.commentAuthor}</p>
+          <p><strong>경고 횟수:</strong> {report.warnings}</p>
+          <p><strong>계정 상태:</strong> {report.accountStatus}</p>
         </div>
 
-        <div className="mb-4 space-y-2">
-          <h3 className="font-semibold">관리자 조치</h3>
-          <div className="flex flex-col space-y-1">
-            <label><input type="checkbox" /> 댓글 삭제</label>
-            <label><input type="checkbox" /> 경고 부여</label>
-            <label><input type="checkbox" /> 반려 처리</label>
-          </div>
-          <textarea
-            placeholder="관리자 메모 (선택)"
-            className="w-full border rounded-md p-2 mt-2"
-            rows={3}
-          />
+        <div className={styles.textSection}>
+          <button
+            onClick={() => setShowReporters(!showReporters)}
+            className={styles.toggleButton}
+          >
+            신고 내용
+            {showReporters ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+          </button>
+          {showReporters && (
+            <ul className={styles.reporterList}>
+              {report.reporters.map((r) => (
+                <li key={r.id} className={styles.reporterItem}>
+                  <p><strong>신고자:</strong> {r.nickname}</p>
+                  <p><strong>사유:</strong> {r.reason}</p>
+                  {r.description && <p><strong>내용:</strong> {r.description}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        <div className="text-right">
+         <div className={styles.adminActions}>
+          <h3 className={styles.title}>관리자 조치</h3>
+          <label>
+            <input
+              type="radio"
+              name="adminAction"
+              value="댓글삭제"
+              checked={selectedAction === "댓글삭제"}
+              onChange={handleActionChange}
+            />
+            댓글 삭제
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="adminAction"
+              value="경고부여"
+              checked={selectedAction === "경고부여"}
+              onChange={handleActionChange}
+            />
+            경고 부여
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="adminAction"
+              value="반려처리"
+              checked={selectedAction === "반려처리"}
+              onChange={handleActionChange}
+            />
+            반려 처리
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="adminAction"
+              value="계정정지"
+              checked={selectedAction === "계정정지"}
+              onChange={handleActionChange}
+            />
+            계정 정지
+          </label>
+
+          {selectedAction === "계정정지" && (
+            <div className="mt-2">
+              <label>
+                정지 일수:
+                <select
+                  value={suspendDays}
+                  onChange={(e) => setSuspendDays(Number(e.target.value))}
+                  className="ml-2 rounded border px-2 py-1"
+                >
+                  {[1, 3, 7, 14, 30].map((day) => (
+                    <option key={day} value={day}>
+                      {day}일
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.buttonGroup}>
           <button
             onClick={onClose}
-            className="mr-2 px-4 py-2 rounded-md border bg-gray-200"
+            className={`${styles.button} ${styles.buttonClose}`}
           >
             닫기
           </button>
-          <button
-            className="px-4 py-2 rounded-md bg-blue-600 text-white"
-          >
+          <button className={`${styles.button} ${styles.buttonConfirm}`}>
             조치하기
           </button>
         </div>
