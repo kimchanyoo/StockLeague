@@ -16,9 +16,5 @@ public interface CommentReportRepository extends JpaRepository<CommentReport, In
 
     Page<CommentReport> findAll(Pageable pageable);
 
-    Optional<CommentReport> findByReportId(Long reportId);
-
-    boolean existsByCommentIdAndWarningSentTrue(Long commentId);
-
-    List<CommentReport> findByCommentId(Long commentId);
+    Optional<CommentReport> findById(Long reportId);
 }
