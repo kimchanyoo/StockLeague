@@ -42,14 +42,6 @@ const Sidebar = () => {
         </li>
         <li>
           <Link
-            href="/admin/comments"
-            className={pathname.startsWith("/admin/comments") ? styles.active : ""}
-          >
-            댓글 관리
-          </Link>
-        </li>
-        <li>
-          <Link
             href="/admin/users"
             className={pathname.startsWith("/admin/users") ? styles.active : ""}
           >
