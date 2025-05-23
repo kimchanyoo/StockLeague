@@ -6,8 +6,10 @@ import java.util.Arrays;
 
 public enum ActionTaken {
     NONE,
+    REJECTED,
     WARNING,
-    DELETED;
+    COMMENT_DELETED,
+    BANNED;
 
     public static ActionTaken from(String actionTaken) {
         return Arrays.stream(ActionTaken.values())

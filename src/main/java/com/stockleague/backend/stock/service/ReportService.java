@@ -4,7 +4,6 @@ import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentReport;
-import com.stockleague.backend.stock.domain.TargetType;
 import com.stockleague.backend.stock.dto.request.report.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
@@ -44,7 +43,6 @@ public class ReportService {
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
         CommentReport commentReport = CommentReport.builder()
-                .targetType(comment.getParent() != null ? TargetType.REPLY : TargetType.COMMENT)
                 .target(comment)
                 .reporter(user)
                 .reason(request.reason())

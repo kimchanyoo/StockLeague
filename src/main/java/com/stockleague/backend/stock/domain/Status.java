@@ -5,10 +5,8 @@ import com.stockleague.backend.global.exception.GlobalException;
 import java.util.Arrays;
 
 public enum Status {
-    PENDING,
-    REJECTED,
-    WARNING_SENT,
-    COMMENT_DELETED;
+    WAITING,
+    RESOLVED;
 
     public static Status from(String status) {
         return Arrays.stream(Status.values())

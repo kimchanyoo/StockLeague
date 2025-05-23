@@ -36,10 +36,6 @@ public class CommentReport {
     @Column(name = "report_id")
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
-    private TargetType targetType;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_id")
     private Comment target;
@@ -61,19 +57,11 @@ public class CommentReport {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private Status status = Status.PENDING;
+    private Status status = Status.WAITING;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "processed_at")
-    private LocalDateTime processedAt;
-
-    @Builder.Default
-    @Column(name = "warning_sent", nullable = false)
-    private boolean warningSent = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "action_taken", length = 20)
