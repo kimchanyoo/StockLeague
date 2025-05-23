@@ -271,7 +271,7 @@ public class CommentController {
         return ResponseEntity.ok(result);
     }
 
-    @PatchMapping("/comments/{commentId}")
+    @PatchMapping("/comments/{commentId}/delete")
     @Operation(summary = "댓글 삭제", description = "사용자가 자신이 작성한 댓글을 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 삭제 성공",
