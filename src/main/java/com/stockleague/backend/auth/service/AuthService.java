@@ -58,9 +58,11 @@ public class AuthService {
 
         return userRepository.findByOauthIdAndProvider(userInfo.getOauthId(), userInfo.getProvider())
                 .map(user -> {
-                    // 기존 유저 → 바로 로그인 처리
-                    String accessToken = issueTokensAndSetCookies(user, response);
+                    if (Boolean.TRUE.equals(user.getIsBanned())) {
+                        throw new GlobalException(GlobalErrorCode.BANNED_USER);
+                    }
 
+                    String accessToken = issueTokensAndSetCookies(user, response);
                     String role = user.getRole().toString();
                     String nickname = user.getNickname();
 
@@ -68,7 +70,6 @@ public class AuthService {
                             accessToken, nickname, role);
                 })
                 .orElseGet(() -> {
-                    // 신규 유저 → accessToken 없이 isFirstLogin true 반환
                     String tempAccessToken = jwtProvider.createTempAccessToken(userInfo.getOauthId(),
                             userInfo.getProvider());
                     return new OAuthLoginResponseDto(true, "추가 정보 입력 필요", true,
