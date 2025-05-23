@@ -21,7 +21,7 @@
     border: 1px solid #ddd;
     padding: 10px;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-top: 10px;
 }
 .inquiry-item.answered {
