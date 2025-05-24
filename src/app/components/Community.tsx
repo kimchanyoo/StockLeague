@@ -21,7 +21,8 @@ const Community = ({ ticker }: Props) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [newComment, setNewComment] = useState("");
   const [stockName, setStockName] = useState<string>(ticker); // 기본값은 ticker
-  
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   const { user } = useAuth(); // 로그인 정보 가져오기
   const isLoggedIn = !!user;
   
@@ -56,7 +57,7 @@ const Community = ({ ticker }: Props) => {
   useEffect(() => {
     fetchStockName();
     fetchComments();
-  }, [ticker, currentPage]);
+  }, [ticker, currentPage, refreshTrigger]);
 
   const handlePostComment = async () => {
     if (!isLoggedIn) { 
@@ -68,7 +69,7 @@ const Community = ({ ticker }: Props) => {
       await postComment(ticker, newComment);
       setNewComment(""); // 입력창 비우기
       setCurrentPage(1); // 첫 페이지로 이동 (선택사항)
-      fetchComments();  // 댓글 목록 새로고침
+      setRefreshTrigger((prev) => prev + 1);  // 댓글 목록 새로고침
     } catch (e) {
       console.error("댓글 작성 실패", e);
     }
@@ -91,7 +92,7 @@ const Community = ({ ticker }: Props) => {
         <button className={styles.mainBtn} onClick={handlePostComment}>의견 남기기</button>
       </div>
       <div className={styles.commentSection}>
-        <Comment ticker={ticker}/>
+        <Comment ticker={ticker} refreshTrigger={refreshTrigger}/>
       </div>
 
       {/* 페이지네이션 */}

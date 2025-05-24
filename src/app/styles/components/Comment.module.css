@@ -132,3 +132,88 @@
   .noComments {
     text-align: center;
   }
+
+  /* 신고 모달 전체 배경 (반투명 블랙) */
+.reportModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px 32px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.reasonGroup,
+.contentGroup {
+  margin: 16px 0;
+}
+
+.reasonGroup label,
+.contentGroup label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.reasonGroup select,
+.contentGroup textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.contentGroup textarea {
+  height: 80px;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modalButtons button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modalButtons button:first-child {
+  background-color: #eee;
+  color: #333;
+}
+
+.modalButtons button:first-child:hover {
+  background-color: #ddd;
+}
+
+.reportConfirm {
+  background-color: #d32f2f;
+  color: white;
+  font-weight: 700;
+  border: none;
+}
+
+.reportConfirm:hover {
+  background-color: #b71c1c;
+}

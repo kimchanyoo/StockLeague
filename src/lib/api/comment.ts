@@ -78,6 +78,13 @@ export interface ReplyDeleteResponse {
   success: boolean;
   message: string;
 }
+
+// 댓글 신고
+export interface ReportPayload {
+  reason: "INSULT" | "SPAM" | "PERSONAL_INFORMATION" | "SEXUAL" | "OTHER";
+  additionalInfo: string;
+}
+
 // ─────────────────────────────
 // 댓글 API
 // ─────────────────────────────
@@ -129,5 +136,14 @@ export const patchReply = async (replyId: number, data: ReplyUpdateRequest): Pro
 
 export const deleteReply = async (replyId: number): Promise<ReplyDeleteResponse> => {
   const res = await axiosInstance.delete(`/api/v1/replies/${replyId}`);
+  return res.data;
+};
+
+// ─────────────────────────────
+// 신고 API
+// ─────────────────────────────
+
+export const reportComment = async (commentId: number, payload: ReportPayload) => {
+  const res = await axiosInstance.post(`/api/v1/reports/${commentId}`, payload);
   return res.data;
 };

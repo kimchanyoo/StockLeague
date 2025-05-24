@@ -11,15 +11,18 @@ import {
   deleteComment, 
   patchComment, 
   patchReply, 
-  deleteReply 
+  deleteReply,
+  reportComment,
+  ReportPayload
 } 
 from "@/lib/api/comment";
 
 type CommentProps = {
   ticker: string;
+  refreshTrigger: number;
 };
 
-const Comment = ({ ticker }: CommentProps) => {
+const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
   const [comments, setComments] = useState<CommentType[]>([]);
   const [likedMap, setLikedMap] = useState<{ [key: number]: boolean }>({});
   const [likesMap, setLikesMap] = useState<{ [key: number]: number }>({});
@@ -27,13 +30,14 @@ const Comment = ({ ticker }: CommentProps) => {
   const [reportModalId, setReportModalId] = useState<number | null>(null);
   const [repliesMap, setRepliesMap] = useState<{ [key: number]: Reply[] }>({}); 
   const [replyInputMap, setReplyInputMap] = useState<{ [key: number]: string }>({});
-
+  const [reportReason, setReportReason] = useState('');
+  const [reportContent, setReportContent] = useState('');
+  
   useEffect(() => {
-    // 댓글 목록 API 호출해서 state에 저장
     getCommentsByTicker(ticker)
       .then(res => {
         if (res.success) {
-          setComments(res.comments); // 실제 데이터 구조에 맞게 조정 필요
+          setComments(res.comments); 
           // 좋아요 수, 좋아요 여부 초기화 (옵션)
           const initialLikesMap: { [key: number]: number } = {};
           const initialLikedMap: { [key: number]: boolean } = {};
@@ -48,7 +52,7 @@ const Comment = ({ ticker }: CommentProps) => {
       .catch(err => {
         console.error("댓글 목록 조회 실패", err);
       });
-  }, [ticker]);
+  }, [ticker, refreshTrigger]);
 
   const toggleLike = (commentId: number) => {
     setLikedMap((prev) => ({
@@ -131,6 +135,8 @@ const Comment = ({ ticker }: CommentProps) => {
   };
 
   const closeReportModal = () => {
+    setReportReason('');   // 초기화
+    setReportContent(''); // 초기화
     setReportModalId(null);
   };
 
@@ -228,6 +234,27 @@ const Comment = ({ ticker }: CommentProps) => {
       alert('대댓글 삭제 중 오류가 발생했습니다.');
     }
   };
+
+const handleReport = async (commentId: number) => {
+  if (!reportReason) {
+    alert('신고 사유를 선택해주세요.');
+    return;
+  }
+
+  try {
+    await reportComment(commentId, {
+      reason: reportReason as ReportPayload["reason"],
+      additionalInfo: reportContent,
+    });
+    alert('신고가 접수되었습니다.');
+    closeReportModal();
+    setReportReason('');
+    setReportContent('');
+  } catch (error) {
+    alert('신고에 실패했습니다.');
+    console.error(error);
+  }
+};
 
   const renderReplies = (parentId: number) => {
     const replies = repliesMap[parentId] || [];
@@ -338,9 +365,36 @@ const Comment = ({ ticker }: CommentProps) => {
                 <div className={styles.reportModal}>
                   <div className={styles.modalContent}>
                     <p>이 댓글을 신고하시겠습니까?</p>
+                    {/* 신고 사유 선택 */}
+                    <div className={styles.reasonGroup}>
+                      <label htmlFor="reason">신고 사유</label>
+                      <select
+                        id="reason"
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                      >
+                        <option value="">-- 선택해주세요 --</option>
+                        <option value="INSULT">욕설 및 비방</option>
+                        <option value="SPAM">광고 / 도배성 내용</option>
+                        <option value="PERSONAL_INFORMATION">개인정보 노출</option>
+                        <option value="SEXUAL">선정적인 내용</option>
+                        <option value="OTHER">기타</option>
+                      </select>
+                    </div>
+
+                    {/* 신고 상세 내용 */}
+                    <div className={styles.contentGroup}>
+                      <label htmlFor="content">신고 내용</label>
+                      <textarea
+                        id="content"
+                        value={reportContent}
+                        onChange={(e) => setReportContent(e.target.value)}
+                        placeholder="신고 사유에 대한 상세 설명을 입력해주세요."
+                      />
+                    </div>
                     <div className={styles.modalButtons}>
                       <button onClick={closeReportModal}>닫기</button>
-                      <button className={styles.reportConfirm}>신고</button>
+                      <button className={styles.reportConfirm} onClick={() => handleReport(comment.commentId)}>신고</button>
                     </div>
                   </div>
                 </div>
