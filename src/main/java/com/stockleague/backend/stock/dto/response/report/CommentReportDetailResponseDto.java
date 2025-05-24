@@ -9,6 +9,7 @@ public record CommentReportDetailResponseDto(
         String commentAuthorNickname,
         String commentCreatedAt,
         String stockName,
+        String commentContent,
         Long commentAuthorId,
         int warningCount,
         Boolean accountStatus,

@@ -123,6 +123,7 @@ public class ReportService {
                 user.getNickname(),
                 comment.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 comment.getStock().getStockName(),
+                comment.getContent(),
                 user.getId(),
                 user.getWarningCount(),
                 user.getIsBanned(),

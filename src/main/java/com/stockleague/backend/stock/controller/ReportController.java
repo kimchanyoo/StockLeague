@@ -190,6 +190,7 @@ public class ReportController {
                                                "commentAuthorNickname": "stockguru",
                                                "commentCreatedAt": "2025-05-23T14:03:00",
                                                "stockName": "삼성전자",
+                                               "commentContent": "이게 주식이냐? XX",
                                                "commentAuthorId": 42,
                                                "warningCount": 2,
                                                "accountStatus": false,
