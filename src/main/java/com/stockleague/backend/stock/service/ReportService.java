@@ -2,10 +2,17 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.notification.domain.NotificationType;
+import com.stockleague.backend.notification.domain.TargetType;
+import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.notification.kafka.producer.NotificationProducer;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentReport;
+import com.stockleague.backend.stock.domain.Reason;
+import com.stockleague.backend.stock.dto.request.report.CommentDeleteAdminRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.response.report.CommentDeleteAdminResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
@@ -15,6 +22,7 @@ import com.stockleague.backend.stock.dto.response.report.WarningHistoryDto;
 import com.stockleague.backend.stock.repository.CommentReportRepository;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.user.domain.User;
+import com.stockleague.backend.user.domain.UserWarning;
 import com.stockleague.backend.user.repository.UserRepository;
 import com.stockleague.backend.user.repository.UserWarningRepository;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +33,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +43,7 @@ public class ReportService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final UserWarningRepository userWarningRepository;
+    private final NotificationProducer notificationProducer;
 
     public CommentReportResponseDto createReport(CommentReportRequestDto request, Long userId, Long targetId) {
 
@@ -118,6 +128,42 @@ public class ReportService {
                 user.getIsBanned(),
                 reports,
                 warnings
+        );
+    }
+
+    @Transactional
+    public CommentDeleteAdminResponseDto deleteCommentAndWarn(CommentDeleteAdminRequestDto request, Long commentId, Long userId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+        User user = comment.getUser();
+
+        User admin = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        comment.markDeletedAndWarnedByAdmin(admin);
+        user.increaseWarningCount();
+
+        userWarningRepository.save(UserWarning.builder()
+                .warnedUser(user)
+                .comment(comment)
+                .admin(admin)
+                .reason(request.reason())
+                .build()
+        );
+
+        NotificationEvent event = new NotificationEvent(
+                user.getId(),
+                NotificationType.COMMENT_DELETED_AND_WARNED,
+                TargetType.COMMENT,
+                commentId
+        );
+
+        notificationProducer.send(event);
+
+        return new CommentDeleteAdminResponseDto(
+                true,
+                "댓글이 삭제되고 경고가 부여되었습니다."
         );
     }
 }

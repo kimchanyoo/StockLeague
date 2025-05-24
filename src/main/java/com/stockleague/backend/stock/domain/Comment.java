@@ -6,6 +6,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -76,6 +78,15 @@ public class Comment {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processed_by_id")
+    private User processedBy;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "action_taken")
+    private ActionTaken actionTaken = ActionTaken.NONE;
+
     @Builder.Default
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikes = new ArrayList<>();
@@ -119,5 +130,17 @@ public class Comment {
 
     public void markAsDeleted() {
         this.deletedAt = LocalDateTime.now();
+    }
+
+    public void markDeletedByAdmin(User admin) {
+        this.deletedAt = LocalDateTime.now();
+        this.processedBy = admin;
+        this.actionTaken = ActionTaken.COMMENT_DELETED;
+    }
+
+    public void markDeletedAndWarnedByAdmin(User admin) {
+        this.deletedAt = LocalDateTime.now();
+        this.processedBy = admin;
+        this.actionTaken = ActionTaken.COMMENT_DELETED_AND_WARNING;
     }
 }

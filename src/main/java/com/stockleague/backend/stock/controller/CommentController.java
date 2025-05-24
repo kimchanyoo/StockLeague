@@ -403,7 +403,7 @@ public class CommentController {
         return ResponseEntity.ok(result);
     }
 
-    @PatchMapping("/admin/comments/{commentId}")
+    @PatchMapping("/admin/comments/{commentId}/delete")
     @Operation(summary = "댓글 강제 삭제", description = "관리자가 신고받은 댓글을 강제 삭제합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 강제 삭제 성공",
@@ -420,27 +420,43 @@ public class CommentController {
                             )
                     )
             ),
-            @ApiResponse(responseCode = "404", description = "댓글이 없음",
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 정보 요청",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject(
-                                    name = "CommentNotFound",
-                                    summary = "해당 댓글 정보가 존재하지 않을 경우",
-                                    value = """
-                                                {
-                                                  "success": false,
-                                                  "message": "해당 댓글을 찾을 수 없습니다.",
-                                                  "errorCode": "COMMENT_NOT_FOUND"
-                                                }
-                                            """
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "CommentNotFound",
+                                            summary = "해당 댓글 정보가 존재하지 않을 경우",
+                                            value = """
+                                                        {
+                                                          "success": false,
+                                                          "message": "해당 댓글을 찾을 수 없습니다.",
+                                                          "errorCode": "COMMENT_NOT_FOUND"
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "UserNotFound",
+                                            summary = "존재하지 않는 사용자",
+                                            value = """
+                                                    {
+                                                        "success" : false,
+                                                        "message" : "해당 사용자를 찾을 수 없습니다.",
+                                                        "errorCode": "USER_NOT_FOUND"
+                                                    }
+                                                    """
+                                    )
+                            }
                     )
             )
     })
     public ResponseEntity<CommentAdminDeleteResponseDto> forceDeleteCommentByAdmin(
-            @PathVariable Long commentId
+            @PathVariable Long commentId,
+            Authentication authentication
     ) {
-        CommentAdminDeleteResponseDto result = commentService.forceDeleteCommentByAdmin(commentId);
+        Long adminId = (Long) authentication.getPrincipal();
+
+        CommentAdminDeleteResponseDto result = commentService.forceDeleteCommentByAdmin(commentId, adminId);
 
         return ResponseEntity.ok(result);
     }

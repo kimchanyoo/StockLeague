@@ -2,6 +2,10 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.notification.domain.NotificationType;
+import com.stockleague.backend.notification.domain.TargetType;
+import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.notification.kafka.producer.NotificationProducer;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;
@@ -38,6 +42,7 @@ public class CommentService {
     private final StockRepository stockRepository;
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final NotificationProducer notificationProducer;
 
     public CommentCreateResponseDto createComment(
             CommentCreateRequestDto request, String ticker, Long userId) {
@@ -162,12 +167,23 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentAdminDeleteResponseDto forceDeleteCommentByAdmin(Long commentId) {
+    public CommentAdminDeleteResponseDto forceDeleteCommentByAdmin(Long commentId, Long adminId) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
 
-        comment.markAsDeleted();
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        comment.markDeletedByAdmin(admin);
+
+        NotificationEvent event = new NotificationEvent(
+                comment.getUser().getId(),
+                NotificationType.COMMENT_DELETED,
+                TargetType.COMMENT,
+                commentId
+        );
+        notificationProducer.send(event);
 
         return CommentAdminDeleteResponseDto.from();
     }

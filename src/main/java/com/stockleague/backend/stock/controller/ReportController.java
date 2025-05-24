@@ -1,13 +1,16 @@
 package com.stockleague.backend.stock.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
+import com.stockleague.backend.stock.dto.request.report.CommentDeleteAdminRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.response.report.CommentDeleteAdminResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
 import com.stockleague.backend.stock.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -243,6 +246,68 @@ public class ReportController {
             @PathVariable Long commentId
     ) {
         CommentReportDetailResponseDto result = reportService.getReport(commentId);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/admin/comments/{commentId}/delete-with-warning")
+    @Operation(
+            summary = "댓글 삭제 및 경고 부여 (관리자 전용)",
+            description = "관리자가 특정 댓글을 삭제하고, 작성자에게 경고를 부여합니다. 알림이 발송되고, 경고 이력이 저장됩니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "댓글 삭제 및 경고 성공",
+                    content = @Content(schema = @Schema(implementation = CommentDeleteAdminResponseDto.class),
+                            examples = @ExampleObject(name = "DeleteAndWarningSuccess",
+                                    summary = "댓글 삭제 및 경고 처리 완료",
+                                    value = """
+                                            {
+                                              "success": true,
+                                              "message": "댓글이 삭제되고 경고가 부여되었습니다.",
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 정보 요청",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "CommentNotFound",
+                                            summary = "해당 댓글 정보가 존재하지 않을 경우",
+                                            value = """
+                                                        {
+                                                          "success": false,
+                                                          "message": "해당 댓글을 찾을 수 없습니다.",
+                                                          "errorCode": "COMMENT_NOT_FOUND"
+                                                        }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "UserNotFound",
+                                            summary = "존재하지 않는 사용자",
+                                            value = """
+                                                    {
+                                                        "success" : false,
+                                                        "message" : "해당 사용자를 찾을 수 없습니다.",
+                                                        "errorCode": "USER_NOT_FOUND"
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    public ResponseEntity<CommentDeleteAdminResponseDto> deleteCommentAndWarn(
+            @PathVariable Long commentId,
+            @RequestBody @Valid CommentDeleteAdminRequestDto request,
+            Authentication authentication
+    ) {
+        Long adminId = (Long) authentication.getPrincipal();
+
+        CommentDeleteAdminResponseDto result
+                = reportService.deleteCommentAndWarn(request, commentId, adminId);
 
         return ResponseEntity.ok(result);
     }

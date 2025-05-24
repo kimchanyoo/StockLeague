@@ -63,7 +63,8 @@ public class CommentReport {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "action_taken", length = 20)
-    private ActionTaken actionTaken;
+    private ActionTaken actionTaken = ActionTaken.NONE;
 }

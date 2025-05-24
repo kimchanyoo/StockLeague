@@ -7,7 +7,7 @@ import java.util.Arrays;
 public enum ActionTaken {
     NONE,
     REJECTED,
-    WARNING,
+    COMMENT_DELETED_AND_WARNING,
     COMMENT_DELETED,
     BANNED;
 

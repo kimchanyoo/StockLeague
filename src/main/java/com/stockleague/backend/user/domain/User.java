@@ -99,8 +99,26 @@ public class User {
     @OneToMany(mappedBy = "admin")
     private List<UserWarning> issuedWarnings = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "processedBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> processedAdmin = new ArrayList<>();
+
     // 비즈니스 메서드
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;
+    }
+
+    public void increaseWarningCount() {
+        this.warningCount++;
+    }
+
+    public void decreaseWarningCount() {
+        if (this.warningCount > 0) {
+            this.warningCount--;
+        }
+    }
+
+    public void ban() {
+        this.isBanned = true;
     }
 }
