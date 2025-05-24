@@ -9,6 +9,7 @@ import com.stockleague.backend.notification.kafka.producer.NotificationProducer;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentReport;
 import com.stockleague.backend.stock.domain.Reason;
+import com.stockleague.backend.stock.domain.Status;
 import com.stockleague.backend.stock.dto.request.report.CommentDeleteAdminRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
@@ -70,7 +71,7 @@ public class ReportService {
         return CommentReportResponseDto.from();
     }
 
-    public CommentReportListResponseDto listReports(CommentReportListRequestDto request, int page, int size) {
+    public CommentReportListResponseDto listReports(Status status, int page, int size) {
 
         if (page < 1 || size < 1) {
             throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
@@ -79,9 +80,9 @@ public class ReportService {
         Pageable pageable;
         Page<CommentReport> reportPage;
 
-        if (request.status() != null) {
+        if (status != null) {
             pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("createdAt")));
-            reportPage = commentReportRepository.findByStatus(request.status(), pageable);
+            reportPage = commentReportRepository.findByStatus(status, pageable);
         } else {
             pageable = PageRequest.of(page - 1, size);
             reportPage = commentReportRepository.findAllOrderByWaitingFirst(pageable);

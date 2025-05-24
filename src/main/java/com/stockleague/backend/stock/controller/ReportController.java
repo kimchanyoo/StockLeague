@@ -1,6 +1,7 @@
 package com.stockleague.backend.stock.controller;
 
 import com.stockleague.backend.global.exception.ErrorResponse;
+import com.stockleague.backend.stock.domain.Status;
 import com.stockleague.backend.stock.dto.request.report.CommentDeleteAdminRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportListRequestDto;
 import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
@@ -165,9 +166,9 @@ public class ReportController {
     public ResponseEntity<CommentReportListResponseDto> getListReport(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @Valid @RequestBody CommentReportListRequestDto request
+            @RequestParam(required = false) Status status
     ) {
-        CommentReportListResponseDto result = reportService.listReports(request, page, size);
+        CommentReportListResponseDto result = reportService.listReports(status, page, size);
 
         return ResponseEntity.ok(result);
     }
