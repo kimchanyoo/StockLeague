@@ -78,11 +78,58 @@ export interface ReplyDeleteResponse {
   success: boolean;
   message: string;
 }
-
+type Reason = "INSULT" | "SPAM" | "PERSONAL_INFORMATION" | "SEXUAL" | "OTHER";
 // 댓글 신고
 export interface ReportPayload {
-  reason: "INSULT" | "SPAM" | "PERSONAL_INFORMATION" | "SEXUAL" | "OTHER";
+  reason: Reason;
   additionalInfo: string;
+}
+
+// 신고 목록
+type ReportStatus = 'WAITING' | 'RESOLVED';
+export interface Report {
+  commentId: number;
+  reporterNickname: string;
+  reportCount: number;
+  warningCount: number;
+}
+export interface ReportListResponse {
+  success: boolean;
+  reports: Report[];
+  page: number;
+  size: number;
+  totalCount: number;
+  totalPage: number;
+}
+
+// 신고 상세
+export interface SingleReport {
+  reporterNickname: string;
+  reason: string;
+  additionalInfo: string;
+  reportedAt: string;
+}
+
+export interface Warning {
+  warningAt: string;
+  reason: string;
+  commentId: number;
+  adminNickname: string;
+}
+
+export interface ReportDetail {
+  success: boolean;
+  message: string;
+  commentId: number;
+  commentAuthorNickname: string;
+  commentCreatedAt: string;
+  stockName: string;
+  commentContent: string;
+  commentAuthorId: number;
+  warningCount: number;
+  accountStatus: boolean;
+  reports: SingleReport[];
+  warnings: Warning[];
 }
 
 // ─────────────────────────────
@@ -145,5 +192,38 @@ export const deleteReply = async (replyId: number): Promise<ReplyDeleteResponse>
 
 export const reportComment = async (commentId: number, payload: ReportPayload) => {
   const res = await axiosInstance.post(`/api/v1/reports/${commentId}`, payload);
+  return res.data;
+};
+
+export const fetchReports = async ( page = 1, size = 10, status: ReportStatus = 'WAITING' ): Promise<ReportListResponse> => {
+  const res = await axiosInstance.get<ReportListResponse>('/api/v1/admin/reports', {
+    params: {
+      page,
+      size,
+      status,
+    },
+  });
+  return res.data;
+};
+
+export const fetchReportDetail = async (commentId: number): Promise<ReportDetail> => {
+  const res = await axiosInstance.get(`/api/v1/admin/reports/${commentId}`);
+  return res.data;
+};
+
+export const forceDeleteComment = async (commentId: number) => {
+  const res = await axiosInstance.patch(`/api/v1/admin/comments/${commentId}/delete`);
+  return res.data;
+};
+
+export const deleteCommentWithWarning = async (commentId: number, reason: string) => {
+  const res = await axiosInstance.post(`/api/v1/admin/comments/${commentId}/delete-with-warning`, {
+    reason
+  });
+  return res.data;
+};
+
+export const banUser = async (userId: number, reason: string) => {
+  const res = await axiosInstance.patch(`/api/v1/admin/users/${userId}`, { reason });
   return res.data;
 };

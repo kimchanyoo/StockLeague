@@ -4,39 +4,29 @@ import { useState } from "react";
 import styles from "@/app/styles/components/ReportDetailModal.module.css"
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+import { ReportDetail } from "@/lib/api/comment";
 
-type Reporter = {
-  id: string;
-  nickname: string;
-  reason: string;
-  description?: string;
-};
-
-type ReportDetail = {
-  id: string;
-  commentId: string;
-  commentContent: string;
-  commentAuthor: string;
-  commentAuthorId: string;
-  commentCreatedAt: string;
-  community: string;
-  warnings: number;
-  accountStatus: "정상" | "정지" | "경고";
-  reporters: Reporter[];
-};
-
-type Props = {
+interface Props {
   open: boolean;
   onClose: () => void;
   report: ReportDetail | null;
-};
+}
 type ActionType = "none" | "댓글삭제" | "경고부여" | "반려처리" | "계정정지";
 
 const ReportDetailModal = ({ open, onClose, report }: Props) => {
   const [showReporters, setShowReporters] = useState(false);
   const [selectedAction, setSelectedAction] = useState<ActionType>("none");
   const [suspendDays, setSuspendDays] = useState<number>(1);
-  
+  const getAccountStatusText = (status: boolean) => (status ? "정지" : "활동 중");
+
+  const reasonTextMap: Record<string, string> = {
+    INSULT: "욕설 및 비방",
+    SPAM: "광고 / 도배성 내용",
+    PERSONAL_INFORMATION: "개인정보 노출",
+    SEXUAL: "선정적인 내용",
+    OTHER: "기타",
+  };
+
   if (!open || !report) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -66,17 +56,17 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
 
         <div className={styles.textSection}>
           <p><strong>댓글 ID:</strong> {report.commentId}</p>
-          <p><strong>작성자:</strong> {report.commentAuthor} (ID: {report.commentAuthorId})</p>
+          <p><strong>작성자:</strong> {report.commentAuthorNickname} (ID: {report.commentAuthorId})</p>
           <p><strong>작성일:</strong> {report.commentCreatedAt}</p>
-          <p><strong>작성 커뮤니티:</strong> {report.community}</p>
+          <p><strong>작성 커뮤니티:</strong> {report.stockName}</p>
           <p><strong>댓글 내용:</strong> {report.commentContent}</p>
         </div>
 
         <div className={styles.textSection}>
           <h3 className={styles.title}>사용자 정보</h3>
-          <p><strong>닉네임:</strong> {report.commentAuthor}</p>
-          <p><strong>경고 횟수:</strong> {report.warnings}</p>
-          <p><strong>계정 상태:</strong> {report.accountStatus}</p>
+          <p><strong>닉네임:</strong> {report.commentAuthorNickname}</p>
+          <p><strong>경고 횟수:</strong> {report.warningCount}</p>
+          <p><strong>계정 상태:</strong> {getAccountStatusText(report.accountStatus)}</p>
         </div>
 
         <div className={styles.textSection}>
@@ -89,11 +79,12 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
           </button>
           {showReporters && (
             <ul className={styles.reporterList}>
-              {report.reporters.map((r) => (
-                <li key={r.id} className={styles.reporterItem}>
-                  <p><strong>신고자:</strong> {r.nickname}</p>
-                  <p><strong>사유:</strong> {r.reason}</p>
-                  {r.description && <p><strong>내용:</strong> {r.description}</p>}
+              {report.reports.map((r, index) => (
+                <li key={`${r.reporterNickname}-${r.reason}-${r.reportedAt}-${index}`} className={styles.reporterItem}>
+                  <p><strong>신고자:</strong> {r.reporterNickname}</p>
+                  <p><strong>사유:</strong> {reasonTextMap[r.reason]}</p>
+                  {r.additionalInfo && <p><strong>내용:</strong> {r.additionalInfo}</p>}
+                  <p><strong>신고일:</strong> {r.reportedAt}</p>
                 </li>
               ))}
             </ul>
@@ -142,25 +133,6 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
             />
             계정 정지
           </label>
-
-          {selectedAction === "계정정지" && (
-            <div className="mt-2">
-              <label>
-                정지 일수:
-                <select
-                  value={suspendDays}
-                  onChange={(e) => setSuspendDays(Number(e.target.value))}
-                  className="ml-2 rounded border px-2 py-1"
-                >
-                  {[1, 3, 7, 14, 30].map((day) => (
-                    <option key={day} value={day}>
-                      {day}일
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          )}
         </div>
 
         <div className={styles.buttonGroup}>
