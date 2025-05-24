@@ -29,17 +29,17 @@ public class AdminController {
     private final AdminService adminService;
 
     @DeleteMapping("/users/{userId}")
-    @Operation(summary = "회원 강제 탈퇴", description = "관리자가 특정 회원을 강제로 탈퇴시킵니다.")
+    @Operation(summary = "회원 강제 탈퇴", description = "관리자가 특정 회원을 이용 정지시킵니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "회원 강제 탈퇴 성공",
+            @ApiResponse(responseCode = "200", description = "회원 이용 정지 성공",
                     content = @Content(schema = @Schema(implementation = AdminUserForceWithdrawResponseDto.class),
                             examples = @ExampleObject(
-                                    name = "ForceWithdrawSuccess",
-                                    summary = "회원 강제 탈퇴 완료",
+                                    name = "UserBanSuccess",
+                                    summary = "회원 이용 정지 완료",
                                     value = """
                                                 {
                                                   "success": true,
-                                                  "message": "회원이 강제 탈퇴되었습니다."
+                                                  "message": "회원이 이용 정지되었습니다."
                                                 }
                                             """
                             )

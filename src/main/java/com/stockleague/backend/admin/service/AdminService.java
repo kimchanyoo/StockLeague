@@ -4,6 +4,10 @@ import com.stockleague.backend.admin.dto.request.AdminUserForceWithdrawRequestDt
 import com.stockleague.backend.admin.dto.response.AdminUserForceWithdrawResponseDto;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.notification.domain.NotificationType;
+import com.stockleague.backend.notification.domain.TargetType;
+import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.notification.kafka.producer.NotificationProducer;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminService {
 
     private final UserRepository userRepository;
+    private final NotificationProducer notificationProducer;
 
     @Transactional
     public AdminUserForceWithdrawResponseDto forceWithdrawUser(
@@ -22,8 +27,16 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-        userRepository.delete(user);
+        user.ban();
 
-        return new AdminUserForceWithdrawResponseDto(true, "회원이 강제 탈퇴되었습니다.");
+        NotificationEvent event = new NotificationEvent(
+                user.getId(),
+                NotificationType.USER_BANNED,
+                TargetType.USER,
+                user.getId()
+        );
+        notificationProducer.send(event);
+
+        return new AdminUserForceWithdrawResponseDto(true, "회원이 이용 정지되었습니다.");
     }
 }
