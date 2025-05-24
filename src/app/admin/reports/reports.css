@@ -31,3 +31,30 @@
 .reports-item:hover {
   background-color: #f9f9f9;
 }
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 8px;
+  }
+  
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  .pagination button.active {
+    background-color: #0070f3;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .pagination button:disabled {
+    background-color: #eee;
+    color: #aaa;
+    cursor: not-allowed;
+  }
