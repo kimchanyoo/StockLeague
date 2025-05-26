@@ -160,6 +160,13 @@ public class AuthService {
         String refreshToken = extractRefreshTokenFromCookie(request);
         Long userId = getValidUserIdFromRefreshToken(refreshToken, response);
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(user.getIsBanned())) {
+            throw new GlobalException(GlobalErrorCode.BANNED_USER);
+        }
+
         String newAccessToken = jwtProvider.createAccessToken(userId);
         String newRefreshToken = jwtProvider.createRefreshToken(userId);
 
