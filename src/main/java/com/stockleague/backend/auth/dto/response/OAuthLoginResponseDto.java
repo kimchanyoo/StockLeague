@@ -4,7 +4,7 @@ public record OAuthLoginResponseDto (
         boolean success,
         String message,
         boolean isFirstLogin,
-        String accessToken,
+        String tempAccessToken,
         String nickname,
         String role
 ) {

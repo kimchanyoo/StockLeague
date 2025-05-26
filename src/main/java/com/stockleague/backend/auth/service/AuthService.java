@@ -62,12 +62,12 @@ public class AuthService {
                         throw new GlobalException(GlobalErrorCode.BANNED_USER);
                     }
 
-                    String accessToken = issueTokensAndSetCookies(user, response);
+                    issueTokensAndSetCookies(user, response);
                     String role = user.getRole().toString();
                     String nickname = user.getNickname();
 
                     return new OAuthLoginResponseDto(true, "소셜 로그인 성공", false,
-                            accessToken, nickname, role);
+                            null, nickname, role);
                 })
                 .orElseGet(() -> {
                     String tempAccessToken = jwtProvider.createTempAccessToken(userInfo.getOauthId(),
@@ -104,13 +104,13 @@ public class AuthService {
                     .build()
             );
 
-            String accessToken = issueTokensAndSetCookies(user, response);
+            issueTokensAndSetCookies(user, response);
 
             String role = user.getRole().toString();
             String nickname = user.getNickname();
 
             return new OAuthLoginResponseDto(true, "추가 정보 입력이 완료되었습니다",
-                    false, accessToken, nickname, role);
+                    false, null, nickname, role);
 
         } catch (DataIntegrityViolationException e) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
@@ -195,14 +195,11 @@ public class AuthService {
         tokenCookieHandler.removeTokenCookies(response);
     }
 
-    private String issueTokensAndSetCookies(User user, HttpServletResponse response) {
+    private void issueTokensAndSetCookies(User user, HttpServletResponse response) {
         String accessToken = jwtProvider.createAccessToken(user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
         redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(30));
         tokenCookieHandler.addTokenCookies(response, accessToken, refreshToken);
-
-        // swagger 테스팅을 위한 accessToken 반환
-        return accessToken;
     }
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
