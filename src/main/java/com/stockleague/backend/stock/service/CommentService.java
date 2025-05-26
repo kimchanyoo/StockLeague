@@ -91,10 +91,12 @@ public class CommentService {
             like.toggle();
             if (like.getIsLiked()) {
                 comment.increaseLikeCount();
+                commentRepository.save(comment);
                 return new CommentLikeResponseDto(true, "좋아요가 등록되었습니다.",
                         like.getIsLiked(), comment.getLikeCount());
             } else {
                 comment.decreaseLikeCount();
+                commentRepository.save(comment);
                 return new CommentLikeResponseDto(true, "좋아요가 취소되었습니다.",
                         like.getIsLiked(), comment.getLikeCount());
             }
