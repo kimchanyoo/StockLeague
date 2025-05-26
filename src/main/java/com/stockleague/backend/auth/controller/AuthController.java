@@ -51,7 +51,7 @@ public class AuthController {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
                                                        "isFirstLogin" : false,
-                                                       "accessToken" "eyJhbGciOiJIUzI1...": ,
+                                                       "tempAccessToken" : null,
                                                        "nickname" : "테스트",
                                                        "role" : "USER"
                                                     }
@@ -65,7 +65,7 @@ public class AuthController {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
                                                        "isFirstLogin" : true,
-                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
+                                                       "tempAccessToken" : "eyJhbGciOiJIUzI1...",
                                                        "nickname" : null,
                                                        "role" : null
                                                     }
@@ -168,7 +168,7 @@ public class AuthController {
                                                "success" : true,
                                                "message" : "추가 정보 입력이 완료되었습니다",
                                                "isFirstLogin" : false,
-                                               "accessToken" : "eyJhbGciOiJIUzI1...",
+                                               "tempAccessToken" : null,
                                                "nickname" : "테스트",
                                                "role" : "USER"
                                             }
