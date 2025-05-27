@@ -28,11 +28,11 @@ public class AdminService {
 
     @Transactional
     public AdminUserForceWithdrawResponseDto forceWithdrawUser(
-            Long adminId, AdminUserForceWithdrawRequestDto requestDto) {
+            AdminUserForceWithdrawRequestDto requestDto, Long adminId, Long userId) {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-        User user = userRepository.findById(requestDto.userId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
         Comment comment = commentRepository.findById(requestDto.commentId())
@@ -49,7 +49,7 @@ public class AdminService {
         );
         notificationProducer.send(event);
 
-        tokenRedisService.deleteRefreshToken(requestDto.userId());
+        tokenRedisService.deleteRefreshToken(userId);
 
         return new AdminUserForceWithdrawResponseDto(true, "회원이 이용 정지되었습니다.");
     }
