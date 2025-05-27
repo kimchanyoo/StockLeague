@@ -26,6 +26,7 @@ import com.stockleague.backend.user.repository.UserRepository;
 import com.stockleague.backend.user.repository.UserWarningRepository;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -126,7 +127,9 @@ public class ReportService {
                 user.getId(),
                 user.getWarningCount(),
                 user.getIsBanned(),
-                comment.getProcessedBy().getNickname(),
+                Optional.ofNullable(comment.getProcessedBy())
+                        .map(User::getNickname)
+                        .orElse(null),
                 comment.getActionTaken(),
                 comment.getStatus(),
                 reports,
