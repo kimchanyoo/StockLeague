@@ -4,6 +4,7 @@ import com.stockleague.backend.admin.dto.request.AdminUserForceWithdrawRequestDt
 import com.stockleague.backend.admin.dto.response.AdminUserForceWithdrawResponseDto;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
@@ -20,6 +21,7 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final NotificationProducer notificationProducer;
+    private final TokenRedisService tokenRedisService;
 
     @Transactional
     public AdminUserForceWithdrawResponseDto forceWithdrawUser(
@@ -36,6 +38,8 @@ public class AdminService {
                 user.getId()
         );
         notificationProducer.send(event);
+
+        tokenRedisService.deleteRefreshToken(userId);
 
         return new AdminUserForceWithdrawResponseDto(true, "회원이 이용 정지되었습니다.");
     }
