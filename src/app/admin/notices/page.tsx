@@ -21,6 +21,7 @@ export default function Notices() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(10);
   const [currentIsPinned, setCurrentIsPinned] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const totalPages = Math.ceil(totalCount / noticesPerPage);
 
@@ -29,20 +30,24 @@ export default function Notices() {
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
-  useEffect(() => {
-    const fetchAdminNotices = async () => {
-      try {
-        const data = await getAdminNotices({ page: currentPage, size: noticesPerPage });
-        if (data.success) {
-          setNotices(data.notices);
-          setTotalCount(data.totalCount);
-        } else {
-          console.error("공지사항 목록 조회 실패");
-        }
-      } catch (error) {
-        console.error("공지사항 API 오류", error);
+  const fetchAdminNotices = async (page = currentPage) => {
+    try {
+      setLoading(true);
+      const data = await getAdminNotices({ page, size: noticesPerPage });
+      if (data.success) {
+        setNotices(data.notices);
+        setTotalCount(data.totalCount);
+      } else {
+        console.error("공지사항 목록 조회 실패");
       }
+    } catch (error) {
+      console.error("공지사항 API 오류", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchAdminNotices();
   }, [currentPage]);
 
@@ -64,9 +69,10 @@ export default function Notices() {
   const handleCancel = () => {
     setEditMode(false);
     setEditingId(null);
-    setCurrentCategory("");
+    setCurrentCategory("일반");
     setCurrentTitle("");
     setCurrentContent("");
+    setCurrentIsPinned(false);
   };
 
   const handleSubmit = async () => {
@@ -89,6 +95,7 @@ export default function Notices() {
       }
 
       handleCancel();
+      await fetchAdminNotices(1);
       setCurrentPage(1);
     } catch (e) {
       alert("저장 실패");
@@ -98,20 +105,16 @@ export default function Notices() {
 
   const handlePinToggle = async (notice: AdminNotice) => {
     try {
-      const updatedNotice = {
-        title: notice.title,
-        category: notice.category,
-        content: "", // content는 수정 API에 필요하니까, 따로 불러오거나 빈 문자열 넣어주세요
-        isPinned: !notice.isPinned,
-      };
-      await updateAdminNotice(notice.noticeId, updatedNotice);
+      const detail = await getNoticeDetail(notice.noticeId); // 상세 조회
 
-      // 로컬 상태도 업데이트
-      setNotices((prev) =>
-        prev.map((n) =>
-          n.noticeId === notice.noticeId ? { ...n, isPinned: !n.isPinned } : n
-        )
-      );
+      await updateAdminNotice(notice.noticeId, {
+        title: detail.title,
+        content: detail.content, // 중요!
+        category: detail.category,
+        isPinned: !detail.isPinned,
+      });
+
+      await fetchAdminNotices(currentPage); // 목록 새로고침
       alert(`공지 ${!notice.isPinned ? "고정" : "고정 해제"} 완료`);
     } catch (error) {
       console.error(error);
@@ -197,6 +200,8 @@ export default function Notices() {
       </div>
       <div className="notices-list">
         <h1>공지 목록</h1>
+        {loading && <p style={{textAlign: "center"}}>로딩중...</p>}
+        {!loading && notices.length === 0 && <p style={{textAlign: "center"}}>공지 내역이 없습니다.</p>}
         {notices.map((notice) => (
           <div
             key={notice.noticeId}

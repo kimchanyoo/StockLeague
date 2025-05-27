@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import MainStockChart from "./components/MainStockChart";
 import Portfolio from "./components/Portfolio";
 import { useAuth } from "@/context/AuthContext";
+import { getNotices, Notice } from "@/lib/api/notice";
 
 // 랜덤 주식 데이터 생성 함수
 const generateDummyStockData = () => {
@@ -30,6 +31,7 @@ const generateDummyStockData = () => {
 };
 
 export default function Home() {
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [activeTab, setActiveTab] = useState("전체");
   const tabList = ["전체", "인기", "관심"];
   const router = useRouter();
@@ -43,6 +45,20 @@ export default function Home() {
   useEffect(() => {
     const data = generateDummyStockData();
     setStockData(data);
+
+    // 공지사항 가져오기
+    const loadNotices = async () => {
+      try {
+        const res = await getNotices(1, 3); // 최신 공지 3개
+        if (res.success) {
+          setNotices(res.notices);
+        }
+      } catch (err) {
+        console.error("❌ 공지사항 불러오기 실패:", err);
+      }
+    };
+
+    loadNotices();
   }, []);
 
   const handleGotoStockList = () => {
@@ -76,14 +92,26 @@ export default function Home() {
         {!isLoggedIn ? (
           <div className={styles.loginContainer}>
             <div className={styles.signSection}>
-              <button className={styles.signBtn}><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
+              <button className={styles.signBtn} onClick={() => router.push("/auth/login")}><SignUpIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>회원가입</button>
               <button className={styles.signBtn} onClick={() => router.push("/auth/login")}><SignInIcon sx={{ fontSize: "3.75rem", marginBottom: "28px" }}/>로그인</button>
             </div>
             <div className={styles.announcement}>
-              <h1 className={styles.announcementTitle}>공지사항<RightIcon/></h1>
-              <div className={styles.announcementContent}>이것은 첫 번째 공지사항 예시입니다.</div>
-              <div className={styles.announcementContent}>이것은 두 번째 공지사항 예시입니다.</div>
-              <div className={styles.announcementContent}>이것은 세 번째 공지사항 예시입니다.</div>
+              <h1 className={styles.announcementTitle} onClick={() => router.push("/help/notice")}>
+                공지사항<RightIcon/>
+              </h1>
+              {notices.length === 0 ? (
+                <div className={styles.announcementContent}>공지사항이 없습니다.</div>
+              ) : (
+                notices.map((notice) => (
+                  <div
+                    key={notice.noticeId}
+                    className={styles.announcementContent}
+                    onClick={() => router.push(`/help/notice/${notice.noticeId}`)}
+                  >
+                    - {notice.title}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         ) : (

@@ -94,7 +94,6 @@
   font-size: 0.875rem;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background-color 0.2s ease;
 }
 
 .buttonClose {

@@ -15,34 +15,36 @@ interface SocialSignupData {
 interface SocialSignupContextType {
   data: Partial<SocialSignupData>;
   setData: (data: Partial<SocialSignupData>) => void;
+  handleFirstLoginSuccess: (token: string) => void;
+  finalizeSignup: (nickname: string, role: Role) => void;
 }
 
 const SocialSignupContext = createContext<SocialSignupContextType | undefined>(undefined);
 
 export const SocialSignupProvider = ({ children }: { children: React.ReactNode }) => {
   const [data, setState] = useState<Partial<SocialSignupData>>({});
-  const { setAccessToken, setUser } = useAuth(); // AuthContext에서 setAccessToken과 setUser 가져오기
+  const { setUser, setTempAccessToken } = useAuth(); // AuthContext에서 setAccessToken과 setUser 가져오기
 
   const setData = (newData: Partial<SocialSignupData>) => {
     setState((prev) => ({ ...prev, ...newData }));
   };
   
-  const handleLoginSuccess = (accessToken: string, nickname: string, role: Role = "USER") => {
+  const handleFirstLoginSuccess = (token: string) => {
+    setTempAccessToken(token);
+  };
+  
+  const finalizeSignup = (nickname: string, role: Role) => {
     setData({
-      accessToken,
+      nickname,
       agreedToTerms: true,
       isOverFifteen: true,
-      nickname,
       role,
     });
-    // 로그인 후 AuthContext에 데이터 설정
-    setAccessToken(accessToken); // AuthContext에 accessToken 설정
-      setUser({ nickname, role });
-
+    setUser({ nickname, role });
   };
   
   return (
-    <SocialSignupContext.Provider value={{ data, setData }}>
+    <SocialSignupContext.Provider value={{ data, setData, handleFirstLoginSuccess, finalizeSignup }}>
       {children}
     </SocialSignupContext.Provider>
   );

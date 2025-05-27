@@ -30,7 +30,7 @@
   gap: 10px;
 }
 
-h1 {
+.admin-layout h1 {
   width: 100%;
   border-bottom: 1px solid #D9D9D9;
   padding: 10px; 

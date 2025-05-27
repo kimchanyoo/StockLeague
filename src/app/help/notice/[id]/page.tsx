@@ -50,7 +50,7 @@ export default function NoticeDetailPage() {
           ))}
         </div>
       </div>
-      <button onClick={() => router.back()} className="back-btn">목록으로</button>
+      <button onClick={() => router.push("/help/notice")} className="back-btn">목록으로</button>
     </div>
   );
 }
