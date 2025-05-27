@@ -4,7 +4,7 @@ import com.stockleague.backend.stock.domain.CommentReport;
 
 public record CommentReportSummaryDto(
         Long commentId,
-        String reporterNickname,
+        String authorNickname,
         Integer reportCount,
         Integer warningCount
 
@@ -12,7 +12,7 @@ public record CommentReportSummaryDto(
     public static CommentReportSummaryDto from(CommentReport report) {
         return new CommentReportSummaryDto(
                 report.getComment().getId(),
-                report.getReporter().getNickname(),
+                report.getComment().getUser().getNickname(),
                 report.getComment().getReportCount(),
                 report.getComment().getUser().getWarningCount()
         );

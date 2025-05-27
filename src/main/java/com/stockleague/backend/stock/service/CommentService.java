@@ -5,7 +5,7 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
-import com.stockleague.backend.notification.kafka.producer.NotificationProducer;
+import com.stockleague.backend.kafka.producer.NotificationProducer;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;

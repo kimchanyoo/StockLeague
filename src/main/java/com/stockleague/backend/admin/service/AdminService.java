@@ -8,7 +8,7 @@ import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
-import com.stockleague.backend.notification.kafka.producer.NotificationProducer;
+import com.stockleague.backend.kafka.producer.NotificationProducer;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

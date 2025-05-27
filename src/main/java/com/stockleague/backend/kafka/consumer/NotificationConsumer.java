@@ -1,4 +1,4 @@
-package com.stockleague.backend.notification.kafka.consumer;
+package com.stockleague.backend.kafka.consumer;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;

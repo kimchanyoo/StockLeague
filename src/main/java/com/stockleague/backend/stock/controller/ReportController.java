@@ -125,13 +125,13 @@ public class ReportController {
                                                    "reports": [
                                                      {
                                                        "commentId": 123,
-                                                       "reporterNickname": "신고자1",
+                                                       "authorNickname": "신고자1",
                                                        "reportCount": 2,
                                                        "warningCount": 1
                                                      },
                                                      {
                                                        "commentId": 124,
-                                                       "reporterNickname": "신고자2",
+                                                       "authorNickname": "신고자2",
                                                        "reportCount": 1,
                                                        "warningCount": 0
                                                      }
