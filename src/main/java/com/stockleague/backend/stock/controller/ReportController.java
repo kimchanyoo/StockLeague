@@ -199,7 +199,7 @@ public class ReportController {
                                                "accountStatus" : false,
                                                "AdminNickname" : "관리자 A씨",
                                                "actionTaken" : "COMMENT_DELETED",
-                                               "status" : "RESOLVED"
+                                               "status" : "RESOLVED",
                                                "reports": [
                                                  {
                                                    "reporterNickname": "reporter01",
@@ -229,7 +229,8 @@ public class ReportController {
                                                  }
                                                ]
                                              }
-                                            """)
+                                            """
+                            )
                     )
             ),
             @ApiResponse(responseCode = "404", description = "댓글이 없음",
