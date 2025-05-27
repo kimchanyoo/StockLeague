@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import ReportDetailModal from "@/app/components/ReportDetailModal";
 import "./reports.css";
-import { fetchReports, Report, fetchReportDetail, ReportDetail } from "@/lib/api/comment"; 
+import { fetchReports, Report, fetchReportDetail, ReportDetail, ReportStatus} from "@/lib/api/comment"; 
 
-const noticesPerPage = 10;
+const reportsPerPage = 10;
 const maxPageButtons = 10;
+
+const statuses: ReportStatus[] = [null, 'WAITING', 'RESOLVED'];
 
 export default function Reports () {
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
@@ -14,14 +16,22 @@ export default function Reports () {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ReportStatus>(null); 
 
   // 페이지네이션
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(10);
-  const totalPages = Math.ceil(totalCount / noticesPerPage);
+  const totalPages = Math.ceil(totalCount / reportsPerPage);
   const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+
+  const toggleStatus = () => {
+    const currentIndex = statuses.indexOf(statusFilter);
+    const nextIndex = (currentIndex + 1) % statuses.length;
+    setStatusFilter(statuses[nextIndex]);
+    setCurrentPage(1);
+  };
 
   const handlePageClick = (page: number) => {
     setCurrentPage(page);
@@ -53,9 +63,14 @@ export default function Reports () {
       setLoading(true);
       setError("");
       try {
-        const res = await fetchReports(currentPage, noticesPerPage, "WAITING");
-              console.log("fetchReports response:", res);  // 추가
-
+        const params: any = {
+          page: currentPage,
+          size: reportsPerPage,
+        };
+        if (statusFilter !== null) {
+          params.status = statusFilter;
+        }
+        const res = await fetchReports(params.page, params.size, params.status);
         setReports(res.reports);
         setTotalCount(res.totalCount);
       } catch (err: any) {
@@ -66,57 +81,62 @@ export default function Reports () {
     };
 
     fetchData();
-  }, [currentPage]);
+  }, [currentPage, statusFilter]);
 
   return (
     <div className="reports-container">
       <div className="reports-list">
-        <h1>신고 목록</h1>
-
+        <h1>
+          신고 목록
+          <button onClick={toggleStatus}>
+            상태: {statusFilter === null ? "전체" : statusFilter === "WAITING" ? "미처리" : "처리완료"}
+          </button>
+        </h1>
         {loading && <div>불러오는 중...</div>}
         {error && <div className="error">{error}</div>}
 
         {groupedReports.map((report, index) => (
           <div
             key={`${report.commentId}-${index}`}
-            className="reports-item"
+            className={`reports-item ${report.status === 'RESOLVED' ? 'resolved' : ''}`}
             onClick={() => handleClick(report)}
           >
             <div>댓글 ID: {report.commentId}</div>
-            <div>작성자: {report.reporterNickname}</div>
+            <div>작성자: {report.authorNickname}</div>
             <div>신고 수: {reports.length}</div> 
             <div>경고: {report.warningCount}</div>
+            <div>상태: {report.status === 'WAITING' ? '미처리' : '처리완료'}</div>
           </div>
         ))}
-
-        <div className="pagination">
-          <button onClick={() => handlePageClick(Math.max(currentPage - 1, 1))} disabled={currentPage === 1}>
-            이전
-          </button>
-
-          {pageNumbers.map((num) => (
-            <button
-              key={num}
-              className={num === currentPage ? "active" : ""}
-              onClick={() => handlePageClick(num)}
-            >
-              {num}
-            </button>
-          ))}
-
-          <button
-            onClick={() => handlePageClick(Math.min(currentPage + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            다음
-          </button>
-        </div>
       </div>
       <ReportDetailModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         report={selectedReport}
       />
+
+      <div className="pagination">
+        <button onClick={() => handlePageClick(Math.max(currentPage - 1, 1))} disabled={currentPage === 1}>
+          이전
+        </button>
+
+        {pageNumbers.map((num) => (
+          <button
+            key={num}
+            className={num === currentPage ? "active" : ""}
+            onClick={() => handlePageClick(num)}
+          >
+            {num}
+          </button>
+        ))}
+
+        <button
+          onClick={() => handlePageClick(Math.min(currentPage + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          다음
+        </button>
+      </div>
     </div>
   );
 }

@@ -12,19 +12,36 @@ import {
 import { getAdminInquiries, getAdminInquiryDetail, createInquiryAnswer } from "@/lib/api/inquiry";
 import { categories } from "@/app/components/InquiryDropdown";
 
+const inquiriesPerPage = 10;
+const maxPageButtons = 10;
+
 export default function Inquiries() {
   const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
   const [selectedInquiry, setSelectedInquiry] = useState<AdminInquiryDetailResponse | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 페이지네이션
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(10);
+  const totalPages = Math.ceil(totalCount / inquiriesPerPage);
+  const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;
+  const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
+  const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // 문의 목록 불러오기
-  const fetchInquiries = async () => {
+  const fetchInquiries = async (page: number) => {
     try {
       setLoading(true);
-      const res: AdminInquiryListResponse = await getAdminInquiries(1, 10);
+      const res: AdminInquiryListResponse = await getAdminInquiries(page, inquiriesPerPage);
       if (res.success) {
         setInquiries(res.inquiries);
+        setTotalCount(res.totalCount);
       }
     } catch (error) {
       alert("문의 목록을 불러오는 중 오류가 발생했습니다.");
@@ -68,7 +85,7 @@ export default function Inquiries() {
 
       if (res.success) {
         alert("답변이 등록되었습니다.");
-        await fetchInquiries();
+        await fetchInquiries(currentPage);
         setSelectedInquiry(null);
         setAnswerText("");
       } else {
@@ -83,15 +100,15 @@ export default function Inquiries() {
   };
 
   useEffect(() => {
-    fetchInquiries();
-  }, []);
+    fetchInquiries(currentPage);
+  }, [currentPage]);
 
   return (
     <div className="inquiries-container">
       <div className="inquiries-list">
         <h1>문의 목록</h1>
         {loading && <p>로딩중...</p>}
-        {!loading && inquiries.length === 0 && <p>문의 내역이 없습니다.</p>}
+        {!loading && inquiries.length === 0 && <p style={{textAlign: "center"}}>문의 내역이 없습니다.</p>}
 
         {inquiries.map((inq) => (
           <div
@@ -162,6 +179,28 @@ export default function Inquiries() {
             )}
           </div>
         )}
+      </div>
+      <div className="pagination">
+        <button onClick={() => handlePageClick(Math.max(currentPage - 1, 1))} disabled={currentPage === 1}>
+          이전
+        </button>
+
+        {pageNumbers.map((num) => (
+          <button
+            key={num}
+            className={num === currentPage ? "active" : ""}
+            onClick={() => handlePageClick(num)}
+          >
+            {num}
+          </button>
+        ))}
+
+        <button
+          onClick={() => handlePageClick(Math.min(currentPage + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          다음
+        </button>
       </div>
     </div>
   );

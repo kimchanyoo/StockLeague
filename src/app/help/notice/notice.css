@@ -59,6 +59,9 @@
   text-align: center;
   align-items: center;
 }
+.notice-categorie h1{
+  border: none;
+}
 .notice-cards {
     display: flex;
     flex-direction: column;

@@ -86,12 +86,13 @@ export interface ReportPayload {
 }
 
 // 신고 목록
-type ReportStatus = 'WAITING' | 'RESOLVED';
+export type ReportStatus = 'WAITING' | 'RESOLVED' | null;
 export interface Report {
   commentId: number;
-  reporterNickname: string;
+  authorNickname: string;
   reportCount: number;
   warningCount: number;
+  status: ReportStatus;
 }
 export interface ReportListResponse {
   success: boolean;
@@ -117,6 +118,7 @@ export interface Warning {
   adminNickname: string;
 }
 
+export type ActionTaken = 'NONE' | 'REJECTED' | 'COMMENT_DELETED_AND_WARNING' | 'COMMENT_DELETED' | 'BANNED';
 export interface ReportDetail {
   success: boolean;
   message: string;
@@ -128,6 +130,8 @@ export interface ReportDetail {
   commentAuthorId: number;
   warningCount: number;
   accountStatus: boolean;
+  AdminNickname: string;
+  actionTaken: ActionTaken;
   reports: SingleReport[];
   warnings: Warning[];
 }
@@ -195,13 +199,13 @@ export const reportComment = async (commentId: number, payload: ReportPayload) =
   return res.data;
 };
 
-export const fetchReports = async ( page = 1, size = 10, status: ReportStatus = 'WAITING' ): Promise<ReportListResponse> => {
+export const fetchReports = async ( page = 1, size = 10, status?: ReportStatus | null ): Promise<ReportListResponse> => {
+  const params: any = { page, size };
+  if (status !== null && status !== undefined) {
+    params.status = status;
+  }
   const res = await axiosInstance.get<ReportListResponse>('/api/v1/admin/reports', {
-    params: {
-      page,
-      size,
-      status,
-    },
+    params
   });
   return res.data;
 };
@@ -220,6 +224,11 @@ export const deleteCommentWithWarning = async (commentId: number, reason: string
   const res = await axiosInstance.post(`/api/v1/admin/comments/${commentId}/delete-with-warning`, {
     reason
   });
+  return res.data;
+};
+
+export const rejectReport = async (commentId: number) => {
+  const res = await axiosInstance.patch(`/api/v1/admin/reports/${commentId}/reject`);
   return res.data;
 };
 

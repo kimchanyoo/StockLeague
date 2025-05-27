@@ -6,7 +6,7 @@ export const postOAuthLogin = async ({
   authCode,
   redirectUri,
 }: {
-  provider: "KAKAO" | "NAVER";
+  provider: "KAKAO";
   authCode: string;
   redirectUri: string;
 }) => {
@@ -22,7 +22,7 @@ export const postOAuthLogin = async ({
 
 // 로그아웃
 export const logout = async () => {
-  const res = await axiosInstance.post("/api/v1/auth/logout", {
+  const res = await axiosInstance.post("/api/v1/auth/logout", {}, {
      withCredentials: true,
   });
   return res.data;
@@ -31,7 +31,23 @@ export const logout = async () => {
 // 유저 정보 불러오기
 export const fetchUserProfile = async () => {
   const res = await axiosInstance.get("/api/v1/user/profile", {
-    withCredentials: true, // 쿠키로 accessToken 전달
+    withCredentials: true, 
   });
-  return res.data; // { success, message, nickname }
+  return res.data; 
+};
+
+// 닉네임 수정 요청
+export async function updateNickname(nickname: string) {
+    const res = await axiosInstance.patch("/api/v1/user/profile", {
+      nickname,
+    });
+    return res.data; 
+};
+
+// 탈퇴
+export const withdrawUser = async (confirmMessage: string) => {
+  const res = await axiosInstance.delete("/api/v1/user/withdraw", {
+    data: { confirmMessage },
+  });
+  return res.data;
 };
