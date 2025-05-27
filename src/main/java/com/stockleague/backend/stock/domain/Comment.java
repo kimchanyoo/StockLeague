@@ -88,6 +88,11 @@ public class Comment {
     private ActionTaken actionTaken = ActionTaken.NONE;
 
     @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private Status status = Status.WAITING;
+
+    @Builder.Default
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentLike> commentLikes = new ArrayList<>();
 
@@ -136,11 +141,25 @@ public class Comment {
         this.deletedAt = LocalDateTime.now();
         this.processedBy = admin;
         this.actionTaken = ActionTaken.COMMENT_DELETED;
+        this.status = Status.RESOLVED;
     }
 
     public void markDeletedAndWarnedByAdmin(User admin) {
         this.deletedAt = LocalDateTime.now();
         this.processedBy = admin;
         this.actionTaken = ActionTaken.COMMENT_DELETED_AND_WARNING;
+        this.status = Status.RESOLVED;
+    }
+
+    public void rejectByAdmin(User admin) {
+        this.processedBy = admin;
+        this.actionTaken = ActionTaken.REJECTED;
+        this.status = Status.RESOLVED;
+    }
+
+    public void bannedByAdmin(User admin) {
+        this.processedBy = admin;
+        this.actionTaken = ActionTaken.BANNED;
+        this.status = Status.RESOLVED;
     }
 }

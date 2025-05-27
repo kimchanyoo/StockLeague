@@ -80,7 +80,7 @@ public class ReportService {
 
         if (status != null) {
             pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("createdAt")));
-            reportPage = commentReportRepository.findByStatus(status, pageable);
+            reportPage = commentReportRepository.findByComment_Status(status, pageable);
         } else {
             pageable = PageRequest.of(page - 1, size);
             reportPage = commentReportRepository.findAllOrderByWaitingFirst(pageable);
@@ -126,6 +126,9 @@ public class ReportService {
                 user.getId(),
                 user.getWarningCount(),
                 user.getIsBanned(),
+                comment.getProcessedBy().getNickname(),
+                comment.getActionTaken(),
+                comment.getStatus(),
                 reports,
                 warnings
         );

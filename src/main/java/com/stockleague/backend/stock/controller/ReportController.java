@@ -11,7 +11,6 @@ import com.stockleague.backend.stock.dto.response.report.CommentReportListRespon
 import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
 import com.stockleague.backend.stock.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -127,13 +126,15 @@ public class ReportController {
                                                        "commentId": 123,
                                                        "authorNickname": "신고자1",
                                                        "reportCount": 2,
-                                                       "warningCount": 1
+                                                       "warningCount": 1,
+                                                       "status": "WAITING"
                                                      },
                                                      {
                                                        "commentId": 124,
                                                        "authorNickname": "신고자2",
                                                        "reportCount": 1,
-                                                       "warningCount": 0
+                                                       "warningCount": 0,
+                                                       "status": "RESOLVED"
                                                      }
                                                    ],
                                                    "page": 1,
@@ -194,7 +195,10 @@ public class ReportController {
                                                "commentContent": "이게 주식이냐? XX",
                                                "commentAuthorId": 42,
                                                "warningCount": 2,
-                                               "accountStatus": false,
+                                               "accountStatus" : false,
+                                               "AdminNickname" : "관리자 A씨",
+                                               "actionTaken" : "COMMENT_DELETED",
+                                               "status" : "RESOLVED"
                                                "reports": [
                                                  {
                                                    "reporterNickname": "reporter01",
