@@ -1,6 +1,7 @@
-package com.stockleague.backend.stock.domain;
+package com.stockleague.backend.user.domain;
 
-import com.stockleague.backend.user.domain.User;
+import com.stockleague.backend.stock.domain.Comment;
+import com.stockleague.backend.stock.domain.Reason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -27,44 +28,31 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "comment_reports")
-public class CommentReport {
+@Table(name = "user_warnings")
+public class UserWarning {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "report_id", nullable = false)
+    @Column(name = "warning_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User warnedUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id", nullable = false)
     private Comment comment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id", nullable = false)
-    private User reporter;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "processed_by_id")
-    private User processedBy;
+    @JoinColumn(name = "admin_id", nullable = false)
+    private User admin;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reason", nullable = false)
     private Reason reason;
 
-    @Column(name = "additional_info", columnDefinition = "TEXT")
-    private String additionalInfo;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private Status status = Status.WAITING;
-
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "action_taken", length = 20)
-    private ActionTaken actionTaken = ActionTaken.NONE;
 }

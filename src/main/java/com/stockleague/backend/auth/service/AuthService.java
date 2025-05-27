@@ -58,17 +58,18 @@ public class AuthService {
 
         return userRepository.findByOauthIdAndProvider(userInfo.getOauthId(), userInfo.getProvider())
                 .map(user -> {
-                    // 기존 유저 → 바로 로그인 처리
-                    String accessToken = issueTokensAndSetCookies(user, response);
+                    if (Boolean.TRUE.equals(user.getIsBanned())) {
+                        throw new GlobalException(GlobalErrorCode.BANNED_USER);
+                    }
 
+                    issueTokensAndSetCookies(user, response);
                     String role = user.getRole().toString();
                     String nickname = user.getNickname();
 
                     return new OAuthLoginResponseDto(true, "소셜 로그인 성공", false,
-                            accessToken, nickname, role);
+                            null, nickname, role);
                 })
                 .orElseGet(() -> {
-                    // 신규 유저 → accessToken 없이 isFirstLogin true 반환
                     String tempAccessToken = jwtProvider.createTempAccessToken(userInfo.getOauthId(),
                             userInfo.getProvider());
                     return new OAuthLoginResponseDto(true, "추가 정보 입력 필요", true,
@@ -103,13 +104,13 @@ public class AuthService {
                     .build()
             );
 
-            String accessToken = issueTokensAndSetCookies(user, response);
+            issueTokensAndSetCookies(user, response);
 
             String role = user.getRole().toString();
             String nickname = user.getNickname();
 
             return new OAuthLoginResponseDto(true, "추가 정보 입력이 완료되었습니다",
-                    false, accessToken, nickname, role);
+                    false, null, nickname, role);
 
         } catch (DataIntegrityViolationException e) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
@@ -159,6 +160,13 @@ public class AuthService {
         String refreshToken = extractRefreshTokenFromCookie(request);
         Long userId = getValidUserIdFromRefreshToken(refreshToken, response);
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        if (Boolean.TRUE.equals(user.getIsBanned())) {
+            throw new GlobalException(GlobalErrorCode.BANNED_USER);
+        }
+
         String newAccessToken = jwtProvider.createAccessToken(userId);
         String newRefreshToken = jwtProvider.createRefreshToken(userId);
 
@@ -187,14 +195,11 @@ public class AuthService {
         tokenCookieHandler.removeTokenCookies(response);
     }
 
-    private String issueTokensAndSetCookies(User user, HttpServletResponse response) {
+    private void issueTokensAndSetCookies(User user, HttpServletResponse response) {
         String accessToken = jwtProvider.createAccessToken(user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
         redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(30));
         tokenCookieHandler.addTokenCookies(response, accessToken, refreshToken);
-
-        // swagger 테스팅을 위한 accessToken 반환
-        return accessToken;
     }
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {

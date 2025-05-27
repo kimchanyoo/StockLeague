@@ -51,7 +51,7 @@ public class AuthController {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
                                                        "isFirstLogin" : false,
-                                                       "accessToken" "eyJhbGciOiJIUzI1...": ,
+                                                       "tempAccessToken" : null,
                                                        "nickname" : "테스트",
                                                        "role" : "USER"
                                                     }
@@ -65,7 +65,7 @@ public class AuthController {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
                                                        "isFirstLogin" : true,
-                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
+                                                       "tempAccessToken" : "eyJhbGciOiJIUzI1...",
                                                        "nickname" : null,
                                                        "role" : null
                                                     }
@@ -168,7 +168,7 @@ public class AuthController {
                                                "success" : true,
                                                "message" : "추가 정보 입력이 완료되었습니다",
                                                "isFirstLogin" : false,
-                                               "accessToken" : "eyJhbGciOiJIUzI1...",
+                                               "tempAccessToken" : null,
                                                "nickname" : "테스트",
                                                "role" : "USER"
                                             }
@@ -220,7 +220,7 @@ public class AuthController {
     }
 
     @PostMapping("/token/refresh")
-    @Operation(summary = "Access Token 재발급", description = "Refresh Token을 통해 Access Token을 재발급 받는다.")
+    @Operation(summary = "AccessToken 재발급", description = "RefreshToken을 통해 AccessToken을 재발급 받는다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "재발급 성공",
                     content = @Content(schema = @Schema(implementation = TokenReissueResponseDto.class),

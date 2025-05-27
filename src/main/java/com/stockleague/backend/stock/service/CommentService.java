@@ -2,6 +2,10 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.notification.domain.NotificationType;
+import com.stockleague.backend.notification.domain.TargetType;
+import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.kafka.producer.NotificationProducer;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;
@@ -38,6 +42,7 @@ public class CommentService {
     private final StockRepository stockRepository;
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final NotificationProducer notificationProducer;
 
     public CommentCreateResponseDto createComment(
             CommentCreateRequestDto request, String ticker, Long userId) {
@@ -80,16 +85,20 @@ public class CommentService {
                     .user(user)
                     .comment(comment)
                     .build());
+            comment.increaseLikeCount();
+
             return new CommentLikeResponseDto(true, "좋아요가 등록되었습니다.",
                     true, comment.getLikeCount());
         } else {
             like.toggle();
-            if (like.getIsLiked()) {
+            if (Boolean.TRUE.equals(like.getIsLiked())) {
                 comment.increaseLikeCount();
+
                 return new CommentLikeResponseDto(true, "좋아요가 등록되었습니다.",
                         like.getIsLiked(), comment.getLikeCount());
             } else {
                 comment.decreaseLikeCount();
+
                 return new CommentLikeResponseDto(true, "좋아요가 취소되었습니다.",
                         like.getIsLiked(), comment.getLikeCount());
             }
@@ -126,7 +135,7 @@ public class CommentService {
             throw new GlobalException(GlobalErrorCode.INVALID_COMMENT_OWNER);
         }
 
-        commentRepository.delete(comment);
+        comment.markAsDeleted();
 
         return CommentDeleteResponseDto.from();
     }
@@ -143,7 +152,7 @@ public class CommentService {
         PageRequest pageable = PageRequest.of(
                 page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Comment> commentPage = commentRepository.findByStockIdAndParentIsNull(stock.getId(), pageable);
+        Page<Comment> commentPage = commentRepository.findByStockIdAndParentIsNullAndDeletedAtIsNull(stock.getId(), pageable);
 
         List<Comment> comments = commentPage.getContent();
 
@@ -162,12 +171,23 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentAdminDeleteResponseDto forceDeleteCommentByAdmin(Long commentId) {
+    public CommentAdminDeleteResponseDto forceDeleteCommentByAdmin(Long commentId, Long adminId) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
 
-        commentRepository.delete(comment);
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        comment.markDeletedByAdmin(admin);
+
+        NotificationEvent event = new NotificationEvent(
+                comment.getUser().getId(),
+                NotificationType.COMMENT_DELETED,
+                TargetType.COMMENT,
+                commentId
+        );
+        notificationProducer.send(event);
 
         return CommentAdminDeleteResponseDto.from();
     }

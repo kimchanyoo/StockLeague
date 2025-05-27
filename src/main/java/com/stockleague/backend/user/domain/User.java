@@ -64,6 +64,14 @@ public class User {
     private LocalDateTime createdAt;
 
     @Builder.Default
+    @Column(name = "warning_count", nullable = false)
+    private Integer warningCount = 0;
+
+    @Builder.Default
+    @Column(name = "is_banned", nullable = false)
+    private Boolean isBanned = false;
+
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
@@ -83,8 +91,34 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> notifications = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "warnedUser")
+    private List<UserWarning> receivedWarnings = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "admin")
+    private List<UserWarning> issuedWarnings = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "processedBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> processedAdmin = new ArrayList<>();
+
     // 비즈니스 메서드
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;
+    }
+
+    public void increaseWarningCount() {
+        this.warningCount++;
+    }
+
+    public void decreaseWarningCount() {
+        if (this.warningCount > 0) {
+            this.warningCount--;
+        }
+    }
+
+    public void ban() {
+        this.isBanned = true;
     }
 }

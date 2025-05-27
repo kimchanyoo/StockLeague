@@ -16,6 +16,7 @@ public enum GlobalErrorCode {
     ALREADY_REGISTERED(HttpStatus.BAD_REQUEST, "이미 가입된 유저입니다."),
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인입니다."),
     INVALID_REDIRECT_URI(HttpStatus.BAD_REQUEST, "잘못된 RedirectUri를 입력하였습니다."),
+    BANNED_USER(HttpStatus.FORBIDDEN, "정지된 유저입니다."),
 
     // 닉네임 형식
     NICKNAME_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "닉네임 형식이 올바르지 않습니다."),
