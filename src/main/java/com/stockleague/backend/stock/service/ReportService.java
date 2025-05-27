@@ -14,6 +14,7 @@ import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
 import com.stockleague.backend.stock.dto.response.report.CommentDeleteAdminResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportRejectResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportSummaryDto;
 import com.stockleague.backend.stock.dto.response.report.ReportDetailDto;
@@ -138,7 +139,8 @@ public class ReportService {
     }
 
     @Transactional
-    public CommentDeleteAdminResponseDto deleteCommentAndWarn(CommentDeleteAdminRequestDto request, Long commentId, Long userId) {
+    public CommentDeleteAdminResponseDto deleteCommentAndWarn(
+            CommentDeleteAdminRequestDto request, Long commentId, Long userId) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
@@ -171,5 +173,19 @@ public class ReportService {
                 true,
                 "댓글이 삭제되고 경고가 부여되었습니다."
         );
+    }
+
+    @Transactional
+    public CommentReportRejectResponseDto rejectReport(Long commentId, Long userId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        User admin = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        comment.rejectByAdmin(admin);
+
+        return CommentReportRejectResponseDto.from();
     }
 }
