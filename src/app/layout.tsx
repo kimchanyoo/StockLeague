@@ -6,6 +6,7 @@ import Footer from "@/app/components/Footer";
 import "@/app/styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext"; // AuthProvider를 임포트
 import { usePathname } from "next/navigation";
+import { NotificationProvider } from "@/context/NotificationContext";
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
@@ -15,11 +16,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="ko">
       <body>
         <AuthProvider>
-          <div className="layout">
-            {isAdminPage ? <AdminHeader /> : <Header />}
-            <main className="content">{children}</main>
-            <Footer />
-          </div>
+          <NotificationProvider>
+            <div className="layout">
+              {isAdminPage ? <AdminHeader /> : <Header />}
+              <main className="content">{children}</main>
+              <Footer />
+            </div>
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

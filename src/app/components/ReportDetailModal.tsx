@@ -6,6 +6,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { ReportDetail, forceDeleteComment, deleteCommentWithWarning, banUser, rejectReport } from "@/lib/api/comment";
 import { useAuth } from "@/context/AuthContext";
+import { connectStomp, disconnectStomp, sendMessage } from "@/lib/socket"
 
 interface Props {
   open: boolean;
@@ -15,7 +16,7 @@ interface Props {
 type ActionType = "none" | "댓글삭제" | "경고부여" | "반려처리" | "계정정지";
 
 const ReportDetailModal = ({ open, onClose, report }: Props) => {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const [showReporters, setShowReporters] = useState(false);
   const [showWarnings, setShowWarnings] = useState(false);
   const [selectedAction, setSelectedAction] = useState<ActionType>("none");
@@ -33,18 +34,17 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
     OTHER: "기타",
   };
   const actionResultTextMap: Record<string, string> = {
-    NO_ACTION: "조치 없음",
+    NONE: "조치 없음",
     COMMENT_DELETED: "댓글 삭제",
-    WARNING: "경고",
     COMMENT_DELETED_AND_WARNING: "댓글 삭제 및 경고",
-    USER_BANNED: "계정 정지",
+    BANNED: "계정 정지",
     REJECTED: "반려 처리됨",
   };
 
   useEffect(() => {
     if (!open || !report) return;
 
-    if (report.actionTaken) {
+    if (report.actionTaken && report.actionTaken !== "NONE") {
       setActionTakenResult(report.actionTaken);
       setAdminNickname(report.AdminNickname || null);
     } else {
@@ -74,21 +74,35 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
   const handleSubmitAction = async () => {
     if (!report) return;
 
+    const token = accessToken || "";
+
+    const onMessageHandler = (message: any) => {
+      console.log("STOMP 메시지 수신:", message);
+    };
+
     try {
+      // STOMP 연결
+      await connectStomp(onMessageHandler, token);
+
       let resultText = "";
+      let actionType: "COMMENT_DELETED" | "COMMENT_DELETED_AND_WARNING" | "BANNED" | "REJECTED" | null = null;
 
       if (selectedAction === "댓글삭제") {
         await forceDeleteComment(report.commentId);
         resultText = "댓글 삭제";
+        actionType = "COMMENT_DELETED";
       } else if (selectedAction === "경고부여") {
         await deleteCommentWithWarning(report.commentId, warningReason);
         resultText = "댓글 삭제 및 경고";
+        actionType = "COMMENT_DELETED_AND_WARNING";
       } else if (selectedAction === "계정정지") {
         await banUser(report.commentAuthorId, "관리자 조치에 의한 계정 정지");
         resultText = "계정 정지";
+        actionType = "BANNED";
       } else if (selectedAction === "반려처리") {
-        await rejectReport(report.commentId)
+        await rejectReport(report.commentId);
         resultText = "반려 처리됨";
+        actionType = "REJECTED";
       } else {
         alert("조치 유형을 선택해주세요.");
         return;
@@ -96,9 +110,19 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
 
       // ✅ 조치 후 상태 업데이트
       setActionTakenResult(resultText);
-      setAdminNickname(user?.nickname || "알 수 없음"); // 실제 닉네임 연결 필요
-
+      setAdminNickname(user?.nickname || "알 수 없음"); 
       alert(`${resultText}가 완료되었습니다.`);
+
+      // ✅ 알림 트리거 요청 (문구는 백에서 처리)
+      if (actionType) {
+        sendMessage("/app/admin-action", {
+          userId: report.commentAuthorId,
+          commentId: report.commentId,
+          actionType,
+          reason: warningReason || null,
+        });
+      }
+
     } catch (error) {
       console.error("조치 처리 중 오류 발생:", error);
       alert("조치 처리 중 오류가 발생했습니다.");

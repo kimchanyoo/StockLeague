@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [user, loading, router]);
 
   if (loading) {
-    return <div>로딩 중...</div>;
+    return <div style={{textAlign: "center"}}>로딩 중...</div>;
   }
 
   // 유저는 존재하지만 ADMIN이 아닌 경우에도 리턴 null (잠깐 깜빡임 방지용)

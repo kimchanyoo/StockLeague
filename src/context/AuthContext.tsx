@@ -65,9 +65,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!response.success) {
         throw new Error(response.message);
       }
-
-      // 쿠키 삭제
-      document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       // 상태 초기화
       setUser(undefined);
       setAccessTokenState(null);
