@@ -103,7 +103,7 @@ export default function Reports () {
           >
             <div>댓글 ID: {report.commentId}</div>
             <div>작성자: {report.authorNickname}</div>
-            <div>신고 수: {reports.length}</div> 
+            <div>신고 수: {report.reportCount}</div> 
             <div>경고: {report.warningCount}</div>
             <div>상태: {report.status === 'WAITING' ? '미처리' : '처리완료'}</div>
           </div>

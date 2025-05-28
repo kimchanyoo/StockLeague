@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import Link from "next/link";
 import styles from "@/app/styles/components/Header.module.css";
 import DropdownMenu from "./DropdownMenu";
