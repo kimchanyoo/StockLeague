@@ -9,6 +9,8 @@ import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
 import com.stockleague.backend.kafka.producer.NotificationProducer;
+import com.stockleague.backend.stock.domain.Comment;
+import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +24,22 @@ public class AdminService {
     private final UserRepository userRepository;
     private final NotificationProducer notificationProducer;
     private final TokenRedisService tokenRedisService;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public AdminUserForceWithdrawResponseDto forceWithdrawUser(
-            Long userId, AdminUserForceWithdrawRequestDto requestDto) {
+            AdminUserForceWithdrawRequestDto requestDto, Long adminId, Long userId) {
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-        user.ban();
+        Comment comment = commentRepository.findById(requestDto.commentId())
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        user.ban(requestDto.reason());
+        comment.bannedByAdmin(admin);
 
         NotificationEvent event = new NotificationEvent(
                 user.getId(),

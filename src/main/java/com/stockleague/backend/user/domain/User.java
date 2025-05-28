@@ -71,6 +71,12 @@ public class User {
     @Column(name = "is_banned", nullable = false)
     private Boolean isBanned = false;
 
+    @Column(name = "banned_at")
+    private LocalDateTime bannedAt;
+
+    @Column(name = "ban_reason")
+    private String banReason;
+
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
@@ -118,7 +124,9 @@ public class User {
         }
     }
 
-    public void ban() {
+    public void ban(String reason) {
         this.isBanned = true;
+        this.bannedAt = LocalDateTime.now();
+        this.banReason = reason;
     }
 }

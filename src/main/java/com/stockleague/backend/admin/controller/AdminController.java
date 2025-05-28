@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -80,9 +81,12 @@ public class AdminController {
     })
     public ResponseEntity<AdminUserForceWithdrawResponseDto> forceWithdrawUser(
             @PathVariable Long userId,
-            @Valid @RequestBody AdminUserForceWithdrawRequestDto request
+            @Valid @RequestBody AdminUserForceWithdrawRequestDto request,
+            Authentication authentication
     ) {
-        AdminUserForceWithdrawResponseDto response = adminService.forceWithdrawUser(userId, request);
+        Long adminId = (Long) authentication.getPrincipal();
+
+        AdminUserForceWithdrawResponseDto response = adminService.forceWithdrawUser(request, adminId, userId);
         return ResponseEntity.ok(response);
     }
 }

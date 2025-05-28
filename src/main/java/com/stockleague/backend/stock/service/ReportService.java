@@ -14,6 +14,7 @@ import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
 import com.stockleague.backend.stock.dto.response.report.CommentDeleteAdminResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportRejectResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportSummaryDto;
 import com.stockleague.backend.stock.dto.response.report.ReportDetailDto;
@@ -26,6 +27,7 @@ import com.stockleague.backend.user.repository.UserRepository;
 import com.stockleague.backend.user.repository.UserWarningRepository;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -80,7 +82,7 @@ public class ReportService {
 
         if (status != null) {
             pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("createdAt")));
-            reportPage = commentReportRepository.findByStatus(status, pageable);
+            reportPage = commentReportRepository.findByComment_Status(status, pageable);
         } else {
             pageable = PageRequest.of(page - 1, size);
             reportPage = commentReportRepository.findAllOrderByWaitingFirst(pageable);
@@ -126,13 +128,19 @@ public class ReportService {
                 user.getId(),
                 user.getWarningCount(),
                 user.getIsBanned(),
+                Optional.ofNullable(comment.getProcessedBy())
+                        .map(User::getNickname)
+                        .orElse(null),
+                comment.getActionTaken(),
+                comment.getStatus(),
                 reports,
                 warnings
         );
     }
 
     @Transactional
-    public CommentDeleteAdminResponseDto deleteCommentAndWarn(CommentDeleteAdminRequestDto request, Long commentId, Long userId) {
+    public CommentDeleteAdminResponseDto deleteCommentAndWarn(
+            CommentDeleteAdminRequestDto request, Long commentId, Long userId) {
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
@@ -165,5 +173,19 @@ public class ReportService {
                 true,
                 "댓글이 삭제되고 경고가 부여되었습니다."
         );
+    }
+
+    @Transactional
+    public CommentReportRejectResponseDto rejectReport(Long commentId, Long userId) {
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.COMMENT_NOT_FOUND));
+
+        User admin = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        comment.rejectByAdmin(admin);
+
+        return CommentReportRejectResponseDto.from();
     }
 }

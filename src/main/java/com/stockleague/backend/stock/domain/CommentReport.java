@@ -54,17 +54,7 @@ public class CommentReport {
     @Column(name = "additional_info", columnDefinition = "TEXT")
     private String additionalInfo;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private Status status = Status.WAITING;
-
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "action_taken", length = 20)
-    private ActionTaken actionTaken = ActionTaken.NONE;
 }

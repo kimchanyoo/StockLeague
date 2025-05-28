@@ -58,7 +58,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/api/v1/stocks/*/comments",
                                 "/api/v1/comments/*/replies",
-                                "/api/v1/stocks"
+                                "/api/v1/stocks",
+                                "/ws/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
                         .anyRequest().authenticated() // 나머지는 로그인한 사용자만 접근 가능
