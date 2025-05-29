@@ -108,10 +108,11 @@ public class AuthController {
             )
     })
     public ResponseEntity<OAuthLoginResponseDto> socialLogin(
-            @RequestBody @Valid OAuthLoginRequestDto request,
+            @RequestBody @Valid OAuthLoginRequestDto requestDto,
+            HttpServletRequest request,
             HttpServletResponse response
     ) {
-        return ResponseEntity.ok(authService.login(request, response));
+        return ResponseEntity.ok(authService.login(requestDto, request, response));
     }
 
     @PostMapping("/logout")
@@ -215,7 +216,7 @@ public class AuthController {
             @Valid @RequestBody AdditionalInfoRequestDto requestDto
     ) {
         String token = jwtProvider.resolveToken(request);
-        OAuthLoginResponseDto result = authService.completeSignup(token, requestDto, response);
+        OAuthLoginResponseDto result = authService.completeSignup(token, requestDto, request, response);
         return ResponseEntity.ok(result);
     }
 

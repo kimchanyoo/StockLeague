@@ -3,7 +3,7 @@ package com.stockleague.backend.global.config;
 
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.handler.CustomHandshakeHandler;
-import com.stockleague.backend.global.handler.JwtHandshakeInterceptor;
+import com.stockleague.backend.global.handler.AuthenticatedUserHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .addInterceptors(new JwtHandshakeInterceptor(jwtProvider))
+                .addInterceptors(new AuthenticatedUserHandshakeInterceptor())
                 .setHandshakeHandler(new CustomHandshakeHandler())
                 .setAllowedOriginPatterns("*")
                 .withSockJS();

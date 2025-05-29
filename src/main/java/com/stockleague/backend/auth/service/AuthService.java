@@ -22,6 +22,7 @@ import com.stockleague.backend.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +30,11 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,7 +49,9 @@ public class AuthService {
     private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
     private final TokenCookieHandler tokenCookieHandler;
 
-    public OAuthLoginResponseDto login(OAuthLoginRequestDto requestDto, HttpServletResponse response) {
+    public OAuthLoginResponseDto login(OAuthLoginRequestDto requestDto,
+                                       HttpServletRequest request,
+                                       HttpServletResponse response) {
         OAuthClient client = oauthClients.stream()
                 .filter(c -> c.supports(OauthServerType.valueOf(requestDto.provider())))
                 .findFirst()
@@ -63,6 +71,8 @@ public class AuthService {
                     }
 
                     issueTokensAndSetCookies(user, response);
+                    createSecuritySession(user, request);
+
                     String role = user.getRole().toString();
                     String nickname = user.getNickname();
 
@@ -78,7 +88,7 @@ public class AuthService {
     }
 
     public OAuthLoginResponseDto completeSignup(String tempToken, AdditionalInfoRequestDto requestDto,
-                                                HttpServletResponse response) {
+                                                HttpServletRequest request, HttpServletResponse response) {
 
         OauthTokenPayload payload = jwtProvider.parseTempToken(tempToken);
         String oauthId = payload.oauthId();
@@ -105,6 +115,7 @@ public class AuthService {
             );
 
             issueTokensAndSetCookies(user, response);
+            createSecuritySession(user, request);
 
             String role = user.getRole().toString();
             String nickname = user.getNickname();
@@ -223,5 +234,18 @@ public class AuthService {
         }
 
         return userId;
+    }
+
+    private void createSecuritySession(User user, HttpServletRequest request) {
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+
+        var authentication = new UsernamePasswordAuthenticationToken(
+                user.getId().toString(), null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+        );
+
+        context.setAuthentication(authentication);
+
+        HttpSession session = request.getSession(true); // 없으면 생성
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
     }
 }
