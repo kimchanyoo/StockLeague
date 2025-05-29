@@ -1,6 +1,5 @@
 package com.stockleague.backend.openapi.client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.stockleague.backend.infra.properties.OpenApiProperties;
 import com.stockleague.backend.openapi.dto.request.HashKeyRequestDto;
 import com.stockleague.backend.openapi.dto.request.OpenApiTokenRequestDto;
@@ -9,7 +8,6 @@ import com.stockleague.backend.openapi.dto.response.HashKeyResponseDto;
 import com.stockleague.backend.openapi.dto.response.OpenApiTokenResponseDto;
 import com.stockleague.backend.openapi.dto.response.RealtimeKeyResponseDto;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
