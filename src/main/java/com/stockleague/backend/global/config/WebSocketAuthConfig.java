@@ -33,22 +33,31 @@ public class WebSocketAuthConfig implements WebSocketMessageBrokerConfigurer {
 
                 if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String token = accessor.getFirstNativeHeader("Authorization");
-                    if (token != null && jwtProvider.validateToken(token)) {
-                        Long userId = jwtProvider.getUserId(token);
 
-                        accessor.setUser(new UsernamePasswordAuthenticationToken(
-                                userId.toString(), null, List.of()
-                        ));
+                    log.info("[WebSocket CONNECT] 헤더들: {}", accessor.toNativeHeaderMap());
 
-                        log.info("[WebSocket CONNECT] 인증 성공: userId={}", userId);
+                    if (token != null && token.startsWith("Bearer ")) {
+                        token = token.substring(7); // "Bearer " 제거
+
+                        if (jwtProvider.validateToken(token)) {
+                            Long userId = jwtProvider.getUserId(token);
+
+                            accessor.setUser(new UsernamePasswordAuthenticationToken(
+                                    userId.toString(), null, List.of()
+                            ));
+
+                            log.info("[WebSocket CONNECT] 인증 성공: userId={}", userId);
+                        } else {
+                            log.warn("[WebSocket CONNECT] 유효하지 않은 토큰");
+                        }
                     } else {
-                        log.info("[WebSocket CONNECT] 인증 실패 or 토큰 없음");
+                        log.warn("[WebSocket CONNECT] Authorization 헤더 누락 또는 형식 오류");
                     }
                 }
 
                 return message;
             }
         });
-
     }
+
 }
