@@ -1,6 +1,7 @@
 package com.stockleague.backend.notification.dto;
 
 import com.stockleague.backend.notification.domain.Notification;
+import java.time.format.DateTimeFormatter;
 
 public record NotificationResponseDto(
         Long notificationId,
@@ -19,7 +20,7 @@ public record NotificationResponseDto(
                 notification.getTarget().name(),
                 notification.getTargetId(),
                 notification.isRead(),
-                notification.getCreatedAt().toString()
+                notification.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         );
     }
 }
