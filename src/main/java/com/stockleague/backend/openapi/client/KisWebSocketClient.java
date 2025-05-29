@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -22,8 +24,15 @@ public class KisWebSocketClient {
     private static final String WS_URL = "wss://ops.koreainvestment.com:21000";
     private static final List<String> TICKERS = List.of("005930", "000660");
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        log.info("[WebSocket] 서버 완전 초기화 후 WebSocket 연결 시도");
+        connect();
+    }
+
     public void connect() {
+        log.info("[DEBUG] KisWebSocketClient 실행 시작됨 ✅");
+
         String approvalKey = openApiTokenRedisService.getRealTimeKey();
 
         if (approvalKey == null || approvalKey.isEmpty()) {
