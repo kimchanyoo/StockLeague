@@ -6,7 +6,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { ReportDetail, forceDeleteComment, deleteCommentWithWarning, banUser, rejectReport } from "@/lib/api/comment";
 import { useAuth } from "@/context/AuthContext";
-import { connectStomp, disconnectStomp, sendMessage } from "@/lib/socket"
+import { sendMessage } from "@/lib/socket"
 
 interface Props {
   open: boolean;
@@ -26,6 +26,9 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
   const [adminNickname, setAdminNickname] = useState<string | null>(null);
   const [actionTakenResult, setActionTakenResult] = useState<string | null>(null);
   
+  // STOMP 연결 상태 관리용
+  const [stompConnected, setStompConnected] = useState(false);
+
   const reasonTextMap: Record<string, string> = {
     INSULT: "욕설 및 비방",
     SPAM: "광고 / 도배성 내용",
@@ -72,40 +75,40 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
   };
 
   const handleSubmitAction = async () => {
-    if (!report) return;
-
-    const token = accessToken || "";
-
-    const onMessageHandler = (message: any) => {
-      console.log("STOMP 메시지 수신:", message);
-    };
+    if (!report || !accessToken) {
+      alert("접근 토큰이 없습니다.");
+      return;
+    }
 
     try {
-      // STOMP 연결
-      await connectStomp(onMessageHandler, token);
 
       let resultText = "";
       let actionType: "COMMENT_DELETED" | "COMMENT_DELETED_AND_WARNING" | "BANNED" | "REJECTED" | null = null;
 
-      if (selectedAction === "댓글삭제") {
-        await forceDeleteComment(report.commentId);
-        resultText = "댓글 삭제";
-        actionType = "COMMENT_DELETED";
-      } else if (selectedAction === "경고부여") {
-        await deleteCommentWithWarning(report.commentId, warningReason);
-        resultText = "댓글 삭제 및 경고";
-        actionType = "COMMENT_DELETED_AND_WARNING";
-      } else if (selectedAction === "계정정지") {
-        await banUser(report.commentAuthorId, "관리자 조치에 의한 계정 정지");
-        resultText = "계정 정지";
-        actionType = "BANNED";
-      } else if (selectedAction === "반려처리") {
-        await rejectReport(report.commentId);
-        resultText = "반려 처리됨";
-        actionType = "REJECTED";
-      } else {
-        alert("조치 유형을 선택해주세요.");
-        return;
+      switch (selectedAction) {
+        case "댓글삭제":
+          await forceDeleteComment(report.commentId);
+          resultText = "댓글 삭제";
+          actionType = "COMMENT_DELETED";
+          break;
+        case "경고부여":
+          await deleteCommentWithWarning(report.commentId, warningReason);
+          resultText = "댓글 삭제 및 경고";
+          actionType = "COMMENT_DELETED_AND_WARNING";
+          break;
+        case "계정정지":
+          await banUser(report.commentAuthorId, "관리자 조치에 의한 계정 정지");
+          resultText = "계정 정지";
+          actionType = "BANNED";
+          break;
+        case "반려처리":
+          await rejectReport(report.commentId);
+          resultText = "반려 처리됨";
+          actionType = "REJECTED";
+          break;
+        default:
+          alert("조치 유형을 선택해주세요.");
+          return;
       }
 
       // ✅ 조치 후 상태 업데이트
@@ -119,7 +122,7 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
           userId: report.commentAuthorId,
           commentId: report.commentId,
           actionType,
-          reason: warningReason || null,
+          reason: warningReason,
         });
       }
 
@@ -130,15 +133,8 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
   };
 
   return (
-    <div
-      id="modal-overlay"
-      onClick={handleOverlayClick}
-      className={styles.overlay}
-    >
-      <div
-        className={styles.modalContent}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div id="modal-overlay" onClick={handleOverlayClick} className={styles.overlay}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h2 className={styles.title}>신고 상세</h2>
 
         <div className={styles.textSection}>
@@ -154,10 +150,7 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
           <p><strong>닉네임:</strong> {report.commentAuthorNickname}</p>
           <p><strong>경고 횟수:</strong> {report.warningCount}</p>
           <p><strong>계정 상태:</strong> {getAccountStatusText(report.accountStatus)}</p>
-          <button
-            onClick={() => setShowWarnings(!showWarnings)}
-            className={styles.toggleButton}
-          >
+          <button onClick={() => setShowWarnings(!showWarnings)} className={styles.toggleButton}>
             경고 이력🚨
             {showWarnings ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
           </button>

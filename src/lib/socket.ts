@@ -3,19 +3,18 @@ import { Client } from "@stomp/stompjs";
 
 export let stompClient: Client | null = null;
 
-// 토큰을 인자로 받아 연결
-export const connectStomp = (onMessage: (body: any) => void, accessToken: string) => {
+export const connectStomp = (accessToken: string, onMessage: (body: any) => void) => {
+
   return new Promise<void>((resolve, reject) => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) {
       reject(new Error("Socket URL is not defined in environment variables."));
       return;
     }
-
     stompClient = new Client({
       webSocketFactory: () => {
-        console.log("Trying to connect to", socketUrl);
-        return new SockJS(socketUrl);
+        const sock = new SockJS(socketUrl) as any;
+        return sock;
       },
       connectHeaders: {
         Authorization: `Bearer ${accessToken}`,
@@ -28,6 +27,7 @@ export const connectStomp = (onMessage: (body: any) => void, accessToken: string
         console.log("✅ STOMP 연결 성공");
 
         stompClient?.subscribe("/user/queue/notifications", (message) => {
+           console.log("subscribe 콜백 진입");
           try {
             const payload = JSON.parse(message.body);
             console.log("🔔 받은 메시지:", payload);
@@ -38,7 +38,6 @@ export const connectStomp = (onMessage: (body: any) => void, accessToken: string
         });
         
         flushMessageQueue();
-
         resolve();
       },
       onStompError: (frame) => {

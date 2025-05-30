@@ -3,24 +3,23 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { logout as logoutAPI, fetchUserProfile } from "@/lib/api/auth";
+import { connectStomp, disconnectStomp } from "@/lib/socket";
 
 type Role = "USER" | "ADMIN";
 
 interface User {
   nickname: string;
   role: Role;
-  // 필요시 추가 필드
 }
 
 interface AuthContextType {
   user: User | undefined;
   accessToken: string | null;
-  tempAccessToken?: string | null;
-  loading: boolean; 
+  loading: boolean;
   setUser: (user: User) => void;
-  setAccessToken: (token: string | null) => void; 
-  setTempAccessToken: (token: string | null) => void; 
+  setAccessToken: (token: string | null) => void;
   logout: () => void;
+  stompConnected: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,33 +27,47 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | undefined>(undefined);
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
-  const [tempAccessToken, setTempAccessToken] = useState<string | null>(null); 
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [stompConnected, setStompConnected] = useState(false);
 
-  // accessToken 상태만 변경 (임시 토큰용, 쿠키에는 저장하지 않음)
+  // accessToken 상태와 localStorage 동기화 함수
   const setAccessToken = (token: string | null) => {
+    if (token) {
+      localStorage.setItem("accessToken", token);
+    } else {
+      localStorage.removeItem("accessToken");
+    }
     setAccessTokenState(token);
   };
 
-  // 초기 로드 시 유저 정보 및 쿠키에 저장된 토큰 불러오기
+  // 초기 로드 시 localStorage에서 토큰 불러와 상태에 반영하고 프로필 요청
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const res = await fetchUserProfile(); // 쿠키 기반 인증
-        if (res.success) {
-          setUser({ nickname: res.nickname, role: res.role });
-        } else {
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem("accessToken");
+      if (storedToken) {
+        setAccessTokenState(storedToken);
+        try {
+          const profile = await fetchUserProfile();
+          setUser(profile);
+          // STOMP 연결
+          await connectStomp(storedToken, (message) => {
+            console.log("STOMP 메시지 수신:", message);
+            // 메시지 처리 로직 추가
+          });
+          setStompConnected(true);
+        } catch (error) {
+          setAccessToken(null);
           setUser(undefined);
+          setStompConnected(false);
         }
-      } catch (error) {
-        setUser(undefined);
-      } finally {
-        setLoading(false);
+      } else {
+        setStompConnected(false);
       }
+      setLoading(false);
     };
 
-    loadUser();
+    initAuth();
   }, []);
 
   // 로그아웃 처리
@@ -65,10 +78,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!response.success) {
         throw new Error(response.message);
       }
-      // 상태 초기화
       setUser(undefined);
-      setAccessTokenState(null);
-      setTempAccessToken(null);
+      setAccessToken(null);
+      await disconnectStomp();
+      setStompConnected(false);
 
       router.push("/");
     } catch (error) {
@@ -78,7 +91,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, tempAccessToken, loading, setTempAccessToken, setUser, setAccessToken, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        accessToken,
+        loading,
+        setUser,
+        setAccessToken,
+        logout,
+        stompConnected,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
