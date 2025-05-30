@@ -22,7 +22,6 @@ import com.stockleague.backend.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -30,11 +29,6 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -50,7 +44,6 @@ public class AuthService {
     private final TokenCookieHandler tokenCookieHandler;
 
     public OAuthLoginResponseDto login(OAuthLoginRequestDto requestDto,
-                                       HttpServletRequest request,
                                        HttpServletResponse response) {
         OAuthClient client = oauthClients.stream()
                 .filter(c -> c.supports(OauthServerType.valueOf(requestDto.provider())))
@@ -70,14 +63,13 @@ public class AuthService {
                         throw new GlobalException(GlobalErrorCode.BANNED_USER);
                     }
 
-                    issueTokensAndSetCookies(user, response);
-                    createSecuritySession(user, request);
+                    String accessToken = issueTokens(user, response);
 
                     String role = user.getRole().toString();
                     String nickname = user.getNickname();
 
                     return new OAuthLoginResponseDto(true, "소셜 로그인 성공", false,
-                            null, nickname, role);
+                            accessToken, nickname, role);
                 })
                 .orElseGet(() -> {
                     String tempAccessToken = jwtProvider.createTempAccessToken(userInfo.getOauthId(),
@@ -88,12 +80,11 @@ public class AuthService {
     }
 
     public OAuthLoginResponseDto completeSignup(String tempToken, AdditionalInfoRequestDto requestDto,
-                                                HttpServletRequest request, HttpServletResponse response) {
+                                                HttpServletResponse response) {
 
         OauthTokenPayload payload = jwtProvider.parseTempToken(tempToken);
         String oauthId = payload.oauthId();
         var provider = payload.provider();
-
 
         if (userRepository.findByOauthIdAndProvider(oauthId, provider).isPresent()) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
@@ -114,14 +105,13 @@ public class AuthService {
                     .build()
             );
 
-            issueTokensAndSetCookies(user, response);
-            createSecuritySession(user, request);
+            String accessToken = issueTokens(user, response);
 
             String role = user.getRole().toString();
             String nickname = user.getNickname();
 
             return new OAuthLoginResponseDto(true, "추가 정보 입력이 완료되었습니다",
-                    false, null, nickname, role);
+                    false, accessToken, nickname, role);
 
         } catch (DataIntegrityViolationException e) {
             throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
@@ -153,7 +143,7 @@ public class AuthService {
 
         Long userId = jwtProvider.getUserId(accessToken);
         if (!redisService.isRefreshTokenValid(userId, refreshToken)) {
-            tokenCookieHandler.removeTokenCookies(response);
+            tokenCookieHandler.removeRefreshTokenCookie(response);
             throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
         }
 
@@ -161,7 +151,7 @@ public class AuthService {
         long expiration = jwtProvider.getTokenRemainingTime(accessToken);
         redisService.blacklistAccessToken(accessToken, expiration);
 
-        tokenCookieHandler.removeTokenCookies(response);
+        tokenCookieHandler.removeRefreshTokenCookie(response);
 
         return new OAuthLogoutResponseDto(true, "로그아웃이 완료되었습니다.");
     }
@@ -182,9 +172,9 @@ public class AuthService {
         String newRefreshToken = jwtProvider.createRefreshToken(userId);
 
         redisService.rotateRefreshToken(userId, newRefreshToken, Duration.ofDays(30));
-        tokenCookieHandler.addTokenCookies(response, newAccessToken, newRefreshToken);
+        tokenCookieHandler.addRefreshTokenCookie(response, newRefreshToken);
 
-        return new TokenReissueResponseDto(true, "토큰이 재발급되었습니다.");
+        return new TokenReissueResponseDto(true, "토큰이 재발급되었습니다.", newAccessToken);
     }
 
     public void clearUserTokens(Long userId, HttpServletRequest request, HttpServletResponse response) {
@@ -203,14 +193,16 @@ public class AuthService {
         }
 
         redisService.deleteRefreshToken(userId);
-        tokenCookieHandler.removeTokenCookies(response);
+        tokenCookieHandler.removeRefreshTokenCookie(response);
     }
 
-    private void issueTokensAndSetCookies(User user, HttpServletResponse response) {
+    private String issueTokens(User user, HttpServletResponse response) {
         String accessToken = jwtProvider.createAccessToken(user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
         redisService.saveRefreshToken(user.getId(), refreshToken, Duration.ofDays(30));
-        tokenCookieHandler.addTokenCookies(response, accessToken, refreshToken);
+        tokenCookieHandler.addRefreshTokenCookie(response, refreshToken);
+
+        return accessToken;
     }
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
@@ -223,29 +215,16 @@ public class AuthService {
 
     private Long getValidUserIdFromRefreshToken(String refreshToken, HttpServletResponse response) {
         if (!jwtProvider.validateToken(refreshToken)) {
-            tokenCookieHandler.removeTokenCookies(response);
+            tokenCookieHandler.removeRefreshTokenCookie(response);
             throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         Long userId = jwtProvider.getUserId(refreshToken);
         if (!redisService.isRefreshTokenValid(userId, refreshToken)) {
-            tokenCookieHandler.removeTokenCookies(response);
+            tokenCookieHandler.removeRefreshTokenCookie(response);
             throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         return userId;
-    }
-
-    private void createSecuritySession(User user, HttpServletRequest request) {
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-
-        var authentication = new UsernamePasswordAuthenticationToken(
-                user.getId().toString(), null, List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
-        );
-
-        context.setAuthentication(authentication);
-
-        HttpSession session = request.getSession(true); // 없으면 생성
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
     }
 }

@@ -1,11 +1,10 @@
 package com.stockleague.backend.global.config;
 
 
-import com.stockleague.backend.auth.jwt.JwtProvider;
-import com.stockleague.backend.global.handler.CustomHandshakeHandler;
-import com.stockleague.backend.global.handler.AuthenticatedUserHandshakeInterceptor;
+import com.stockleague.backend.global.handler.WebSocketSecurityInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -16,13 +15,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final JwtProvider jwtProvider;
+    private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .addInterceptors(new AuthenticatedUserHandshakeInterceptor())
-                .setHandshakeHandler(new CustomHandshakeHandler())
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
@@ -32,5 +29,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/user/queue");
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/pub");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketSecurityInterceptor);
     }
 }
