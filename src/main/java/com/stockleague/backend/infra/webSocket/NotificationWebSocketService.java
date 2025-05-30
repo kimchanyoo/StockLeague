@@ -21,7 +21,7 @@ public class NotificationWebSocketService {
 
         messagingTemplate.convertAndSendToUser(
                 String.valueOf(userId),
-                "/queue/notifications",
+                "/user/queue/notifications",
                 dto
         );
     }
