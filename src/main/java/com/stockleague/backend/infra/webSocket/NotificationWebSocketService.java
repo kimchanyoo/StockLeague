@@ -33,5 +33,7 @@ public class NotificationWebSocketService {
                 "queue/notifications",
                 dto
         );
+
+        messagingTemplate.convertAndSend("/topic/notifications", dto);
     }
 }

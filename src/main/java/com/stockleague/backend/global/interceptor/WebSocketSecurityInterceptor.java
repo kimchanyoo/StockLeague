@@ -1,4 +1,4 @@
-package com.stockleague.backend.global.handler;
+package com.stockleague.backend.global.interceptor;
 
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
