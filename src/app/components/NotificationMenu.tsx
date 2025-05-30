@@ -31,11 +31,11 @@ const NotificationMenu = () => {
         <div className={styles.dropdown}>
           {notifications.length > 0 ? (
             notifications.map((n) => (
-              <div key={n.id} className={styles.item}>
-                <span>{n.content}</span>
+              <div key={n.notificationId} className={styles.item}>
+                <span>{n.message}</span>
                 <CloseIcon
                   className={styles.closeIcon}
-                  onClick={() => removeNotification(n.id)}
+                  onClick={() => removeNotification(n.notificationId)}
                   fontSize="small"
                 />
               </div>

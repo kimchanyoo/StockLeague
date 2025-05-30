@@ -2,6 +2,8 @@ import React from "react";
 import styles from "@/app/styles/components/AdminHeader.module.css";
 import UserMenu from "./UserMenu";
 import { useAuth } from "@/context/AuthContext";
+import NotificationMenu from "./NotificationMenu";
+
 
 const AdminHeader = () => {
   // 임시 유저 (나중에 실제 로그인 정보로 대체)
@@ -25,6 +27,7 @@ const AdminHeader = () => {
           <div className={styles.rightHeader}>
             {isLoggedIn ? (
               <>
+                <NotificationMenu/>
                 <UserMenu nickname={user.nickname} />
               </>
             ) : (

@@ -1,39 +1,35 @@
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
-import { useAuth } from "@/context/AuthContext"; // AuthContext 가져오기
+import { useAuth } from "@/context/AuthContext";
 
-type Role = "USER" | "ADMIN"; // 또는 enum
+type Role = "USER" | "ADMIN";
+
 interface SocialSignupData {
   agreedToTerms: boolean;
   isOverFifteen: boolean;
+  accessToken?: string;
   nickname: string;
-  accessToken?: string; 
-  role?: Role; // 추가
+  role: Role;
 }
 
 interface SocialSignupContextType {
   data: Partial<SocialSignupData>;
   setData: (data: Partial<SocialSignupData>) => void;
-  handleFirstLoginSuccess: (token: string) => void;
-  finalizeSignup: (nickname: string, role: Role) => void;
+  finalizeSignup: (nickname: string, role: Role, accessToken: string) => void;
 }
 
 const SocialSignupContext = createContext<SocialSignupContextType | undefined>(undefined);
 
 export const SocialSignupProvider = ({ children }: { children: React.ReactNode }) => {
   const [data, setState] = useState<Partial<SocialSignupData>>({});
-  const { setUser, setTempAccessToken } = useAuth(); // AuthContext에서 setAccessToken과 setUser 가져오기
+  const { setUser, setAccessToken } = useAuth();
 
   const setData = (newData: Partial<SocialSignupData>) => {
     setState((prev) => ({ ...prev, ...newData }));
   };
-  
-  const handleFirstLoginSuccess = (token: string) => {
-    setTempAccessToken(token);
-  };
-  
-  const finalizeSignup = (nickname: string, role: Role) => {
+
+  const finalizeSignup = (nickname: string, role: Role, accessToken: string) => {
     setData({
       nickname,
       agreedToTerms: true,
@@ -41,10 +37,11 @@ export const SocialSignupProvider = ({ children }: { children: React.ReactNode }
       role,
     });
     setUser({ nickname, role });
+    setAccessToken(accessToken);
   };
-  
+
   return (
-    <SocialSignupContext.Provider value={{ data, setData, handleFirstLoginSuccess, finalizeSignup }}>
+    <SocialSignupContext.Provider value={{ data, setData, finalizeSignup }}>
       {children}
     </SocialSignupContext.Provider>
   );

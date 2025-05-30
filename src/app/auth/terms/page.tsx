@@ -30,9 +30,6 @@ export default function Terms() {
         isOverFifteen: true,
       });
 
-      // 💾 Optional: localStorage 백업
-      localStorage.setItem("tempAccessToken", accessToken);
-
       router.push(`/auth/nickname?accessToken=${accessToken}`);
     } else {
       alert("모든 필수 항목에 동의해주세요.");
@@ -64,7 +61,7 @@ export default function Terms() {
                 onChange={(e) => setIsAgreed(e.target.checked)}
                 className="mr-2"
               />
-              <label htmlFor="agree">[필수] 약관에 동의합니다.</label>
+              <label htmlFor="agreeTerms">[필수] 약관에 동의합니다.</label>
             </div>
             <div className="agreeBox">
               <input
@@ -74,7 +71,7 @@ export default function Terms() {
                 onChange={(e) => setIsOverFifteen(e.target.checked)}
                 className="mr-2"
               />
-              <label htmlFor="agree">[필수] 만 14세 이상입니다.</label>
+              <label htmlFor="overFifteen">[필수] 만 14세 이상입니다.</label>
             </div>
             <NextButton text="다음" onClick={handleNextClick} disabled={!isAgreed && isOverFifteen}/>
         </div>

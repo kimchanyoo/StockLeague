@@ -2,42 +2,36 @@
 
 import "./nickname.css";
 import NextButton from "@/app/components/NextButton";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";
-import { useAuth } from "@/context/AuthContext"; 
-import { useSearchParams } from "next/navigation"; 
 import axios from "axios";
 
 export default function Nickname() {
-  const { data, setData } = useSocialSignup(); // SocialSignupContext에서 데이터와 setData 가져오기
-  const { setAccessToken, setUser } = useAuth(); // AuthContext에서 setAccessToken과 setUser 가져오기
+  const { data, setData, finalizeSignup } = useSocialSignup();
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams(); 
-  const accessTokenFromQuery = searchParams.get("accessToken"); 
+  const searchParams = useSearchParams();
+  const accessTokenFromQuery = searchParams.get("accessToken");
 
+  // accessToken 쿼리로부터 초기 설정
   useEffect(() => {
     if (accessTokenFromQuery && !data.accessToken) {
-      setData({
-        ...data,
-        accessToken: accessTokenFromQuery,  // accessToken만 업데이트
-      });
+      setData({ accessToken: accessTokenFromQuery });
     }
-  }, [accessTokenFromQuery, data, setData]);
-  
+  }, [accessTokenFromQuery, data.accessToken, setData]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-
     if (value.length > 10) {
       setError("닉네임은 최대 10자까지 가능합니다.");
     } else {
       setError("");
       setNickname(value);
-      setIsAvailable(null); // 닉네임이 바뀌면 중복 검사 결과 초기화
+      setIsAvailable(null); // 중복 검사 결과 초기화
     }
   };
 
@@ -49,15 +43,10 @@ export default function Nickname() {
 
     try {
       setIsChecking(true);
-      const response = await axios.get(`/api/v1/auth/check-nickname`, {
+      const response = await axios.get("/api/v1/auth/check-nickname", {
         params: { nickname },
-        headers: {
-          "Content-Type": "application/json",
-        },
-        
+        headers: { "Content-Type": "application/json" },
       });
-
-      console.log(response.data);  // 응답 데이터 확인
 
       if (response.data.available) {
         setIsAvailable(true);
@@ -75,38 +64,12 @@ export default function Nickname() {
   };
 
   const handleNext = async () => {
-    if (!nickname) {
-      setError("닉네임을 입력해주세요.");
-      return;
-    }
+    if (!nickname) return setError("닉네임을 입력해주세요.");
+    if (nickname.length > 10) return setError("닉네임은 최대 10자까지 가능합니다.");
+    if (!isAvailable) return setError("중복 검사를 통과한 닉네임만 사용할 수 있습니다.");
+    if (!data.accessToken) return setError("로그인 정보가 유효하지 않습니다.");
 
-    if (nickname.length > 10) {
-      setError("닉네임은 최대 10자까지 가능합니다.");
-      return;
-    }
-
-    if (!isAvailable) {
-      setError("중복 검사를 통과한 닉네임만 사용할 수 있습니다.");
-      return;
-    }
-
- if (!data.accessToken) {
-    setError("로그인 정보가 유효하지 않습니다.");
-    console.error("accessToken이 없습니다.");  // 토큰이 없을 때 확인
-    return;
-  }  
     try {
-      if (!data.accessToken) {
-        console.error("accessToken is missing.");
-        return;
-      }
-
-      console.log("Sending request with data:", {
-        nickname,
-        agreedToTerms: data.agreedToTerms,
-        isOverFifteen: data.isOverFifteen,
-      });
-
       const response = await axios.post(
         "/api/v1/auth/oauth/complete",
         {
@@ -119,15 +82,14 @@ export default function Nickname() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${data.accessToken}`,
           },
-          withCredentials: true, // 쿠키도 함께 전송하는 경우
+          withCredentials: true,
         }
       );
-      // 응답을 받은 후 로그
-      console.log("Response received:", response);
-      
-      // 성공적으로 회원가입 완료 후 AuthContext에 사용자 정보 및 토큰 설정
-      setAccessToken(data.accessToken || ""); // SocialSignupContext에서 받은 accessToken 저장
-      setUser({ nickname }); // 사용자 정보 설정
+
+      console.log("회원가입 완료:", response.data);
+
+      // ✅ finalizeSignup 사용
+      finalizeSignup(nickname, "USER", data.accessToken);
 
       router.push("/auth/success");
     } catch (error) {
