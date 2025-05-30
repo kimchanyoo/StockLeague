@@ -11,6 +11,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -64,7 +65,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
         }
 
-        return message;
+        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
 
     // WebSocket 사용자 인증용 Principal 구현
