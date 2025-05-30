@@ -65,7 +65,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
         }
 
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+        return message;
     }
 
     // WebSocket 사용자 인증용 Principal 구현
