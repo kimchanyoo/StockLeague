@@ -4,6 +4,7 @@ import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.TokenRedisService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -12,6 +13,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -60,7 +62,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
             // 유저 정보 설정
             Long userId = jwtProvider.getUserId(token);
-            accessor.setUser(new StompPrincipal(userId.toString()));
+            accessor.setUser(new UsernamePasswordAuthenticationToken(userId, null, List.of()));
 
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
         }
