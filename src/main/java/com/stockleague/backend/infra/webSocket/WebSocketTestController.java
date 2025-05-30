@@ -14,6 +14,11 @@ public class WebSocketTestController {
     @MessageMapping("/test")
     @SendToUser("/queue/notifications")
     public String testEcho(String message, Principal principal) {
+        if (principal == null) {
+            log.warn("Principal is null");
+            return "접속 정보 없음";
+        }
+
         log.info("[Echo] from userId={}, message={}", principal.getName(), message);
         return "echo: " + message;
     }
