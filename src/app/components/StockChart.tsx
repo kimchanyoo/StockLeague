@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { createChart, UTCTimestamp, CandlestickSeriesOptions, LineSeriesOptions, ISeriesApi } from "lightweight-charts";
+import { createChart, UTCTimestamp, CandlestickSeriesOptions, LineSeriesOptions, Time, IChartApi, ISeriesApi, IPriceScaleApi } from "lightweight-charts";
 import styles from "@/app/styles/components/StockChart.module.css";
 import TimeIntervalSelector from "./TimeIntervalSelector";
 import MovingAverageSelector from "./MovingAverageSelector"
@@ -10,6 +10,7 @@ type Props = {
   activeTab: 'chart' | 'community';
   setActiveTab: (tab: 'chart' | 'community') => void;
 };
+type Point = { time: Time; price: number };
 
 // 예시 주식 데이터
 const data: { open: number; high: number; low: number; close: number; time: UTCTimestamp; volume: number }[] = [
@@ -28,13 +29,20 @@ const data: { open: number; high: number; low: number; close: number; time: UTCT
 const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const maRefs = useRef<{ [period: number]: ISeriesApi<"Line"> }>({});
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const [lines, setLines] = useState<Point[][]>([]);
   const [selectedInterval, setSelectedInterval] = useState<string>("d"); 
   const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({
     5: true,
     20: false,
     60: false,
   });
-  
+
+  // 선 그리기용 점 저장 state
+  const lineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
+
   const toggleMA = (period: number) => {
     setMaVisibility(prev => ({ ...prev, [period]: !prev[period] }));
   };
@@ -50,6 +58,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     };
 
     const chart = createChart(chartContainerRef.current, chartOptions);
+    chartRef.current = chart;
     
     // 캔들스틱 시리즈 추가
     const candlestickSeries = chart.addCandlestickSeries({
@@ -59,6 +68,9 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       wickUpColor: '#CB3030',
       wickDownColor: '#2D7CD1',
     } as CandlestickSeriesOptions);
+
+    candlestickSeries.setData(data);
+    candlestickSeriesRef.current = candlestickSeries;
 
     // 거래량 차트 영역을 위한 또 다른 차트
     const volumeChart = createChart(volumeContainerRef.current, {
@@ -85,25 +97,8 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       priceLineVisible: false,
     });
 
-    // 평균이동선 추가
-    const addMovingAverage = (period: number, color: string) => {
-      const maSeries = chart.addLineSeries({ color, lineWidth: 1 } as LineSeriesOptions);
-      const maData = data.map((d, i, arr) => {
-        if (i < period - 1) return null;
-        const slice = arr.slice(i - period + 1, i + 1);
-        const avg = slice.reduce((sum, item) => sum + item.close, 0) / period;
-        return { time: d.time, value: avg };
-      }).filter(Boolean) as { time: UTCTimestamp; value: number }[];
-      maSeries.setData(maData);
-    };
-
-    if (maVisibility[5]) addMovingAverage(5, '#FFA500');  // 주황 단기
-    if (maVisibility[20]) addMovingAverage(20, '#008000');   // 초록 중기
-    if (maVisibility[60]) addMovingAverage(60, '#0000FF');  // 파랑 장기
-
     // 데이터 설정
     candlestickSeries.setData(data);
-     // 데이터 설정 (거래량 차트)
      volumeSeries.setData(
       data.map((d, i) => {
         const prev = data[i - 1];
@@ -116,18 +111,128 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
         };
       })
     );
-    
 
-    // 화면에 맞게 시간 범위 조정
     chart.timeScale().fitContent();
     volumeChart.timeScale().fitContent();
+    
+    Object.entries(maVisibility).forEach(([periodStr, visible]) => {
+      const period = Number(periodStr);
+      if (visible) {
+        if (!maRefs.current[period]) {
+          maRefs.current[period] = chart.addLineSeries({
+            color: period === 5 ? '#FFA500' : period === 20 ? '#008000' : '#0000FF',
+            lineWidth: 1,
+          });
+        }
+        // 평균이동선
+        const maData = data.map((d, i, arr) => {
+          if (i < period - 1) return null;
+          const slice = arr.slice(i - period + 1, i + 1);
+          const avg = slice.reduce((sum, item) => sum + item.close, 0) / period;
+          return { time: d.time, value: avg };
+        }).filter(Boolean) as { time: UTCTimestamp; value: number }[];
+
+        // 중복된 time 제거
+        const filteredMAData = maData.reduce<{ time: UTCTimestamp; value: number }[]>((acc, cur) => {
+          if (acc.length === 0 || acc[acc.length - 1].time !== cur.time) {
+            acc.push(cur);
+          }
+          return acc;
+        }, []);
+
+        maRefs.current[period].setData(filteredMAData);
+      } else {
+
+        if (maRefs.current[period]) {
+          chart.removeSeries(maRefs.current[period]);
+          delete maRefs.current[period];
+        }
+      }
+    });
 
     // 차트 클린업
     return () => {
       chart.remove();
       volumeChart.remove();
+      candlestickSeriesRef.current = null;
     };
   }, [maVisibility]);
+
+  // 클릭 좌표를 시계열 데이터 좌표로 변환하는 함수
+  const coordinateToPoint = (x: number, y: number): Point | null => {
+    if (!chartRef.current) return null;
+    if (!candlestickSeriesRef.current) return null;
+
+    const time = chartRef.current.timeScale().coordinateToTime(x);
+    if (time === null) return null;
+
+    // 시리즈에서 coordinateToPrice 호출
+    const price = candlestickSeriesRef.current.coordinateToPrice(y);
+    if (price === null) return null;
+
+    return { time, price };
+  };
+
+  // 차트 클릭 이벤트 핸들러
+  const handleChartClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if (!chartContainerRef.current) return;
+
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const point = coordinateToPoint(x, y);
+    if (point) {
+    setLines(prev => {
+      const lastLine = prev[prev.length - 1] || [];
+      if (lastLine.length === 0) {
+        // 새 선 시작
+        return [...prev, [point]];
+      } else if (lastLine.length === 1) {
+        // 선 완성(2점)
+        const updatedLastLine = [...lastLine, point];
+        return [...prev.slice(0, -1), updatedLastLine];
+      } else {
+        // 이미 2점이라면 새 선 추가
+        return [...prev, [point]];
+      }
+    });
+  }
+};
+
+  // 선 그리기 업데이트
+  useEffect(() => {
+    if (!lineSeriesRef.current) return;
+    if (!chartRef.current) return;
+
+    lineSeriesRef.current.forEach(series => {
+      if (series) {
+        chartRef.current!.removeSeries(series);
+      }
+    });
+    lineSeriesRef.current.length = 0;
+    lineSeriesRef.current = [];
+
+    if (!lines || lines.length === 0) return;
+    
+    // 새로 만든 선마다 LineSeries 생성 후 데이터 세팅
+    lines.forEach(linePoints => {
+      if (linePoints.length === 2) {
+        const series = chartRef.current!.addLineSeries({
+          color: 'blue',
+          lineWidth: 2,
+        });
+        if (series) {
+          series.setData(
+            [linePoints[0], linePoints[1]]
+              .sort((a, b) => (a.time as number) - (b.time as number))
+              .map(p => ({ time: p.time, value: p.price }))
+          );
+          lineSeriesRef.current.push(series);
+        }
+      }
+    });
+  }, [lines]);
 
   return (
     <div className={styles.container}>
@@ -139,7 +244,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
         <MovingAverageSelector selected={maVisibility} onToggle={toggleMA} />
       </div>
       {/* 차트 영역 */}
-      <div ref={chartContainerRef} className={styles.centerSection} />
+      <div ref={chartContainerRef} className={styles.centerSection} onClick={handleChartClick}/>
       <div ref={volumeContainerRef} className={styles.bottomSection}/>
     </div>
   );

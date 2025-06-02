@@ -27,6 +27,8 @@
     width: 100%;
     flex: 3;
     border-bottom: 1px solid #999999;
+    user-select: none;
+    cursor: crosshair;
 }
 
 /* 거래량차트 섹션 */
