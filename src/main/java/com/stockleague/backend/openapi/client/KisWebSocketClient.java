@@ -92,6 +92,7 @@ public class KisWebSocketClient {
 
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+                log.debug("[WebSocket 수신 데이터]: {}", data);
                 handleIncomingMessage(data.toString());
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
