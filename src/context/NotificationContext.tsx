@@ -27,15 +27,26 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (!loading && user && accessToken) {
-      connectStomp(accessToken, (msg) => {
-        if (!msg) {
-          console.warn("⚠️ 메시지가 없습니다:", msg);
-          return;
+      let isMounted = true;
+
+      (async () => {
+        try {
+          await connectStomp(accessToken, (msg) => {
+            if (!msg) {
+              console.warn("⚠️ 메시지가 없습니다:", msg);
+              return;
+            }
+            if (isMounted) {
+              setNotifications((prev) => [msg, ...prev]);
+            }
+          });
+        } catch (error) {
+          console.error("STOMP 연결 중 오류 발생:", error);
         }
-        setNotifications((prev) => [msg, ...prev]);
-      });
+      })();
 
       return () => {
+        isMounted = false;
         disconnectStomp();
       };
     }
