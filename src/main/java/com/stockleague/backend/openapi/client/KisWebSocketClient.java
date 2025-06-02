@@ -1,6 +1,8 @@
 package com.stockleague.backend.openapi.client;
 
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
+import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
+import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -29,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class KisWebSocketClient {
 
     private final OpenApiTokenRedisService openApiTokenRedisService;
+    private final KisWebSocketResponseParser parser;
 
     private static final String WS_URL = "ws://ops.koreainvestment.com:21000";
     private static final List<String> TICKERS = List.of("005930", "000660");
@@ -147,9 +150,6 @@ public class KisWebSocketClient {
             String trKey = header.optString(TR_KEY, "");
             String encrypt = header.optString(ENCRYPT, "N");
 
-            if ("PINGPONG".equalsIgnoreCase(trId)) {
-                return;
-            }
 
             if (body == null) {
                 log.info("body가 없는 WebSocket 메시지: {}", data);
@@ -186,17 +186,23 @@ public class KisWebSocketClient {
         String iv = encryptionIvMap.get(trKey);
         String key = encryptionKeyMap.get(trKey);
 
-        if (iv == null) log.warn("IV 누락됨 (trKey: {})", trKey);
-        if (key == null) log.warn("KEY 누락됨 (trKey: {})", trKey);
-        if (cipherText == null) log.warn("cipher_text 누락됨 (trKey: {})", trKey);
-
         if (iv != null && key != null && cipherText != null) {
             try {
                 String decrypted = decryptAes256(cipherText, key, iv);
                 log.info("복호화된 실시간 데이터 [{}]: {}", trKey, decrypted);
+
+                StockPriceDto stockPriceDto = parser.parse(decrypted);
+                if (stockPriceDto != null) {
+                    log.info("실시간 종목 시세 객체 생성: {}", stockPriceDto);
+
+                }
             } catch (Exception e) {
                 log.error("복호화 실패 (trKey: {})", trKey, e);
             }
+        } else {
+            if (iv == null) log.warn("IV 누락됨 (trKey: {})", trKey);
+            if (key == null) log.warn("KEY 누락됨 (trKey: {})", trKey);
+            if (cipherText == null) log.warn("cipher_text 누락됨 (trKey: {})", trKey);
         }
     }
 
