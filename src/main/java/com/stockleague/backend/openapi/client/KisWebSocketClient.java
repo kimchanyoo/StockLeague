@@ -78,14 +78,14 @@ public class KisWebSocketClient {
                         String message = String.format("""
                                     {
                                         "header": {
-                                        "approval_key": "%s",
-                                        "custtype": "P",
-                                        "tr_type": "1",
-                                        "content-type": "utf-8"
+                                            "approval_key": "%s",
+                                            "custtype": "P",
+                                            "tr_type": "1",
+                                            "content-type": "utf-8"
                                         },
                                         "body": {
                                             "tr_id": "H0STCNT0"
-                                            }
+                                        }
                                     }
                                 """, approvalKey);
                         webSocket.sendText(message, true);
