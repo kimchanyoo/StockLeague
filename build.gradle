@@ -80,6 +80,9 @@ dependencies {
 	// 개발 편의 기능
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
+	// json
+	implementation 'org.json:json:20240303'
+
 	// 테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
