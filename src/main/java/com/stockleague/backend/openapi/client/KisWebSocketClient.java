@@ -138,9 +138,19 @@ public class KisWebSocketClient {
             JSONObject header = json.optJSONObject("header");
             JSONObject body = json.optJSONObject("body");
 
-            String trId = header != null ? header.optString(TR_ID, "") : "";
-            String trKey = header != null ? header.optString(TR_KEY, "") : "";
-            String encrypt = header != null ? header.optString(ENCRYPT, "N") : "N";
+            if (header == null) {
+                log.warn("WebSocket 수신 메시지에 header가 없습니다: {}", data);
+                return;
+            }
+
+            String trId = header.optString(TR_ID, "");
+            String trKey = header.optString(TR_KEY, "");
+            String encrypt = header.optString(ENCRYPT, "N");
+
+            if (body == null) {
+                log.info("body가 없는 WebSocket 메시지: {}", data);
+                return;
+            }
 
             if (SUCCESS_MSG_CD.equals(body.optString(MSG_CD)) && body.has(OUTPUT)) {
                 handleKeyExchange(body, trKey);
