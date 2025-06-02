@@ -76,28 +76,31 @@ public class KisWebSocketClient {
 
                     private void sendApprovalKey(WebSocket webSocket, String approvalKey) {
                         String message = String.format("""
-                            {
-                                "header": {
-                                    "approval_key": "%s",
-                                    "custtype": "P",
-                                    "tr_type": "1",
-                                    "content-type": "utf-8"
-                                }
-                            }
-                        """, approvalKey);
+                                    {
+                                        "header": {
+                                        "approval_key": "%s",
+                                        "custtype": "P",
+                                        "tr_type": "1",
+                                        "content-type": "utf-8"
+                                        },
+                                        "body": {
+                                            "tr_id": "H0STCNT0"
+                                            }
+                                    }
+                                """, approvalKey);
                         webSocket.sendText(message, true);
                         log.info("인증 메시지 전송 완료");
                     }
 
                     private void subscribe(WebSocket webSocket, String trId, String ticker) {
                         String message = String.format("""
-                            {
-                                "header": {
-                                    "tr_id": "%s",
-                                    "tr_key": "%s"
-                                }
-                            }
-                        """, trId, ticker);
+                                    {
+                                        "header": {
+                                            "tr_id": "%s",
+                                            "tr_key": "%s"
+                                        }
+                                    }
+                                """, trId, ticker);
                         webSocket.sendText(message, true);
                         log.info("구독 요청: {} / {}", trId, ticker);
                     }
