@@ -147,6 +147,10 @@ public class KisWebSocketClient {
             String trKey = header.optString(TR_KEY, "");
             String encrypt = header.optString(ENCRYPT, "N");
 
+            if ("PINGPONG".equalsIgnoreCase(trId)) {
+                return;
+            }
+
             if (body == null) {
                 log.info("body가 없는 WebSocket 메시지: {}", data);
                 return;
