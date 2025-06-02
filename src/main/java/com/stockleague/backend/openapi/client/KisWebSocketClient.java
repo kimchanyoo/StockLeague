@@ -21,7 +21,7 @@ public class KisWebSocketClient {
 
     private final OpenApiTokenRedisService openApiTokenRedisService;
 
-    private static final String WS_URL = "wss://ops.koreainvestment.com:21000";
+    private static final String WS_URL = "ws://ops.koreainvestment.com:21000";
     private static final List<String> TICKERS = List.of("005930", "000660");
 
     @EventListener(ApplicationReadyEvent.class)
@@ -34,6 +34,7 @@ public class KisWebSocketClient {
         log.info("[DEBUG] KisWebSocketClient 실행 시작됨 ✅");
 
         String approvalKey = openApiTokenRedisService.getRealTimeKey();
+        log.info("현재 approvalKey: {}", approvalKey);
 
         if (approvalKey == null || approvalKey.isEmpty()) {
             log.error("실시간 키가 존재하지 않습니다. WebSocket 연결 중단.");
@@ -100,6 +101,10 @@ public class KisWebSocketClient {
                         webSocket.sendText(message, true);
                         log.info("구독 요청: {} / {}", trId, ticker);
                     }
+                })
+                .exceptionally(ex -> {
+                    log.error("[❌] WebSocket 연결 예외 발생", ex);
+                    return null;
                 });
     }
 }
