@@ -33,7 +33,7 @@ public class KisWebSocketClient {
     private final OpenApiTokenRedisService openApiTokenRedisService;
     private final KisWebSocketResponseParser parser;
 
-    private static final String WS_URL = "ws://ops.koreainvestment.com:21000";
+    private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
     private static final List<String> TICKERS = List.of("005930", "000660");
 
     private final Map<String, String> encryptionKeyMap = new ConcurrentHashMap<>();
@@ -148,6 +148,11 @@ public class KisWebSocketClient {
             }
 
             String trId = header.optString(TR_ID, "");
+            if ("PINGPONG".equals(trId)) {
+                log.debug("PINGPONG 메시지 무시");
+                return;
+            }
+
             String trKey = header.optString(TR_KEY, "");
             String encrypt = header.optString(ENCRYPT, "N");
 
