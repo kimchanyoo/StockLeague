@@ -1,18 +1,29 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { createChart, UTCTimestamp, CandlestickSeriesOptions, LineSeriesOptions, Time, IChartApi, ISeriesApi, IPriceScaleApi } from "lightweight-charts";
+import {
+  createChart,
+  UTCTimestamp,
+  CandlestickSeriesOptions,
+  LineSeriesOptions,
+  Time,
+  IChartApi,
+  ISeriesApi,
+} from "lightweight-charts";
 import styles from "@/app/styles/components/StockChart.module.css";
 import TimeIntervalSelector from "./TimeIntervalSelector";
-import MovingAverageSelector from "./MovingAverageSelector"
+import MovingAverageSelector from "./MovingAverageSelector";
+import DeleteIcon from '@mui/icons-material/Delete';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import { IconButton, Tooltip } from '@mui/material';
 
 type Props = {
   activeTab: 'chart' | 'community';
   setActiveTab: (tab: 'chart' | 'community') => void;
 };
+
 type Point = { time: Time; price: number };
 
-// 예시 주식 데이터
 const data: { open: number; high: number; low: number; close: number; time: UTCTimestamp; volume: number }[] = [
   { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 as UTCTimestamp, volume: 3000 },
   { open: 9.55, high: 10.30, low: 9.42, close: 9.94, time: 1642514276 as UTCTimestamp, volume: 2000 },
@@ -30,37 +41,48 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const maRefs = useRef<{ [period: number]: ISeriesApi<"Line"> }>({});
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const maRefs = useRef<{ [period: number]: ISeriesApi<"Line"> }>({});
+  const lineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
   const [lines, setLines] = useState<Point[][]>([]);
-  const [selectedInterval, setSelectedInterval] = useState<string>("d"); 
+  const [selectedInterval, setSelectedInterval] = useState<string>("d");
   const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({
     5: true,
     20: false,
     60: false,
   });
 
-  // 선 그리기용 점 저장 state
-  const lineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
+  const [isDrawingLine, setIsDrawingLine] = useState<boolean>(false);
 
   const toggleMA = (period: number) => {
     setMaVisibility(prev => ({ ...prev, [period]: !prev[period] }));
   };
+  
+  // 선 그리기 모드 토글 함수
+  const toggleDrawingLine = () => {
+    setIsDrawingLine((prev) => !prev);
+  };
+
+  // 선 모두 삭제 함수
+  const clearLines = () => {
+    setLines([]);
+  };
 
   useEffect(() => {
-  if (!chartContainerRef.current || !volumeContainerRef.current) return;
+    if (!chartContainerRef.current || !volumeContainerRef.current) return;
 
-    // 차트 옵션
-    const chartOptions = {
-      layout: {
-        textColor: 'black',
-      },
-    };
-
-    const chart = createChart(chartContainerRef.current, chartOptions);
+    const chart = createChart(chartContainerRef.current, {
+      layout: { textColor: 'black' },
+    });
     chartRef.current = chart;
-    
-    // 캔들스틱 시리즈 추가
+
+    const volumeChart = createChart(volumeContainerRef.current, {
+      layout: { textColor: 'black', background: { color: 'white' } },
+      crosshair: { vertLine: { color: '#000' }, horzLine: { color: '#000' } },
+      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      leftPriceScale: { visible: false },
+    });
+
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#CB3030',
       downColor: '#2D7CD1',
@@ -68,55 +90,26 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       wickUpColor: '#CB3030',
       wickDownColor: '#2D7CD1',
     } as CandlestickSeriesOptions);
-
-    candlestickSeries.setData(data);
+    const sortedData = [...data].sort((a, b) => a.time - b.time);
+    candlestickSeries.setData(sortedData);
     candlestickSeriesRef.current = candlestickSeries;
 
-    // 거래량 차트 영역을 위한 또 다른 차트
-    const volumeChart = createChart(volumeContainerRef.current, {
-      layout: {
-        textColor: 'black',
-        background: { color: 'white' },
-      },
-      crosshair: {
-        vertLine: { color: '#000', width: 1 },
-        horzLine: { color: '#000', width: 1 },
-      },
-      grid: {
-        vertLines: { visible: false },
-        horzLines: { visible: false },
-      },
-      leftPriceScale: {
-        visible: false, // 거래량 차트에는 가격 축을 숨깁니다
-      },
-    });
-
-    // 거래량 시리즈 추가
-    const volumeSeries = volumeChart.addHistogramSeries({
-      color: '#26a69a',
-      priceLineVisible: false,
-    });
-
-    // 데이터 설정
-    candlestickSeries.setData(data);
-     volumeSeries.setData(
-      data.map((d, i) => {
-        const prev = data[i - 1];
-        const isHigherVolume = prev ? d.volume > prev.volume : true;
-    
-        return {
-          time: d.time,
-          value: d.volume,
-          color: isHigherVolume ? "#CB3030" : "#2D7CD1",
-        };
-      })
+    const volumeSeries = volumeChart.addHistogramSeries({ color: '#26a69a', priceLineVisible: false });
+    volumeSeries.setData(
+      data.map((d, i) => ({
+        time: d.time,
+        value: d.volume,
+        color: i > 0 && d.volume > data[i - 1].volume ? '#CB3030' : '#2D7CD1',
+      }))
     );
 
     chart.timeScale().fitContent();
     volumeChart.timeScale().fitContent();
-    
+
     Object.entries(maVisibility).forEach(([periodStr, visible]) => {
       const period = Number(periodStr);
+      if (!chartRef.current) return;
+
       if (visible) {
         if (!maRefs.current[period]) {
           maRefs.current[period] = chart.addLineSeries({
@@ -124,113 +117,106 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
             lineWidth: 1,
           });
         }
-        // 평균이동선
+
         const maData = data.map((d, i, arr) => {
           if (i < period - 1) return null;
-          const slice = arr.slice(i - period + 1, i + 1);
-          const avg = slice.reduce((sum, item) => sum + item.close, 0) / period;
+          const avg = arr.slice(i - period + 1, i + 1).reduce((sum, item) => sum + item.close, 0) / period;
           return { time: d.time, value: avg };
         }).filter(Boolean) as { time: UTCTimestamp; value: number }[];
+        maData.sort((a, b) => (a.time as number) - (b.time as number));
 
-        // 중복된 time 제거
-        const filteredMAData = maData.reduce<{ time: UTCTimestamp; value: number }[]>((acc, cur) => {
-          if (acc.length === 0 || acc[acc.length - 1].time !== cur.time) {
-            acc.push(cur);
-          }
-          return acc;
-        }, []);
-
-        maRefs.current[period].setData(filteredMAData);
+        maRefs.current[period]?.setData(maData);
       } else {
-
         if (maRefs.current[period]) {
-          chart.removeSeries(maRefs.current[period]);
+          try {
+            chartRef.current?.removeSeries(maRefs.current[period]!);
+          } catch (e) {
+            console.warn(`MA 제거 실패 (period ${period}):`, e);
+          }
           delete maRefs.current[period];
         }
       }
     });
 
-    // 차트 클린업
     return () => {
       chart.remove();
       volumeChart.remove();
       candlestickSeriesRef.current = null;
+      maRefs.current = {};
     };
   }, [maVisibility]);
 
-  // 클릭 좌표를 시계열 데이터 좌표로 변환하는 함수
   const coordinateToPoint = (x: number, y: number): Point | null => {
-    if (!chartRef.current) return null;
-    if (!candlestickSeriesRef.current) return null;
-
+    if (!chartRef.current || !candlestickSeriesRef.current) return null;
     const time = chartRef.current.timeScale().coordinateToTime(x);
-    if (time === null) return null;
-
-    // 시리즈에서 coordinateToPrice 호출
     const price = candlestickSeriesRef.current.coordinateToPrice(y);
-    if (price === null) return null;
-
+    if (time === null || price === null) return null;
     return { time, price };
   };
 
-  // 차트 클릭 이벤트 핸들러
   const handleChartClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if (!isDrawingLine) return;
+    
     if (!chartContainerRef.current) return;
-
     const rect = chartContainerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-
     const point = coordinateToPoint(x, y);
+
     if (point) {
-    setLines(prev => {
-      const lastLine = prev[prev.length - 1] || [];
-      if (lastLine.length === 0) {
-        // 새 선 시작
+      setLines(prev => {
+        const last = prev[prev.length - 1] || [];
+        if (last.length === 0) return [...prev, [point]];
+        if (last.length === 1) return [...prev.slice(0, -1), [...last, point]];
         return [...prev, [point]];
-      } else if (lastLine.length === 1) {
-        // 선 완성(2점)
-        const updatedLastLine = [...lastLine, point];
-        return [...prev.slice(0, -1), updatedLastLine];
-      } else {
-        // 이미 2점이라면 새 선 추가
-        return [...prev, [point]];
-      }
-    });
-  }
-};
+      });
+    }
+  };
 
-  // 선 그리기 업데이트
   useEffect(() => {
-    if (!lineSeriesRef.current) return;
     if (!chartRef.current) return;
-
     lineSeriesRef.current.forEach(series => {
-      if (series) {
+      try {
         chartRef.current!.removeSeries(series);
+      } catch (e) {
+        console.warn("라인 제거 실패:", e);
       }
     });
-    lineSeriesRef.current.length = 0;
     lineSeriesRef.current = [];
 
     if (!lines || lines.length === 0) return;
-    
-    // 새로 만든 선마다 LineSeries 생성 후 데이터 세팅
-    lines.forEach(linePoints => {
-      if (linePoints.length === 2) {
-        const series = chartRef.current!.addLineSeries({
-          color: 'blue',
-          lineWidth: 2,
-        });
-        if (series) {
-          series.setData(
-            [linePoints[0], linePoints[1]]
-              .sort((a, b) => (a.time as number) - (b.time as number))
-              .map(p => ({ time: p.time, value: p.price }))
-          );
-          lineSeriesRef.current.push(series);
-        }
+
+    const allPrices = data.flatMap(d => [d.high, d.low]);
+    const min = Math.min(...allPrices);
+    const max = Math.max(...allPrices);
+
+    lines.forEach(line => {
+      if (line.length !== 2) return;
+
+      const series = chartRef.current!.addLineSeries({
+        color: 'blue',
+        lineWidth: 2,
+      });
+
+      const [p1, p2] = line;
+
+      if (p1.time === p2.time) {
+        const min = Math.min(p1.price, p2.price);
+        const max = Math.max(p1.price, p2.price);
+
+        series.setData([
+          { time: p1.time as UTCTimestamp, value: min },
+          { time: (p1.time as number + 1) as UTCTimestamp, value: max },
+        ]);
+      } else {
+        const sorted = [p1, p2].sort((a, b) => (a.time as number) - (b.time as number));
+        series.setData(sorted.map(p => ({
+          time: p.time as UTCTimestamp,
+          value: p.price,
+        })));
       }
+
+      lineSeriesRef.current.push(series);
     });
   }, [lines]);
 
@@ -238,14 +224,40 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     <div className={styles.container}>
       <div className={styles.btnSection}>
         <div className={styles.label}>시간 간격</div>
-        <TimeIntervalSelector onIntervalChange={setSelectedInterval}/>
+        <TimeIntervalSelector onIntervalChange={setSelectedInterval} />
         <h1>|</h1>
         <div className={styles.label}>이동평균선 주기</div>
         <MovingAverageSelector selected={maVisibility} onToggle={toggleMA} />
+        <h1>|</h1>
+        <div className={styles.label}>그리기</div>
+        <div>
+          <Tooltip title={isDrawingLine ? "그리기 끄기" : "그리기 켜기"}>
+            <IconButton
+              onClick={toggleDrawingLine}
+              color={isDrawingLine ? "primary" : "default"}
+              aria-pressed={isDrawingLine}
+              size="large"
+            >
+              <ShowChartIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="모든 선 삭제">
+            <span>
+              <IconButton
+                onClick={clearLines}
+                disabled={lines.length === 0}
+                color="error"
+                size="large"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </div>
       </div>
-      {/* 차트 영역 */}
-      <div ref={chartContainerRef} className={styles.centerSection} onClick={handleChartClick}/>
-      <div ref={volumeContainerRef} className={styles.bottomSection}/>
+      <div ref={chartContainerRef} className={styles.centerSection} onClick={handleChartClick} />
+      <div ref={volumeContainerRef} className={styles.bottomSection} />
     </div>
   );
 };
