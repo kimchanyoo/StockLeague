@@ -1,15 +1,15 @@
 package com.stockleague.backend.stock.mapper;
 
-import com.stockleague.backend.openapi.dto.response.KisPriceResponseDto;
+import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import org.springframework.stereotype.Component;
 
 @Component
 public class KisPriceMapper {
 
-    public StockPriceDto toStockPriceDto(KisPriceResponseDto response) {
-        KisPriceResponseDto.Header header = response.getHeader();
-        KisPriceResponseDto.Body body = response.getBody();
+    public StockPriceDto toStockPriceDto(KisPriceWebSocketResponseDto response) {
+        KisPriceWebSocketResponseDto.Header header = response.getHeader();
+        KisPriceWebSocketResponseDto.Body body = response.getBody();
 
         return new StockPriceDto(
                 header.getTr_key(),

@@ -4,7 +4,7 @@ import lombok.Getter;
 
 
 @Getter
-public class KisPriceResponseDto {
+public class KisPriceWebSocketResponseDto {
     private Header header;
     private Body body;
 

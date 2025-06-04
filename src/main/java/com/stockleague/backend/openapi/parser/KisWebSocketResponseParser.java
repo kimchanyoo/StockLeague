@@ -1,7 +1,7 @@
 package com.stockleague.backend.openapi.parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stockleague.backend.openapi.dto.response.KisPriceResponseDto;
+import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.mapper.KisPriceMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class KisWebSocketResponseParser {
 
     public StockPriceDto parse(String decryptedJson) {
         try {
-            KisPriceResponseDto response = objectMapper.readValue(decryptedJson, KisPriceResponseDto.class);
+            KisPriceWebSocketResponseDto response = objectMapper.readValue(decryptedJson, KisPriceWebSocketResponseDto.class);
             return kisPriceMapper.toStockPriceDto(response);
         } catch (Exception e) {
             log.error("실시간 응답 JSON 파싱 실패: {}", decryptedJson, e);
@@ -36,8 +36,8 @@ public class KisWebSocketResponseParser {
                 return null;
             }
 
-            KisPriceResponseDto.Header header = new KisPriceResponseDto.Header();
-            KisPriceResponseDto.Body data = new KisPriceResponseDto.Body();
+            KisPriceWebSocketResponseDto.Header header = new KisPriceWebSocketResponseDto.Header();
+            KisPriceWebSocketResponseDto.Body data = new KisPriceWebSocketResponseDto.Body();
 
             setField(header, "tr_id", trId);
             setField(header, "tr_key", parts[0]);
@@ -52,7 +52,7 @@ public class KisWebSocketResponseParser {
             setField(data, "prdy_vrss_sign", parts[46]);
             setField(data, "acml_vol", parts[47]);
 
-            KisPriceResponseDto response = new KisPriceResponseDto();
+            KisPriceWebSocketResponseDto response = new KisPriceWebSocketResponseDto();
             setField(response, "header", header);
             setField(response, "body", data);
 

@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/api/v1/stocks/*/comments",
                                 "/api/v1/comments/*/replies",
                                 "/api/v1/stocks",
+                                "/api/v1/openapi/*",
                                 "/ws/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
