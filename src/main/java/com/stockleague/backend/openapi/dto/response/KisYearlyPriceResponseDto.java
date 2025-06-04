@@ -5,13 +5,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.stockleague.backend.stock.dto.response.stock.StockYearlyPriceDto;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class KisYearlyPriceResponseDto {
 
     @JsonProperty("output")
     private List<Output> output;
 
     public List<StockYearlyPriceDto> toDtoList(String ticker) {
+        if (output == null) {
+            log.warn("[KIS API] output이 null입니다 - ticker: {}", ticker);
+            return List.of();
+        }
+
         return output.stream()
                 .map(o -> new StockYearlyPriceDto(
                         ticker,
@@ -31,6 +38,10 @@ public class KisYearlyPriceResponseDto {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    public List<Output> getOutput() {
+        return output;
     }
 
     public static class Output {

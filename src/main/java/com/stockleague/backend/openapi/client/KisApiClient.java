@@ -8,9 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
@@ -69,15 +69,25 @@ public class KisApiClient {
                                     .flatMap(body -> Mono.error(new RuntimeException("KIS API 오류 응답"))))
                     .bodyToMono(KisYearlyPriceResponseDto.class)
                     .map(response -> {
+                        if (response == null) {
+                            log.warn("[KIS API] 응답 객체 자체가 null입니다 - ticker: {}, year: {}", ticker, year);
+                            return List.<StockYearlyPriceDto>of();
+                        }
+
+                        if (response.getOutput() == null) {
+                            log.warn("[KIS API] output이 null입니다 - ticker: {}, year: {}", ticker, year);
+                            return List.<StockYearlyPriceDto>of();
+                        }
+
                         List<StockYearlyPriceDto> dtos = response.toDtoList(ticker).stream()
                                 .filter(dto -> dto.year() == year)
                                 .toList();
+
                         log.debug("[KIS API] 응답 수신 성공 - ticker: {}, year: {}, 변환된 데이터 건수: {}", ticker, year, dtos.size());
                         return dtos;
                     })
                     .doOnError(e ->
-                            log.warn("[KIS API] 연봉 데이터 조회 실패 - ticker: {}, year: {}, error: {}", ticker, year,
-                                    e.getMessage()))
+                            log.warn("[KIS API] 연봉 데이터 조회 실패 - ticker: {}, year: {}, error: {}", ticker, year, e.getMessage()))
                     .block();
         } catch (Exception e) {
             log.error("[KIS API] 연봉 데이터 조회 예외 발생 - ticker: {}, year: {}, exception: {}", ticker, year, e.getMessage(), e);
