@@ -34,7 +34,7 @@ public class KisWebSocketClient {
     private final KisWebSocketResponseParser parser;
 
     private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
-    private static final List<String> TICKERS = List.of("005930", "000660");
+    private static final List<String> TICKERS = List.of("005930");
 
     private final Map<String, String> encryptionKeyMap = new ConcurrentHashMap<>();
     private final Map<String, String> encryptionIvMap = new ConcurrentHashMap<>();
@@ -85,15 +85,38 @@ public class KisWebSocketClient {
                 log.info("WebSocket 연결 성공");
                 TICKERS.forEach(ticker -> {
                     sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker);
-                    sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
+//                    sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
                 });
                 WebSocket.Listener.super.onOpen(webSocket);
             }
 
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-                log.debug("[WebSocket 수신 데이터]: {}", data);
-                handleIncomingMessage(data.toString());
+                String message = data.toString();
+
+                // JSON 포맷이면 기존 로직 사용
+                if (message.trim().startsWith("{")) {
+                    try {
+                        JSONObject json = new JSONObject(message);
+                        String trId = json.optJSONObject("header").optString(TR_ID, "");
+                        if ("PINGPONG".equals(trId)) {
+                            log.debug("PINGPONG 메시지 무시");
+                            return WebSocket.Listener.super.onText(webSocket, data, last);
+                        }
+
+                        log.debug("[WebSocket 수신 JSON]: {}", message);
+                        handleIncomingMessage(message);
+
+                    } catch (Exception e) {
+                        log.error("WebSocket JSON 메시지 처리 중 예외 발생", e);
+                    }
+
+                } else {
+                    // 평문 메시지 처리
+                    log.debug("[WebSocket 수신 평문]: {}", message);
+                    handlePlainMessage(message);
+                }
+
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
 
@@ -147,12 +170,6 @@ public class KisWebSocketClient {
                 return;
             }
 
-            String trId = header.optString(TR_ID, "");
-            if ("PINGPONG".equals(trId)) {
-                log.debug("PINGPONG 메시지 무시");
-                return;
-            }
-
             String trKey = header.optString(TR_KEY, "");
             String encrypt = header.optString(ENCRYPT, "N");
 
@@ -197,11 +214,8 @@ public class KisWebSocketClient {
                 String decrypted = decryptAes256(cipherText, key, iv);
                 log.info("복호화된 실시간 데이터 [{}]: {}", trKey, decrypted);
 
-                StockPriceDto stockPriceDto = parser.parse(decrypted);
-                if (stockPriceDto != null) {
-                    log.info("실시간 종목 시세 객체 생성: {}", stockPriceDto);
+                handlePlainMessage(decrypted);
 
-                }
             } catch (Exception e) {
                 log.error("복호화 실패 (trKey: {})", trKey, e);
             }
@@ -209,6 +223,30 @@ public class KisWebSocketClient {
             if (iv == null) log.warn("IV 누락됨 (trKey: {})", trKey);
             if (key == null) log.warn("KEY 누락됨 (trKey: {})", trKey);
             if (cipherText == null) log.warn("cipher_text 누락됨 (trKey: {})", trKey);
+        }
+    }
+
+    private void handlePlainMessage(String message) {
+        try {
+            String[] parts = message.split("\\|", 4); // 암호화 여부 | tr_id | count | body
+            if (parts.length < 4) {
+                log.warn("잘못된 평문 메시지: {}", message);
+                return;
+            }
+
+            String trId = parts[1];
+            String body = parts[3];
+
+            StockPriceDto dto = parser.parsePlainText(trId, body);
+            if (dto != null) {
+                log.info("실시간 평문 종목 시세 객체 생성: {}", dto);
+
+            } else {
+                log.debug("지원하지 않는 평문 메시지 or DTO 파싱 실패: {}", message);
+            }
+
+        } catch (Exception e) {
+            log.error("평문 메시지 처리 중 예외 발생", e);
         }
     }
 
