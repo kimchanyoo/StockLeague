@@ -51,7 +51,7 @@ public class YearlyPriceBatchService {
 
                 log.info("[{}] {}년 데이터 저장 완료", ticker, year);
 
-                Thread.sleep(300L);
+                Thread.sleep(1000L);
 
             } catch (Exception e) {
                 log.warn("{}년 {} 연봉 데이터 저장 실패: {}", year, ticker, e.getMessage());
