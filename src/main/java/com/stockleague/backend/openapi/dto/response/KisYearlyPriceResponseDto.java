@@ -1,13 +1,15 @@
 package com.stockleague.backend.openapi.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import com.stockleague.backend.stock.dto.response.stock.StockYearlyPriceDto;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
+@Getter
 public class KisYearlyPriceResponseDto {
 
     @JsonProperty("output")
@@ -40,28 +42,24 @@ public class KisYearlyPriceResponseDto {
         }
     }
 
-    public List<Output> getOutput() {
-        return output;
-    }
-
+    @Getter
     public static class Output {
         @JsonProperty("basDt")
-        public String basDt;
+        private String basDt;
 
         @JsonProperty("mkp")
-        public String mkp;
+        private String mkp;
 
         @JsonProperty("hipr")
-        public String hipr;
+        private String hipr;
 
         @JsonProperty("lopr")
-        public String lopr;
+        private String lopr;
 
         @JsonProperty("clpr")
-        public String clpr;
+        private String clpr;
 
         @JsonProperty("acml_vol")
-        public String acmlVol;
+        private String acmlVol;
     }
 }
-

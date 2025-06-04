@@ -6,6 +6,7 @@ import com.stockleague.backend.openapi.service.OpenApiService;
 import com.stockleague.backend.stock.dto.response.stock.StockYearlyPriceDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -63,7 +64,7 @@ public class KisApiClient {
                     .header("appsecret", openApiProperties.getAppSecret())
                     .header("tr_id", TR_ID)
                     .retrieve()
-                    .onStatus(status -> status.isError(), response ->
+                    .onStatus(HttpStatusCode::isError, response ->
                             response.bodyToMono(String.class)
                                     .doOnNext(errorBody -> log.error("[KIS API] 에러 응답 바디: {}", errorBody))
                                     .flatMap(body -> Mono.error(new RuntimeException("KIS API 오류 응답"))))
