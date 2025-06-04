@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @Getter
 public class KisYearlyPriceResponseDto {
 
-    @JsonProperty("output")
+    @JsonProperty("output1")
     private List<Output> output;
 
     public List<StockYearlyPriceDto> toDtoList(String ticker) {
