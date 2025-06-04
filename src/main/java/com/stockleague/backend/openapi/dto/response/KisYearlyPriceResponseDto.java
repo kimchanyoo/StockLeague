@@ -12,23 +12,23 @@ import java.util.stream.Collectors;
 @Getter
 public class KisYearlyPriceResponseDto {
 
-    @JsonProperty("output1")
-    private List<Output> output;
+    @JsonProperty("output2")
+    private List<Output2> output;
 
     public List<StockYearlyPriceDto> toDtoList(String ticker) {
         if (output == null) {
-            log.warn("[KIS API] output이 null입니다 - ticker: {}", ticker);
+            log.warn("[KIS API] output2가 null입니다 - ticker: {}", ticker);
             return List.of();
         }
 
         return output.stream()
                 .map(o -> new StockYearlyPriceDto(
                         ticker,
-                        Integer.parseInt(o.basDt.substring(0, 4)),
-                        parseLong(o.mkp),
-                        parseLong(o.hipr),
-                        parseLong(o.lopr),
-                        parseLong(o.clpr),
+                        Integer.parseInt(o.stckBsopDate.substring(0, 4)),
+                        parseLong(o.stckOprc),
+                        parseLong(o.stckHgpr),
+                        parseLong(o.stckLwpr),
+                        parseLong(o.stckClpr),
                         parseLong(o.acmlVol)
                 ))
                 .collect(Collectors.toList());
@@ -43,23 +43,26 @@ public class KisYearlyPriceResponseDto {
     }
 
     @Getter
-    public static class Output {
-        @JsonProperty("basDt")
-        private String basDt;
+    public static class Output2 {
+        @JsonProperty("stck_bsop_date")
+        private String stckBsopDate;
 
-        @JsonProperty("mkp")
-        private String mkp;
+        @JsonProperty("stck_clpr")
+        private String stckClpr;
 
-        @JsonProperty("hipr")
-        private String hipr;
+        @JsonProperty("stck_oprc")
+        private String stckOprc;
 
-        @JsonProperty("lopr")
-        private String lopr;
+        @JsonProperty("stck_hgpr")
+        private String stckHgpr;
 
-        @JsonProperty("clpr")
-        private String clpr;
+        @JsonProperty("stck_lwpr")
+        private String stckLwpr;
 
         @JsonProperty("acml_vol")
         private String acmlVol;
+
+        @JsonProperty("acml_tr_pbmn")
+        private String acmlTrPbmn;
     }
 }
