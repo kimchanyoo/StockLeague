@@ -45,6 +45,9 @@ public class KisApiClient {
             return List.of();
         }
 
+        String fromDate = year + "0101";
+        String toDate = year + "1231";
+
         try {
             log.debug("[KIS API] 연봉 시세 요청 시작 - ticker: {}, year: {}", ticker, year);
 
@@ -55,6 +58,8 @@ public class KisApiClient {
                             .queryParam("fid_input_iscd", ticker)
                             .queryParam("fid_period_div_code", "Y")
                             .queryParam("fid_org_adj_prc", "0")
+                            .queryParam("fid_input_date_1", fromDate)
+                            .queryParam("fid_input_date_2", toDate)
                             .build())
                     .header("authorization", "Bearer " + accessToken)
                     .header("appkey", openApiProperties.getAppKey())
