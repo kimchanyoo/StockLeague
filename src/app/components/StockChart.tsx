@@ -44,28 +44,75 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const maRefs = useRef<{ [period: number]: ISeriesApi<"Line"> }>({});
   const lineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
-  const [lines, setLines] = useState<Point[][]>([]);
-  const [selectedInterval, setSelectedInterval] = useState<string>("d");
-  const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({
-    5: true,
-    20: false,
-    60: false,
-  });
+  const previewLineRef = useRef<ISeriesApi<"Line"> | null>(null);
 
+  const [lines, setLines] = useState<Point[][]>([]);
+  const [hoverPreviewLine, setHoverPreviewLine] = useState<Point[] | null>(null);
+
+  const [selectedInterval, setSelectedInterval] = useState<string>("d");
+  const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({ 5: true, 20: false, 60: false, });
   const [isDrawingLine, setIsDrawingLine] = useState<boolean>(false);
 
   const toggleMA = (period: number) => {
+    clearLines();
     setMaVisibility(prev => ({ ...prev, [period]: !prev[period] }));
   };
   
-  // 선 그리기 모드 토글 함수
-  const toggleDrawingLine = () => {
-    setIsDrawingLine((prev) => !prev);
+  // 선 그리기 / 삭제 모드 토글 함수
+  const toggleDrawingLine = () => { setIsDrawingLine((prev) => !prev); };
+  const clearLines = () => { 
+    if (!chartRef.current) return;
+    lineSeriesRef.current.forEach(series => {
+      if (series) {
+        try {
+          chartRef.current!.removeSeries(series);
+        } catch (e) {
+          console.warn('선 제거 중 오류 발생:', e);
+        }
+      }
+    });
+    lineSeriesRef.current = [];
+    setLines([]); 
   };
 
-  // 선 모두 삭제 함수
-  const clearLines = () => {
-    setLines([]);
+  const coordinateToPoint = (x: number, y: number): Point | null => {
+    if (!chartRef.current || !candlestickSeriesRef.current) return null;
+    const time = chartRef.current.timeScale().coordinateToTime(x);
+    const price = candlestickSeriesRef.current.coordinateToPrice(y);
+    if (time === null || price === null) return null;
+    return { time, price };
+  };
+
+  const handleChartClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if (!isDrawingLine) return;
+    
+    if (!chartContainerRef.current) return;
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const point = coordinateToPoint(x, y);
+
+    if (point) {
+      setLines(prev => {
+        const last = prev[prev.length - 1] || [];
+        if (last.length === 0) return [...prev, [point]];
+        if (last.length === 1) return [...prev.slice(0, -1), [...last, point]];
+        return [...prev, [point]];
+      });
+      setHoverPreviewLine(null)
+    }
+  };
+
+  const handleMouseMove = (event: MouseEvent) => {
+    if (!isDrawingLine || !chartContainerRef.current) return;
+    const lastLine = lines[lines.length - 1];
+    if (!lastLine || lastLine.length !== 1) return;
+
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const point = coordinateToPoint(x, y);
+    if (point) setHoverPreviewLine([lastLine[0], point]);
   };
 
   useEffect(() => {
@@ -146,57 +193,31 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     };
   }, [maVisibility]);
 
-  const coordinateToPoint = (x: number, y: number): Point | null => {
-    if (!chartRef.current || !candlestickSeriesRef.current) return null;
-    const time = chartRef.current.timeScale().coordinateToTime(x);
-    const price = candlestickSeriesRef.current.coordinateToPrice(y);
-    if (time === null || price === null) return null;
-    return { time, price };
-  };
-
-  const handleChartClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (!isDrawingLine) return;
-    
+  useEffect(() => {
     if (!chartContainerRef.current) return;
-    const rect = chartContainerRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const point = coordinateToPoint(x, y);
-
-    if (point) {
-      setLines(prev => {
-        const last = prev[prev.length - 1] || [];
-        if (last.length === 0) return [...prev, [point]];
-        if (last.length === 1) return [...prev.slice(0, -1), [...last, point]];
-        return [...prev, [point]];
-      });
-    }
-  };
-
+    chartContainerRef.current.addEventListener("mousemove", handleMouseMove);
+    return () => chartContainerRef.current?.removeEventListener("mousemove", handleMouseMove);
+  }, [lines, isDrawingLine]);
+  
   useEffect(() => {
     if (!chartRef.current) return;
-    lineSeriesRef.current.forEach(series => {
-      try {
-        chartRef.current!.removeSeries(series);
-      } catch (e) {
-        console.warn("라인 제거 실패:", e);
+
+    lineSeriesRef.current.forEach(s => {
+      if (s) {
+        try {
+          chartRef.current?.removeSeries(s);
+        } catch (e) {
+          console.warn('선 제거 실패:', e);
+        }
       }
     });
     lineSeriesRef.current = [];
 
     if (!lines || lines.length === 0) return;
 
-    const allPrices = data.flatMap(d => [d.high, d.low]);
-    const min = Math.min(...allPrices);
-    const max = Math.max(...allPrices);
-
     lines.forEach(line => {
       if (line.length !== 2) return;
-
-      const series = chartRef.current!.addLineSeries({
-        color: 'blue',
-        lineWidth: 2,
-      });
+      const series = chartRef.current!.addLineSeries({ color: 'blue', lineWidth: 2, });
 
       const [p1, p2] = line;
 
@@ -219,6 +240,26 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       lineSeriesRef.current.push(series);
     });
   }, [lines]);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    if (previewLineRef.current) {
+      chartRef.current.removeSeries(previewLineRef.current);
+      previewLineRef.current = null;
+    }
+
+    if (hoverPreviewLine && hoverPreviewLine.length === 2) {
+      const previewSeries = chartRef.current.addLineSeries({ color: 'gray', lineWidth: 1, lineStyle: 1 });
+      let [p1, p2] = [...hoverPreviewLine];
+      if (p1.time === p2.time) {
+        p2 = { ...p2, time: (p2.time as number) + 1 as UTCTimestamp };
+      }
+      const sorted = [p1, p2].sort((a, b) => (a.time as number) - (b.time as number));
+      previewSeries.setData(sorted.map(p => ({ time: p.time as UTCTimestamp, value: p.price })));
+      previewLineRef.current = previewSeries;
+    }
+  }, [hoverPreviewLine]);
 
   return (
     <div className={styles.container}>
