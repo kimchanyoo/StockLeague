@@ -10,12 +10,12 @@ import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentReport;
 import com.stockleague.backend.stock.domain.Status;
 import com.stockleague.backend.stock.dto.request.report.CommentDeleteAdminRequestDto;
-import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.request.report.CommentReportCreateRequestDto;
 import com.stockleague.backend.stock.dto.response.report.CommentDeleteAdminResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportRejectResponseDto;
-import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportCreateResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportSummaryDto;
 import com.stockleague.backend.stock.dto.response.report.ReportDetailDto;
 import com.stockleague.backend.stock.dto.response.report.WarningHistoryDto;
@@ -46,7 +46,7 @@ public class ReportService {
     private final UserWarningRepository userWarningRepository;
     private final NotificationProducer notificationProducer;
 
-    public CommentReportResponseDto createReport(CommentReportRequestDto request, Long userId, Long targetId) {
+    public CommentReportCreateResponseDto createReport(CommentReportCreateRequestDto request, Long userId, Long targetId) {
 
         if (request.reason() == null || request.additionalInfo().isBlank()) {
             throw new GlobalException(GlobalErrorCode.MISSING_FIELDS);
@@ -68,7 +68,7 @@ public class ReportService {
         commentReportRepository.save(commentReport);
         comment.increaseReportCount();
 
-        return CommentReportResponseDto.from();
+        return CommentReportCreateResponseDto.from();
     }
 
     public CommentReportListResponseDto listReports(Status status, int page, int size) {
