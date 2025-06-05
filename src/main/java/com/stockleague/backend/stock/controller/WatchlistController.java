@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.request.watchlist.WatchlistCreateRequestDto;
 import com.stockleague.backend.stock.dto.response.watchlist.WatchlistCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.watchlist.WatchlistListResponseDto;
 import com.stockleague.backend.stock.service.WatchlistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,9 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -88,7 +91,7 @@ public class WatchlistController {
                     )
             )
     })
-    public ResponseEntity<WatchlistCreateResponseDto> createReport(
+    public ResponseEntity<WatchlistCreateResponseDto> createWatchlist(
             @Valid @RequestBody WatchlistCreateRequestDto request,
             Authentication authentication
     ) {
@@ -97,5 +100,66 @@ public class WatchlistController {
         WatchlistCreateResponseDto response = watchlistService.createWatchlist(userId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    @Operation(summary = "관심 종목 조회", description = "관심 종목을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "관심 종목 조회 성공",
+                    content = @Content(schema = @Schema(implementation = WatchlistListResponseDto.class),
+                            examples = @ExampleObject(name = "GetWatchlistSuccess",
+                                    summary = "관심 종목 조회 완료",
+                                    value = """
+                                            {
+                                                "success": true,
+                                                "watchlists": [
+                                                    {
+                                                        "watchlistId": 1,
+                                                        "stockId": 100,
+                                                        "StockTicker": "005930",
+                                                        "StockName": "삼성전자"
+                                                    },
+                                                    {
+                                                        "watchlistId": 2,
+                                                        "stockId": 101,
+                                                        "StockTicker": "000660",
+                                                        "StockName": "SK하이닉스"
+                                                    }
+                                                ],
+                                                "page": 1,
+                                                "size": 2,
+                                                "totalCount": 12
+                                                }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "종목 정보 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "UserNotFound",
+                                    summary = "존재하지 않는 사용자",
+                                    value = """
+                                            {
+                                                "success" : false,
+                                                "message" : "해당 사용자를 찾을 수 없습니다.",
+                                                "errorCode": "USER_NOT_FOUND"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<WatchlistListResponseDto> getWatchlist(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+
+        WatchlistListResponseDto response = watchlistService.getWatchlist(userId, page, size);
+
+        return ResponseEntity.ok(response);
     }
 }
