@@ -5,7 +5,7 @@ import styles from "@/app/styles/components/StockSelector.module.css";
 import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
 import MiniStockList from "./MiniStockList";
-import { getTopStocks, Stock } from "@/lib/api/stock"; 
+import { getTopStocks, Stock, getWatchlist } from "@/lib/api/stock"; 
 
 type Props = {
   onSelect: (stock: Stock) => void;
@@ -22,12 +22,27 @@ const StockSelector = ({onSelect}: Props) => {
     const fetchStocks = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        const res = await getTopStocks();
-        if (res.success) {
-          setStocks(res.stocks);
+        if (selectedFilter === "관심종목") {
+          const watchlist = await getWatchlist();
+          const converted: Stock[] = watchlist.map((item) => ({
+            stockId: item.stockId,
+            stockTicker: item.StockTicker,
+            stockName: item.StockName,
+            marketType: "UNKNOWN", // 백엔드 응답에 없다면 임시값
+            currentPrice: 0,
+            prevPrice: 0,
+            priceChange: 0,
+          }));
+          setStocks(converted);
         } else {
-          setError("종목 리스트를 불러오는 데 실패했습니다.");
+          const res = await getTopStocks();
+          if (res.success) {
+            setStocks(res.stocks);
+          } else {
+            setError("종목 리스트를 불러오는 데 실패했습니다.");
+          }
         }
       } catch (err) {
         setError("서버 요청 중 오류가 발생했습니다.");
@@ -36,7 +51,8 @@ const StockSelector = ({onSelect}: Props) => {
     };
 
     fetchStocks();
-  }, []);
+  }, [selectedFilter]);
+
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>{error}</div>;
   
