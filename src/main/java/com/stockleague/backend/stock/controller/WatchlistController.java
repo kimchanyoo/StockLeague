@@ -182,6 +182,22 @@ public class WatchlistController {
                             )
                     )
             ),
+            @ApiResponse(responseCode = "403", description = "접근 권한 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "AccessDenied",
+                                    summary = "다른 사용자의 관심 종목 삭제 시도",
+                                    value = """
+                                        {
+                                          "success": false,
+                                          "message": "접근 권한이 없습니다.",
+                                          "errorCode": "FORBIDDEN"
+                                        }
+                                        """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "404", description = "사용자 또는 관심 종목 정보를 찾을 수 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),

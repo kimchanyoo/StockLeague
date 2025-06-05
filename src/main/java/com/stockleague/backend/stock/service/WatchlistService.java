@@ -93,6 +93,9 @@ public class WatchlistService {
         Watchlist watchlist = watchlistRepository.findById(watchlistId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.WATCHLIST_NOT_FOUND));
 
+        if (!watchlist.getUser().getId().equals(user.getId())) {
+            throw new GlobalException(GlobalErrorCode.FORBIDDEN);
+        }
 
         watchlistRepository.delete(watchlist);
 
