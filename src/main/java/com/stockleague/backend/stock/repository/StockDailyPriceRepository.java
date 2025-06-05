@@ -6,5 +6,5 @@ import java.time.LocalDate;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StockDailyPriceRepository extends JpaRepository<StockDailyPrice, Long> {
-    boolean existsByStockAndYearAndMonth(Stock stock, LocalDate date);
+    boolean existsByStockAndDate(Stock stock, LocalDate date);
 }
