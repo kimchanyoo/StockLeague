@@ -111,7 +111,7 @@ public class User {
     private List<Comment> processedAdmin = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Watchlist> watchlists = new ArrayList<>();
 
     // 비즈니스 메서드
