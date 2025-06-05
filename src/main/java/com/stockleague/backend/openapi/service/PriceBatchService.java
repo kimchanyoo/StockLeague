@@ -137,7 +137,7 @@ public class PriceBatchService {
                 int savedCount = 0;
 
                 for (StockDailyPriceDto dto : dtos) {
-                    if (dailyPriceRepository.existsByTickerAndDate(dto.ticker(), dto.date())) {
+                    if (dailyPriceRepository.existsByStockAndYearAndMonth(stock, dto.date())) {
                         log.debug("이미 존재: {} - 건너뜀", dto.date());
                         continue;
                     }
