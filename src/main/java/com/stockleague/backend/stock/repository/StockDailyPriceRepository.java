@@ -1,0 +1,9 @@
+package com.stockleague.backend.stock.repository;
+
+import com.stockleague.backend.stock.domain.StockDailyPrice;
+import java.time.LocalDate;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface StockDailyPriceRepository extends JpaRepository<StockDailyPrice, Long> {
+    boolean existsByTickerAndDate(String ticker, LocalDate date);
+}

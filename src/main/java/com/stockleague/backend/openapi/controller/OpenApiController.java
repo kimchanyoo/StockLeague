@@ -40,4 +40,16 @@ public class OpenApiController {
                     .body("월별 시세 저장 실패: " + e.getMessage());
         }
     }
+
+    @PostMapping("/{ticker}/daily-prices")
+    public ResponseEntity<String> saveDailyPrices(@PathVariable String ticker) {
+        try {
+            priceBatchService.saveDailyPricesByTicker(ticker);
+            return ResponseEntity.ok(ticker + " 일별 시세 저장 완료");
+        } catch (Exception e) {
+            log.error("일별 시세 저장 실패 - ticker: {}, error: {}", ticker, e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body("일별 시세 저장 실패: " + e.getMessage());
+        }
+    }
 }
