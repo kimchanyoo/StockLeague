@@ -6,6 +6,7 @@ import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.domain.Watchlist;
 import com.stockleague.backend.stock.dto.request.watchlist.WatchlistCreateRequestDto;
 import com.stockleague.backend.stock.dto.response.watchlist.WatchlistCreateResponseDto;
+import com.stockleague.backend.stock.dto.response.watchlist.WatchlistDeleteResponseDto;
 import com.stockleague.backend.stock.dto.response.watchlist.WatchlistListResponseDto;
 import com.stockleague.backend.stock.dto.response.watchlist.WatchlistSummaryDto;
 import com.stockleague.backend.stock.repository.StockRepository;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -79,5 +81,21 @@ public class WatchlistService {
                 page,
                 size,
                 watchlistPage.getTotalElements());
+    }
+
+    @Transactional
+    public WatchlistDeleteResponseDto deleteWatchlist(Long userId, Long watchlistId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+
+        Watchlist watchlist = watchlistRepository.findById(watchlistId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.WATCHLIST_NOT_FOUND));
+
+
+        watchlistRepository.delete(watchlist);
+
+        return WatchlistDeleteResponseDto.from();
     }
 }

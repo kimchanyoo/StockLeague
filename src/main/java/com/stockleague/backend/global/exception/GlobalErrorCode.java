@@ -56,7 +56,10 @@ public enum GlobalErrorCode {
     MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다."),
 
     // 알림 관련
-    INVALID_NOTIFICATION_TYPE(HttpStatus.BAD_REQUEST, "잘못된 알림 유형이 입력되었습니다.");
+    INVALID_NOTIFICATION_TYPE(HttpStatus.BAD_REQUEST, "잘못된 알림 유형이 입력되었습니다."),
+
+    // 관심 종목 관련
+    WATCHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관심 종목을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
