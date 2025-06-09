@@ -15,7 +15,20 @@ import MovingAverageSelector from "./MovingAverageSelector";
 import DeleteIcon from '@mui/icons-material/Delete';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { IconButton, Tooltip } from '@mui/material';
-import { getCandleData, CandleData } from '@/lib/api/stock';
+import { getCandleData, CandleData, Interval } from '@/lib/api/stock';
+
+// 초기 로드 및 추가 로드 개수 정의
+const INITIAL_LOAD_COUNTS: Record<Interval, number> = {
+  "1m": 500, "3m": 600, "5m": 700, "10m": 700,
+  "15m": 700, "30m": 700, "60m": 800,
+  d: 250, w: 150, m: 80, y: 40,
+};
+
+const ADDITIONAL_LOAD_COUNTS: Record<Interval, number> = {
+  "1m": 200, "3m": 200, "5m": 200, "10m": 200,
+  "15m": 200, "30m": 200, "60m": 200,
+  d: 100, w: 50, m: 25, y: 10,
+};
 
 type Props = {
   activeTab: 'chart' | 'community';
@@ -24,7 +37,6 @@ type Props = {
 };
 
 type Point = { time: Time; price: number };
-
 
 
 const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
@@ -37,29 +49,48 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const previewLineRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   const [candles, setCandles] = useState<CandleData[]>([]);
-
   const [lines, setLines] = useState<Point[][]>([]);
   const [hoverPreviewLine, setHoverPreviewLine] = useState<Point[] | null>(null);
 
-  const [selectedInterval, setSelectedInterval] = useState<"y" | "m" | "w" | "d">("d");
+  const [selectedInterval, setSelectedInterval] = useState<Interval>("d");
   const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({ 5: true, 20: false, 60: false, });
   const [isDrawingLine, setIsDrawingLine] = useState<boolean>(false);
+  
+  const [offset, setOffset] = useState(0);
 
   // 봉 데이터 불러오기 (interval, ticker 변경 시)
   useEffect(() => {
     if (!ticker) return;
-    // offset, limit은 임의로 설정 (예: 최근 100개)
-    getCandleData(ticker, selectedInterval, 0, 100)
+    // 초기 로드 개수 가져오기
+    const initialLoadCount = INITIAL_LOAD_COUNTS[selectedInterval] || 100;
+
+    getCandleData(ticker, selectedInterval, offset, initialLoadCount)
       .then((data) => {
         console.log("받은 캔들 데이터:", data);
         const sortedData = data.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-        setCandles(sortedData);
+        if (offset === 0) {
+          // 처음 로딩
+          setCandles(sortedData);
+        } else {
+          // 추가 로딩 시 기존 데이터 뒤에 붙임
+          setCandles(prev => [...sortedData, ...prev]); // 오래된 데이터가 앞에 오도록
+        }
       })
       .catch((err) => {
         console.error("캔들 데이터 로드 실패:", err);
-        setCandles([]);
+        if (offset === 0) setCandles([]);
       });
-  }, [ticker, selectedInterval]);
+  }, [ticker, selectedInterval, offset]);;
+
+  // 추가 데이터 더 불러오기 (예: 스크롤 하단에 도달했을 때 호출 가능)
+  const loadMoreCandles = () => {
+    const addCount = ADDITIONAL_LOAD_COUNTS[selectedInterval] || 50;
+    setOffset(prev => prev + addCount);
+  };
+  // interval 또는 ticker 변경 시 offset 초기화
+  useEffect(() => {
+    setOffset(0);
+  }, [selectedInterval, ticker]);
 
   const toggleMA = (period: number) => {
     clearLines();
@@ -123,9 +154,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   useEffect(() => {
     if (!chartContainerRef.current || !volumeContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: { textColor: 'black' },
-    });
+    const chart = createChart(chartContainerRef.current, { layout: { textColor: 'black' }, });
     chartRef.current = chart;
 
     const volumeChart = createChart(volumeContainerRef.current, {

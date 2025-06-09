@@ -4,15 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import styles from "@/app/styles/components/FilterMenu.module.css";
 import ListIcon from "@mui/icons-material/List";
 
-const filters = ['전체종목', '인기종목', '관심종목'];
-
-const FilterMenu = ({
-  selected,
-  onChange,
-}: {
+type FilterMenuProps = {
   selected: string;
   onChange: (filter: string) => void;
-}) => {
+  options: string[];
+};
+
+const FilterMenu = ({ selected, onChange, options }: FilterMenuProps) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +40,7 @@ const FilterMenu = ({
       </button>
       {open && (
         <ul className={styles.filterTool}>
-          {filters.map((item) => (
+          {options.map((item) => (
             <li
               key={item}
               className={`${styles.index} ${item === selected ? styles.selected : ''}`}

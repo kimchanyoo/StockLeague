@@ -1,37 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Interval } from '@/lib/api/stock';
 
 type TimeIntervalProps = {
-  onIntervalChange: (interval: string) => void; // 부모 컴포넌트로 선택된 주기를 전달하는 함수
+  onIntervalChange: (interval: Interval) => void;
 };
 
 const TimeIntervalSelector: React.FC<TimeIntervalProps> = ({ onIntervalChange }) => {
-  const [timeInterval, setTimeInterval] = useState<string>("d");
-
-  const minuteIntervals = ["1m", "3m", "5m", "10m", "15m", "30m", "60m"];
-  const otherIntervals = [
+  const [timeInterval, setTimeInterval] = useState<Interval>("d");
+  const minuteIntervals: Interval[] = ["1m", "3m", "5m", "10m", "15m", "30m", "60m"];
+  const otherIntervals: { label: string; value: Interval }[] = [
     { label: "일", value: "d" },
     { label: "주", value: "w" },
     { label: "월", value: "m" },
     { label: "년", value: "y" },
   ];
 
-  const handleIntervalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setTimeInterval(val);
-    onIntervalChange(val); // 부모 컴포넌트로 주기 전달
-  };
-
-  const handleButtonClick = (val: string) => {
+  const handleChange = (val: Interval) => {
     setTimeInterval(val);
     onIntervalChange(val);
   };
 
-
   return (
     <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
       <select
-        onChange={handleIntervalChange}
         value={minuteIntervals.includes(timeInterval) ? timeInterval : ""}
+        onChange={(e) => handleChange(e.target.value as Interval)}
         style={{
           padding: "6px 12px",
           borderRadius: "5px",
@@ -49,7 +42,7 @@ const TimeIntervalSelector: React.FC<TimeIntervalProps> = ({ onIntervalChange })
       {otherIntervals.map(({ label, value }) => (
         <button
           key={value}
-          onClick={() => handleButtonClick(value)}
+          onClick={() => handleChange(value)}
           style={{
             padding: "6px 12px",
             borderRadius: "5px",
