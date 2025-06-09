@@ -50,7 +50,7 @@ public class StockService {
             case "y" -> yearlyRepo.findAllByStockIdOrderByYearDesc(stockId, pageable)
                     .map(CandleDto::from)
                     .toList();
-            case "M" -> monthlyRepo.findAllByStockIdOrderByMonthDesc(stockId, pageable)
+            case "m" -> monthlyRepo.findAllByStockIdOrderByMonthDesc(stockId, pageable)
                     .map(CandleDto::from)
                     .toList();
             case "d" -> dailyRepo.findAllByStockIdOrderByDateDesc(stockId, pageable)
