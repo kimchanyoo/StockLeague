@@ -9,6 +9,7 @@ import com.stockleague.backend.stock.dto.response.stock.StockSummaryDto;
 import com.stockleague.backend.stock.repository.StockDailyPriceRepository;
 import com.stockleague.backend.stock.repository.StockMonthlyPriceRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
+import com.stockleague.backend.stock.repository.StockWeeklyPriceRepository;
 import com.stockleague.backend.stock.repository.StockYearlyPriceRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class StockService {
     private final StockRepository stockRepository;
     private final StockYearlyPriceRepository yearlyRepo;
     private final StockMonthlyPriceRepository monthlyRepo;
+    private final StockWeeklyPriceRepository weeklyRepo;
     private final StockDailyPriceRepository dailyRepo;
 
     public StockListResponseDto getAllStocks() {
@@ -53,6 +55,9 @@ public class StockService {
                     .map(CandleDto::from)
                     .toList();
             case "m" -> monthlyRepo.findAllByStockIdOrderByMonthDesc(stockId, pageable)
+                    .map(CandleDto::from)
+                    .toList();
+            case "w" -> weeklyRepo.findAllByStockIdOrderByWeekDesc(stockId, pageable)
                     .map(CandleDto::from)
                     .toList();
             case "d" -> dailyRepo.findAllByStockIdOrderByDateDesc(stockId, pageable)

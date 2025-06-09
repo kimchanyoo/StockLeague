@@ -2,6 +2,7 @@ package com.stockleague.backend.stock.dto.response.stock;
 
 import com.stockleague.backend.stock.domain.StockDailyPrice;
 import com.stockleague.backend.stock.domain.StockMonthlyPrice;
+import com.stockleague.backend.stock.domain.StockWeeklyPrice;
 import com.stockleague.backend.stock.domain.StockYearlyPrice;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -43,6 +44,18 @@ public record CandleDto(
         return new CandleDto(
                 entity.getStock().getStockTicker(),
                 String.format("%04d-%02d-01", entity.getYear(), entity.getMonth()),
+                entity.getOpenPrice(),
+                entity.getHighPrice(),
+                entity.getLowPrice(),
+                entity.getClosePrice(),
+                entity.getVolume()
+        );
+    }
+
+    public static CandleDto from(StockWeeklyPrice entity) {
+        return new CandleDto(
+                entity.getStock().getStockTicker(),
+                String.format("%04d-W%02d", entity.getYear(), entity.getWeek()),
                 entity.getOpenPrice(),
                 entity.getHighPrice(),
                 entity.getLowPrice(),
