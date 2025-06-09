@@ -5,7 +5,6 @@ import {
   createChart,
   UTCTimestamp,
   CandlestickSeriesOptions,
-  LineSeriesOptions,
   Time,
   IChartApi,
   ISeriesApi,
@@ -16,28 +15,19 @@ import MovingAverageSelector from "./MovingAverageSelector";
 import DeleteIcon from '@mui/icons-material/Delete';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { IconButton, Tooltip } from '@mui/material';
+import { getCandleData, CandleData } from '@/lib/api/stock';
 
 type Props = {
   activeTab: 'chart' | 'community';
   setActiveTab: (tab: 'chart' | 'community') => void;
+  ticker: string;
 };
 
 type Point = { time: Time; price: number };
 
-const data: { open: number; high: number; low: number; close: number; time: UTCTimestamp; volume: number }[] = [
-  { open: 10, high: 10.63, low: 9.49, close: 9.55, time: 1642427876 as UTCTimestamp, volume: 3000 },
-  { open: 9.55, high: 10.30, low: 9.42, close: 9.94, time: 1642514276 as UTCTimestamp, volume: 2000 },
-  { open: 9.94, high: 10.17, low: 9.92, close: 9.78, time: 1642600676 as UTCTimestamp, volume: 1500 },
-  { open: 9.78, high: 10.59, low: 9.18, close: 9.51, time: 1642687076 as UTCTimestamp, volume: 2500 },
-  { open: 9.51, high: 10.46, low: 9.10, close: 10.17, time: 1642773476 as UTCTimestamp, volume: 4000 },
-  { open: 10.17, high: 10.96, low: 10.16, close: 10.47, time: 1642859876 as UTCTimestamp, volume: 3500 },
-  { open: 10.47, high: 11.39, low: 10.40, close: 10.81, time: 1642946276 as UTCTimestamp, volume: 3000 },
-  { open: 10.81, high: 11.60, low: 10.30, close: 10.75, time: 1643032676 as UTCTimestamp, volume: 2200 },
-  { open: 10.75, high: 11.60, low: 10.49, close: 10.93, time: 1643119076 as UTCTimestamp, volume: 3300 },
-  { open: 10.93, high: 11.53, low: 10.76, close: 10.96, time: 1643205476 as UTCTimestamp, volume: 3800 }
-];
 
-const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
+
+const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -46,12 +36,30 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const lineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
   const previewLineRef = useRef<ISeriesApi<"Line"> | null>(null);
 
+  const [candles, setCandles] = useState<CandleData[]>([]);
+
   const [lines, setLines] = useState<Point[][]>([]);
   const [hoverPreviewLine, setHoverPreviewLine] = useState<Point[] | null>(null);
 
-  const [selectedInterval, setSelectedInterval] = useState<string>("d");
+  const [selectedInterval, setSelectedInterval] = useState<"y" | "m" | "w" | "d">("d");
   const [maVisibility, setMaVisibility] = useState<{ [key: number]: boolean }>({ 5: true, 20: false, 60: false, });
   const [isDrawingLine, setIsDrawingLine] = useState<boolean>(false);
+
+  // 봉 데이터 불러오기 (interval, ticker 변경 시)
+  useEffect(() => {
+    if (!ticker) return;
+    // offset, limit은 임의로 설정 (예: 최근 100개)
+    getCandleData(ticker, selectedInterval, 0, 100)
+      .then((data) => {
+        console.log("받은 캔들 데이터:", data);
+        const sortedData = data.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+        setCandles(sortedData);
+      })
+      .catch((err) => {
+        console.error("캔들 데이터 로드 실패:", err);
+        setCandles([]);
+      });
+  }, [ticker, selectedInterval]);
 
   const toggleMA = (period: number) => {
     clearLines();
@@ -74,7 +82,6 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     lineSeriesRef.current = [];
     setLines([]); 
   };
-
   const coordinateToPoint = (x: number, y: number): Point | null => {
     if (!chartRef.current || !candlestickSeriesRef.current) return null;
     const time = chartRef.current.timeScale().coordinateToTime(x);
@@ -82,7 +89,6 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
     if (time === null || price === null) return null;
     return { time, price };
   };
-
   const handleChartClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (!isDrawingLine) return;
     
@@ -102,7 +108,6 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       setHoverPreviewLine(null)
     }
   };
-
   const handleMouseMove = (event: MouseEvent) => {
     if (!isDrawingLine || !chartContainerRef.current) return;
     const lastLine = lines[lines.length - 1];
@@ -137,22 +142,41 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       wickUpColor: '#CB3030',
       wickDownColor: '#2D7CD1',
     } as CandlestickSeriesOptions);
-    const sortedData = [...data].sort((a, b) => a.time - b.time);
-    candlestickSeries.setData(sortedData);
-    candlestickSeriesRef.current = candlestickSeries;
 
-    const volumeSeries = volumeChart.addHistogramSeries({ color: '#26a69a', priceLineVisible: false });
+    const sortedCandles = [...candles].sort(
+      (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+    );
+
+    const candleChartData = sortedCandles.map((c) => ({
+      time: Math.floor(new Date(c.dateTime).getTime() / 1000) as UTCTimestamp,
+      open: c.openPrice,
+      high: c.highPrice,
+      low: c.lowPrice,
+      close: c.closePrice,
+    }));
+
+    candlestickSeries.setData(candleChartData);
+
+    // 거래량 히스토그램 시리즈
+    const volumeSeries = volumeChart.addHistogramSeries({
+      color: "#26a69a",
+      priceLineVisible: false,
+    });
     volumeSeries.setData(
-      data.map((d, i) => ({
-        time: d.time,
-        value: d.volume,
-        color: i > 0 && d.volume > data[i - 1].volume ? '#CB3030' : '#2D7CD1',
+      candles.map((c, i) => ({
+        time: Math.floor(new Date(c.dateTime).getTime() / 1000) as UTCTimestamp,
+        value: c.volume,
+        color:
+          i > 0 && c.volume > candles[i - 1].volume
+            ? "#CB3030"
+            : "#2D7CD1",
       }))
     );
 
     chart.timeScale().fitContent();
     volumeChart.timeScale().fitContent();
 
+    // 이동평균선 처리
     Object.entries(maVisibility).forEach(([periodStr, visible]) => {
       const period = Number(periodStr);
       if (!chartRef.current) return;
@@ -160,17 +184,27 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       if (visible) {
         if (!maRefs.current[period]) {
           maRefs.current[period] = chart.addLineSeries({
-            color: period === 5 ? '#FFA500' : period === 20 ? '#008000' : '#0000FF',
+            color:
+              period === 5
+                ? "#FFA500"
+                : period === 20
+                ? "#008000"
+                : "#0000FF",
             lineWidth: 1,
           });
         }
 
-        const maData = data.map((d, i, arr) => {
-          if (i < period - 1) return null;
-          const avg = arr.slice(i - period + 1, i + 1).reduce((sum, item) => sum + item.close, 0) / period;
-          return { time: d.time, value: avg };
-        }).filter(Boolean) as { time: UTCTimestamp; value: number }[];
-        maData.sort((a, b) => (a.time as number) - (b.time as number));
+        // 이동평균 데이터 계산
+        const maData = candleChartData
+          .map((d, i, arr) => {
+            if (i < period - 1) return null;
+            const avg =
+              arr
+                .slice(i - period + 1, i + 1)
+                .reduce((sum, item) => sum + item.close, 0) / period;
+            return { time: d.time, value: avg };
+          })
+          .filter(Boolean) as { time: UTCTimestamp; value: number }[];
 
         maRefs.current[period]?.setData(maData);
       } else {
@@ -191,10 +225,11 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab }) => {
       candlestickSeriesRef.current = null;
       maRefs.current = {};
     };
-  }, [maVisibility]);
+  }, [maVisibility, candles]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
+    chartContainerRef.current.style.cursor = isDrawingLine ? "crosshair" : "crosshair";
     chartContainerRef.current.addEventListener("mousemove", handleMouseMove);
     return () => chartContainerRef.current?.removeEventListener("mousemove", handleMouseMove);
   }, [lines, isDrawingLine]);

@@ -5,13 +5,13 @@ type TimeIntervalProps = {
 };
 
 const TimeIntervalSelector: React.FC<TimeIntervalProps> = ({ onIntervalChange }) => {
-  const [timeInterval, setTimeInterval] = useState<string>("1m");
+  const [timeInterval, setTimeInterval] = useState<string>("d");
 
   const minuteIntervals = ["1m", "3m", "5m", "10m", "15m", "30m", "60m"];
   const otherIntervals = [
     { label: "일", value: "d" },
     { label: "주", value: "w" },
-    { label: "월", value: "M" },
+    { label: "월", value: "m" },
     { label: "년", value: "y" },
   ];
 
