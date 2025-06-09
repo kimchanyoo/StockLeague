@@ -54,6 +54,9 @@ export interface CandleData {
   closePrice: number;
   volume: number;
 }
+export type Interval = 
+  | "1m" | "3m" | "5m" | "10m" | "15m" | "30m" | "60m"
+  | "d" | "w" | "m" | "y";
 
 // ─────────────────────────────
 // 종목 API
@@ -91,7 +94,7 @@ export const deleteWatchlist = async (watchlistId: number): Promise<DeleteWatchl
 // 봉 데이터 조회 함수
 export const getCandleData = async (
   ticker: string,
-  interval: "y" | "w" | "m" | "d",
+  interval: Interval,
   offset: number,
   limit: number
 ): Promise<CandleData[]> => {

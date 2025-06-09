@@ -6,6 +6,7 @@ import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
 import MiniStockList from "./MiniStockList";
 import { getTopStocks, Stock, getWatchlist } from "@/lib/api/stock"; 
+import { useAuth } from "@/context/AuthContext"; 
 
 type Props = {
   onSelect: (stock: Stock) => void;
@@ -13,10 +14,14 @@ type Props = {
 
 
 const StockSelector = ({onSelect}: Props) => {
+  const { user } = useAuth(); // 로그인 정보 가져오기
+  const isLoggedIn = !!user;  // user가 있으면 로그인된 상태
+  
   const [selectedFilter, setSelectedFilter] = useState('전체종목');
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const availableFilters = isLoggedIn ? ['전체종목', '인기종목', '관심종목'] : ['전체종목', '인기종목'];
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -25,8 +30,14 @@ const StockSelector = ({onSelect}: Props) => {
 
       try {
         if (selectedFilter === "관심종목") {
+          if (!isLoggedIn) {
+            setError("로그인이 필요합니다.");
+            setStocks([]);
+            setLoading(false);
+            return;
+          }
           const watchlist = await getWatchlist();
-          const converted: Stock[] = watchlist.map((item) => ({
+          const converted: Stock[] = watchlist.watchlists.map((item) => ({
             stockId: item.stockId,
             stockTicker: item.StockTicker,
             stockName: item.StockName,
@@ -51,7 +62,7 @@ const StockSelector = ({onSelect}: Props) => {
     };
 
     fetchStocks();
-  }, [selectedFilter]);
+  }, [selectedFilter, isLoggedIn]);
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div>{error}</div>;
@@ -60,7 +71,7 @@ const StockSelector = ({onSelect}: Props) => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.left}>
-          <FilterMenu selected={selectedFilter} onChange={setSelectedFilter} />
+          <FilterMenu selected={selectedFilter} onChange={setSelectedFilter} options={availableFilters} />
         </div>
         <h1 className={styles.center}>{selectedFilter}</h1>
       </div>

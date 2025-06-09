@@ -6,7 +6,7 @@ import StockOrder from "@/app/components/StockOrder";
 import StockSelector from "@/app/components/StockSelector";
 import StockChart from "@/app/components/StockChart";
 import Community from "@/app/components/Community";
-import { useAuth } from "@/context/AuthContext"; // 예시: 직접 만든 인증 Context
+import { useAuth } from "@/context/AuthContext";
 import { Stock, getWatchlist, addWatchlist, deleteWatchlist } from "@/lib/api/stock";
 
 export default function Trade() {
