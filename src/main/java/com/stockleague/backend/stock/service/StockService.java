@@ -29,7 +29,9 @@ public class StockService {
 
         Pageable topTen = PageRequest.of(0, 10);
 
-        List<Stock> stocks = stockRepository.findAll(topTen).getContent();
+        List<String> tickers = List.of("005930", "000660");
+
+        List<Stock> stocks = stockRepository.findByStockTickerIn(tickers, topTen);
 
         List<StockSummaryDto> stockDtos = stocks.stream()
                 .map(StockSummaryDto::from)
