@@ -61,6 +61,10 @@ public class Stock {
 
     @Builder.Default
     @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StockWeeklyPrice> stockWeeklyPrices = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StockDailyPrice> stockDailyPrices = new ArrayList<>();
 
     @Builder.Default
