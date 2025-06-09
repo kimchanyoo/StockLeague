@@ -24,6 +24,14 @@ export interface AddWatchlistSuccessResponse {
 }
 
 // 관심 종목 목록 조회
+export interface GetWatchlistResponse {
+  success: boolean;
+  watchlists: WatchlistItem[];
+  page: number;
+  size: number;
+  totalCount: number;
+}
+
 export interface WatchlistItem {
   watchlistId: number;
   stockId: number;
@@ -34,6 +42,17 @@ export interface WatchlistItem {
 export interface DeleteWatchlistResponse {
   success: boolean;
   message: string;
+}
+
+// 봉 데이터 타입
+export interface CandleData {
+  ticker: string;
+  dateTime: string; // ISO string or yyyy-MM-dd
+  openPrice: number;
+  highPrice: number;
+  lowPrice: number;
+  closePrice: number;
+  volume: number;
 }
 
 // ─────────────────────────────
@@ -56,13 +75,28 @@ export const addWatchlist = async ( ticker: string ): Promise<AddWatchlistSucces
 };
 
 // 관심 조회
-export const getWatchlist = async (): Promise<WatchlistItem[]> => {
-  const res = await axiosInstance.get("/api/v1/stock/watchlist");
-  return res.data.watchlists;
+export const getWatchlist = async ( page = 1, size = 10 ): Promise<GetWatchlistResponse> => {
+  const res = await axiosInstance.get("/api/v1/stock/watchlist", {
+    params: { page, size },
+  });
+  return res.data;
 };
 
 // 관심 삭제
 export const deleteWatchlist = async (watchlistId: number): Promise<DeleteWatchlistResponse> => {
   const res = await axiosInstance.delete(`/api/v1/stock/watchlist/${watchlistId}`);
+  return res.data;
+};
+
+// 봉 데이터 조회 함수
+export const getCandleData = async (
+  ticker: string,
+  interval: "y" | "w" | "m" | "d",
+  offset: number,
+  limit: number
+): Promise<CandleData[]> => {
+  const res = await axiosInstance.get(`/api/v1/stocks/${ticker}/candles`, {
+    params: { interval, offset, limit },
+  });
   return res.data;
 };

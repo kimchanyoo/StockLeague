@@ -28,8 +28,8 @@ export default function Trade() {
       if (!selectedStock) return;
 
       try {
-        const watchlist = await getWatchlist();
-        const found = watchlist.find(item => item.StockTicker === selectedStock.stockTicker);
+        const { watchlists } = await getWatchlist();
+        const found = watchlists.find(item => item.StockTicker === selectedStock.stockTicker);
         setIsFavorite(!!found);
       } catch (err) {
         console.error("관심 종목 확인 중 오류:", err);
@@ -52,8 +52,8 @@ export default function Trade() {
         setIsFavorite(true);
         alert("관심 종목에 추가되었습니다.");
       } else {
-        const watchlist = await getWatchlist();
-        const target = watchlist.find(item => item.StockTicker === selectedStock.stockTicker);
+        const { watchlists } = await getWatchlist();
+        const target = watchlists.find(item => item.StockTicker === selectedStock.stockTicker);
         if (target) {
           await deleteWatchlist(target.watchlistId);
           setIsFavorite(false);
@@ -100,7 +100,7 @@ export default function Trade() {
             <h3>거래대금 얼마</h3>
           </div>
         </div>
-        {activeTab === "chart" ? (<StockChart activeTab={activeTab} setActiveTab={setActiveTab} />) : (<Community ticker={selectedStock?.stockTicker ?? ""}/>)}
+        {activeTab === "chart" ? (<StockChart activeTab={activeTab} setActiveTab={setActiveTab} ticker={selectedStock?.stockTicker ?? ""}/>) : (<Community ticker={selectedStock?.stockTicker ?? ""}/>)}
       </div>
       
       <div className="stockOrder_section">
