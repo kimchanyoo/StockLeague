@@ -58,7 +58,7 @@ public class SecurityConfig {
                                 "/error",
                                 "/api/v1/stocks/*/comments",
                                 "/api/v1/comments/*/replies",
-                                "/api/v1/stocks",
+                                "/api/v1/stocks/*/candles",
                                 "/api/v1/openapi/**",
                                 "/ws/**"
                         ).permitAll()
