@@ -22,15 +22,11 @@ public class WebSocketTestController {
         log.info(">>> 받은 메시지: {}", message);
         log.info(">>> Principal: {}", principal);
 
-        if (principal != null) {
-            String username = principal.getName();
-            String destination = "/user/" + username + "/queue/notifications";
-            String payload = "서버에서 보낸 메시지: \"" + message + "\"";
+        String username = principal.getName();
+        String destination = "/user/" + username + "/queue/notifications";
+        String payload = "서버에서 보낸 메시지: \"" + message + "\"";
 
-            log.info(">>> [{}] 에게 메시지 전송: {}", destination, payload);
-            messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
-        } else {
-            log.warn(">>> Principal이 null입니다. 메시지를 보낼 수 없습니다.");
-        }
+        log.info(">>> [{}] 에게 메시지 전송: {}", destination, payload);
+        messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
     }
 }
