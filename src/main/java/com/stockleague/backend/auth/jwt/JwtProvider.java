@@ -124,7 +124,7 @@ public class JwtProvider {
     }
 
     // JWT 파싱
-    protected Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
