@@ -69,9 +69,8 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof StompPrincipal)) return false;
-            StompPrincipal that = (StompPrincipal) o;
-            return name.equals(that.name);
+            if (!(o instanceof Principal)) return false;
+            return name.equals(((Principal) o).getName());
         }
 
         @Override
