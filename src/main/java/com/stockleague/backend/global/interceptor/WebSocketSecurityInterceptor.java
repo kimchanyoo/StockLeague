@@ -45,13 +45,17 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             Long userId = jwtProvider.getUserId(token);
             Principal principal = new StompPrincipal(String.valueOf(userId));
             accessor.setUser(principal);
+            accessor.getSessionAttributes().put("user", principal);
 
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
-
-            return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+        } else {
+            Object userAttr = accessor.getSessionAttributes().get("user");
+            if (userAttr instanceof Principal) {
+                accessor.setUser((Principal) userAttr);
+            }
         }
 
-        return message;
+        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
 
     public static class StompPrincipal implements Principal {
