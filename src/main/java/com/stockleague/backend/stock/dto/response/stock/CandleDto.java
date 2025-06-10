@@ -5,6 +5,11 @@ import com.stockleague.backend.stock.domain.StockMonthlyPrice;
 import com.stockleague.backend.stock.domain.StockWeeklyPrice;
 import com.stockleague.backend.stock.domain.StockYearlyPrice;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.WeekFields;
+import java.util.Locale;
 
 public record CandleDto(
         @Schema(description = "종목 티커", example = "005930")
@@ -53,9 +58,21 @@ public record CandleDto(
     }
 
     public static CandleDto from(StockWeeklyPrice entity) {
+        int year = entity.getYear();
+        int week = entity.getWeek();
+
+        WeekFields weekFields = WeekFields.of(Locale.KOREA);
+        LocalDate monday = LocalDate
+                .now()
+                .withYear(year)
+                .with(weekFields.weekOfYear(), week)
+                .with(weekFields.dayOfWeek(), 1);
+
+        LocalDate friday = monday.with(TemporalAdjusters.nextOrSame(DayOfWeek.FRIDAY));
+
         return new CandleDto(
                 entity.getStock().getStockTicker(),
-                String.format("%04d-W%02d", entity.getYear(), entity.getWeek()),
+                friday.toString(),
                 entity.getOpenPrice(),
                 entity.getHighPrice(),
                 entity.getLowPrice(),
