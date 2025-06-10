@@ -4,7 +4,6 @@ import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.TokenRedisService;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -12,8 +11,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -35,42 +32,28 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
             String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-            if (authHeader == null) {
-                log.warn("[WebSocket] Authorization 헤더가 없습니다.");
-                throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
-            }
-
-            if (!authHeader.startsWith("Bearer ")) {
-                log.warn("[WebSocket] Authorization 형식이 올바르지 않습니다. value={}", authHeader);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                log.warn("[WebSocket] Authorization 헤더 오류: {}", authHeader);
                 throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
             }
 
             String token = authHeader.substring(7);
             log.debug("[WebSocket] 전달된 토큰 (앞 10자): {}", token.substring(0, Math.min(10, token.length())));
 
-            // 토큰 유효성 검사
-            if (!jwtProvider.validateToken(token)) {
-                log.warn("[WebSocket] accessToken 유효성 검사 실패");
+            if (!jwtProvider.validateToken(token) || redisService.isBlacklisted(token)) {
+                log.warn("[WebSocket] 유효하지 않거나 블랙리스트 토큰");
                 throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
             }
 
-            // 블랙리스트 확인
-            if (redisService.isBlacklisted(token)) {
-                log.warn("[WebSocket] 블랙리스트에 등록된 토큰입니다.");
-                throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
-            }
-
-            // 유저 정보 설정
             Long userId = jwtProvider.getUserId(token);
-            accessor.setUser(new UsernamePasswordAuthenticationToken(userId, null, List.of()));
+            accessor.setUser(new StompPrincipal(String.valueOf(userId)));
 
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
         }
 
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+        return message; // ✅ accessor 수정만 하고 그대로 반환
     }
 
-    // WebSocket 사용자 인증용 Principal 구현
     public static class StompPrincipal implements Principal {
         private final String name;
 
