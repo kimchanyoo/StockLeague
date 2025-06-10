@@ -2,8 +2,6 @@ package com.stockleague.backend.global.config;
 
 
 import com.stockleague.backend.auth.jwt.JwtProvider;
-import com.stockleague.backend.global.handler.CustomHandshakeHandler;
-import com.stockleague.backend.global.interceptor.AuthHandshakeInterceptor;
 import com.stockleague.backend.global.interceptor.LoggingChannelInterceptor;
 import com.stockleague.backend.global.interceptor.WebSocketSecurityInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +24,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .addInterceptors(new AuthHandshakeInterceptor(jwtProvider))
-                .setHandshakeHandler(new CustomHandshakeHandler())
-                .setAllowedOrigins("*");
+                .setAllowedOriginPatterns("*");
     }
 
     @Override
