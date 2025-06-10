@@ -45,10 +45,9 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             Long userId = jwtProvider.getUserId(token);
             Principal principal = new StompPrincipal(String.valueOf(userId));
 
-            accessor.setUser(principal); // 설정
+            accessor.setUser(principal);
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
 
-            // ✅ 메시지를 새로 만들어서 반환 (헤더 반영 확실히 하도록)
             return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
         }
 
