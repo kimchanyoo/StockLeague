@@ -27,7 +27,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        accessor.setLeaveMutable(true); // 여전히 필요
+        accessor.setLeaveMutable(true);
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             log.info("[WebSocket] 클라이언트 WebSocket CONNECT 요청 수신");
@@ -47,9 +47,11 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             accessor.setUser(principal);
 
             log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
+
+            return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
         }
 
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
+        return message;
     }
 
     public static class StompPrincipal implements Principal {
@@ -62,6 +64,19 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof StompPrincipal)) return false;
+            StompPrincipal that = (StompPrincipal) o;
+            return name.equals(that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
         }
     }
 }
