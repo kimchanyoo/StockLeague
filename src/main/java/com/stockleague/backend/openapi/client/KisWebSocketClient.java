@@ -228,7 +228,7 @@ public class KisWebSocketClient {
 
     private void handlePlainMessage(String message) {
         try {
-            String[] parts = message.split("\\|", 4); // 암호화 여부 | tr_id | count | body
+            String[] parts = message.split("\\|", 4);
             if (parts.length < 4) {
                 log.warn("잘못된 평문 메시지: {}", message);
                 return;
@@ -237,12 +237,11 @@ public class KisWebSocketClient {
             String trId = parts[1];
             String body = parts[3];
 
-            StockPriceDto dto = parser.parsePlainText(trId, body);
-            if (dto != null) {
-                log.info("실시간 평문 종목 시세 객체 생성: {}", dto);
-
+            List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
+            if (!dtos.isEmpty()) {
+                dtos.forEach(dto -> log.info("실시간 평문 종목 시세 객체 생성: {}", dto));
             } else {
-                log.debug("지원하지 않는 평문 메시지 or DTO 파싱 실패: {}", message);
+                log.debug("DTO 파싱 결과 없음: {}", message);
             }
 
         } catch (Exception e) {

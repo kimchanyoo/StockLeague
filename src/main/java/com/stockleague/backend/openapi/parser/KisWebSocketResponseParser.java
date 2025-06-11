@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.mapper.KisPriceMapper;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,28 +31,42 @@ public class KisWebSocketResponseParser {
         }
     }
 
-    public StockPriceDto parsePlainText(String trId, String body) {
+    public List<StockPriceDto> parsePlainText(String trId, String body) {
+        List<StockPriceDto> result = new ArrayList<>();
         try {
-            if (!"H0STCNT0".equals(trId)) return null;
+            if (!"H0STCNT0".equals(trId)) return result;
 
             String[] parts = body.split("\\^");
-            if (parts.length < 48) {
-                log.warn("H0STCNT0 필드 수 부족: {}", parts.length);
-                return null;
+            int FIELD_COUNT = 48;
+
+            for (int i = 0; i + FIELD_COUNT <= parts.length; i += FIELD_COUNT) {
+                String[] block = Arrays.copyOfRange(parts, i, i + FIELD_COUNT);
+                StockPriceDto dto = parsePlainTextBlock(trId, block);
+                if (dto != null) result.add(dto);
             }
 
+            return result;
+
+        } catch (Exception e) {
+            log.error("실시간 평문 파싱 실패 (trId: {}): {}", trId, body, e);
+            return result;
+        }
+    }
+
+    private StockPriceDto parsePlainTextBlock(String trId, String[] parts) {
+        try {
             KisPriceWebSocketResponseDto.Header header = new KisPriceWebSocketResponseDto.Header();
             KisPriceWebSocketResponseDto.Body data = new KisPriceWebSocketResponseDto.Body();
 
             setField(header, "tr_id", trId);
             setField(header, "tr_key", parts[0]);
 
-            setField(data, "stck_bsop_date", "20250604");
+            setField(data, "stck_bsop_date", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
             setField(data, "stck_oprc", parts[3]);
             setField(data, "stck_hgpr", parts[4]);
             setField(data, "stck_lwpr", parts[5]);
             setField(data, "stck_clpr", parts[6]);
-            setField(data, "stck_prpr", parts[6]);
+            setField(data, "stck_prpr", parts[6]);  // 현재가 = 종가로 대체
             setField(data, "prdy_vrss", parts[44]);
             setField(data, "prdy_vrss_sign", parts[46]);
             setField(data, "acml_vol", parts[47]);
@@ -59,10 +78,11 @@ public class KisWebSocketResponseParser {
             return kisPriceMapper.toStockPriceDto(response);
 
         } catch (Exception e) {
-            log.error("실시간 평문 파싱 실패 (trId: {}): {}", trId, body, e);
+            log.warn("블록 파싱 실패: {}", Arrays.toString(parts), e);
             return null;
         }
     }
+
 
     private void setField(Object target, String fieldName, Object value) {
         try {
