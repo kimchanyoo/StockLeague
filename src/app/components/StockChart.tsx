@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   createChart,
   UTCTimestamp,
-  CandlestickSeriesOptions,
   Time,
   IChartApi,
   ISeriesApi,
+  LogicalRange,
 } from "lightweight-charts";
 import styles from "@/app/styles/components/StockChart.module.css";
 import TimeIntervalSelector from "./TimeIntervalSelector";
@@ -43,10 +43,16 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const volumeChartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const maRefs = useRef<{ [period: number]: ISeriesApi<"Line"> }>({});
   const lineSeriesRef = useRef<ISeriesApi<"Line">[]>([]);
   const previewLineRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const prevScrollRangeRef = useRef<LogicalRange | null>(null);
+  const pendingScrollAdjust = useRef<number>(0);
+  const requestedOffsets = useRef<Set<number>>(new Set());
+  const lastRangeFrom = useRef<number | null>(null);
 
   const [candles, setCandles] = useState<CandleData[]>([]);
   const [lines, setLines] = useState<Point[][]>([]);
@@ -57,40 +63,76 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const [isDrawingLine, setIsDrawingLine] = useState<boolean>(false);
   
   const [offset, setOffset] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const noMoreDataRef = useRef(false);
 
   // 봉 데이터 불러오기 (interval, ticker 변경 시)
   useEffect(() => {
     if (!ticker) return;
-    // 초기 로드 개수 가져오기
     const initialLoadCount = INITIAL_LOAD_COUNTS[selectedInterval] || 100;
+    let isMounted = true;
 
-    getCandleData(ticker, selectedInterval, offset, initialLoadCount)
+    getCandleData(ticker, selectedInterval, 0, initialLoadCount)
       .then((data) => {
-        console.log("받은 캔들 데이터:", data);
+        if (!isMounted) return;
         const sortedData = data.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-        if (offset === 0) {
-          // 처음 로딩
-          setCandles(sortedData);
-        } else {
-          // 추가 로딩 시 기존 데이터 뒤에 붙임
-          setCandles(prev => [...sortedData, ...prev]); // 오래된 데이터가 앞에 오도록
-        }
+        setCandles(sortedData);
+        setOffset(sortedData.length);
       })
       .catch((err) => {
+        if (!isMounted) return;
         console.error("캔들 데이터 로드 실패:", err);
-        if (offset === 0) setCandles([]);
+        setCandles([]);
+        setOffset(0);
       });
-  }, [ticker, selectedInterval, offset]);;
 
-  // 추가 데이터 더 불러오기 (예: 스크롤 하단에 도달했을 때 호출 가능)
-  const loadMoreCandles = () => {
-    const addCount = ADDITIONAL_LOAD_COUNTS[selectedInterval] || 50;
-    setOffset(prev => prev + addCount);
-  };
-  // interval 또는 ticker 변경 시 offset 초기화
+    return () => { isMounted = false; };
+  }, [ticker, selectedInterval]);
+
   useEffect(() => {
-    setOffset(0);
-  }, [selectedInterval, ticker]);
+    requestedOffsets.current.clear();
+    noMoreDataRef.current = false;
+  }, [ticker, selectedInterval]);
+
+  const loadMoreCandles = useCallback(() => {
+    if (isLoading || !chartRef.current || requestedOffsets.current.has(offset)) return;
+    
+    requestedOffsets.current.add(offset);
+    setIsLoading(true);
+
+    const chart = chartRef.current;
+    const timeScale = chart.timeScale();
+    const prevRange = timeScale.getVisibleLogicalRange();
+    const addCount = ADDITIONAL_LOAD_COUNTS[selectedInterval] || 50;
+
+    getCandleData(ticker, selectedInterval, offset, addCount)
+      .then((data) => {
+        if (data.length === 0) {
+          noMoreDataRef.current = true; // ✅ 더 이상 불러올 데이터 없음
+          return;
+        }
+
+        const sortedData = data.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+
+        let newDataCount = 0;
+        setCandles((prev) => {
+          const existingTimestamps = new Set(prev.map((c) => c.dateTime));
+          const newData = sortedData.filter((c) => !existingTimestamps.has(c.dateTime));
+          newDataCount = newData.length;
+
+          prevScrollRangeRef.current = prevRange;
+          pendingScrollAdjust.current = newDataCount;
+
+          return [...newData, ...prev]; // prepend
+        });
+
+        setOffset((prevOffset) => prevOffset + addCount);
+      })
+      .catch((err) => {
+        console.error("추가 캔들 로드 실패:", err);
+      })
+      .finally(() => setIsLoading(false));
+  }, [isLoading, offset, selectedInterval, ticker]);
 
   const toggleMA = (period: number) => {
     clearLines();
@@ -151,10 +193,12 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
     if (point) setHoverPreviewLine([lastLine[0], point]);
   };
 
+  // 차트와 시리즈는 처음 마운트 시에만 생성
   useEffect(() => {
+    let isMounted = true;
     if (!chartContainerRef.current || !volumeContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, { layout: { textColor: 'black' }, });
+    const chart = createChart(chartContainerRef.current, { layout: { textColor: 'black' } });
     chartRef.current = chart;
 
     const volumeChart = createChart(volumeContainerRef.current, {
@@ -163,6 +207,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       grid: { vertLines: { visible: false }, horzLines: { visible: false } },
       leftPriceScale: { visible: false },
     });
+    volumeChartRef.current = volumeChart;
 
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#CB3030',
@@ -170,7 +215,59 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       borderVisible: false,
       wickUpColor: '#CB3030',
       wickDownColor: '#2D7CD1',
-    } as CandlestickSeriesOptions);
+    });
+    candlestickSeriesRef.current = candlestickSeries;
+
+    const volumeSeries = volumeChart.addHistogramSeries({
+      color: "#26a69a",
+      priceLineVisible: false,
+    });
+    volumeSeriesRef.current = volumeSeries;
+
+    // visible range 이벤트 처리
+    const timeScale = chart.timeScale();
+    const volumeTimeScale = volumeChart.timeScale();
+
+    const visibleRangeHandler = (range: LogicalRange | null) => {
+      if (!range || !isMounted) return;
+      if (lastRangeFrom.current === range.from) return;
+
+      lastRangeFrom.current = range.from;
+      
+      if (range.from < 100) {
+        loadMoreCandles();
+      }
+    };
+    timeScale.subscribeVisibleLogicalRangeChange(visibleRangeHandler);
+
+    const syncVolumeTimeScale = (range: LogicalRange | null) => {
+      if (!range) return;
+      volumeTimeScale.setVisibleLogicalRange(range);
+    };
+    timeScale.subscribeVisibleLogicalRangeChange(syncVolumeTimeScale);
+
+    const syncChartTimeScale = (range: LogicalRange | null) => {
+      if (!range) return;
+      timeScale.setVisibleLogicalRange(range);
+    };
+    volumeTimeScale.subscribeVisibleLogicalRangeChange(syncChartTimeScale);
+
+    return () => {
+      isMounted = false;
+      timeScale.unsubscribeVisibleLogicalRangeChange(visibleRangeHandler);
+      timeScale.unsubscribeVisibleLogicalRangeChange(syncVolumeTimeScale);
+      volumeTimeScale.unsubscribeVisibleLogicalRangeChange(syncChartTimeScale);
+      chart.remove();
+      volumeChart.remove();
+      chartRef.current = null;
+      candlestickSeriesRef.current = null;
+      maRefs.current = {};
+    };
+  }, [loadMoreCandles]);
+
+  // candles 데이터가 바뀔 때마다 데이터만 갱신
+  useEffect(() => {
+    if (!chartRef.current || !candlestickSeriesRef.current) return;
 
     const sortedCandles = [...candles].sort(
       (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
@@ -184,35 +281,30 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       close: c.closePrice,
     }));
 
-    candlestickSeries.setData(candleChartData);
+    candlestickSeriesRef.current.setData(candleChartData);
 
-    // 거래량 히스토그램 시리즈
-    const volumeSeries = volumeChart.addHistogramSeries({
-      color: "#26a69a",
-      priceLineVisible: false,
-    });
-    volumeSeries.setData(
-      candles.map((c, i) => ({
-        time: Math.floor(new Date(c.dateTime).getTime() / 1000) as UTCTimestamp,
-        value: c.volume,
-        color:
-          i > 0 && c.volume > candles[i - 1].volume
-            ? "#CB3030"
-            : "#2D7CD1",
-      }))
-    );
+    // 거래량 갱신
+    if (volumeSeriesRef.current) {
+      volumeSeriesRef.current.setData(
+        sortedCandles.map((c, i) => ({
+          time: Math.floor(new Date(c.dateTime).getTime() / 1000) as UTCTimestamp,
+          value: c.volume,
+          color:
+            i > 0 && c.volume > sortedCandles[i - 1].volume
+              ? "#CB3030"
+              : "#2D7CD1",
+        }))
+      );
+    }
 
-    chart.timeScale().fitContent();
-    volumeChart.timeScale().fitContent();
-
-    // 이동평균선 처리
+    // 이동평균선 갱신 (toggleMA 함수 내 계산 재사용 가능)
     Object.entries(maVisibility).forEach(([periodStr, visible]) => {
       const period = Number(periodStr);
       if (!chartRef.current) return;
 
       if (visible) {
         if (!maRefs.current[period]) {
-          maRefs.current[period] = chart.addLineSeries({
+          maRefs.current[period] = chartRef.current.addLineSeries({
             color:
               period === 5
                 ? "#FFA500"
@@ -222,8 +314,6 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
             lineWidth: 1,
           });
         }
-
-        // 이동평균 데이터 계산
         const maData = candleChartData
           .map((d, i, arr) => {
             if (i < period - 1) return null;
@@ -239,7 +329,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       } else {
         if (maRefs.current[period]) {
           try {
-            chartRef.current?.removeSeries(maRefs.current[period]!);
+            chartRef.current.removeSeries(maRefs.current[period]!);
           } catch (e) {
             console.warn(`MA 제거 실패 (period ${period}):`, e);
           }
@@ -247,14 +337,33 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
         }
       }
     });
+  }, [candles, maVisibility]);
 
-    return () => {
-      chart.remove();
-      volumeChart.remove();
-      candlestickSeriesRef.current = null;
-      maRefs.current = {};
-    };
-  }, [maVisibility, candles]);
+  useEffect(() => {
+    if ( chartRef.current && prevScrollRangeRef.current && pendingScrollAdjust.current > 0 ) {
+      const timeScale = chartRef.current.timeScale();
+      const currentRange = timeScale.getVisibleLogicalRange();
+
+      if (!currentRange) return;
+
+      const newRange = {
+        from: prevScrollRangeRef.current.from + pendingScrollAdjust.current,
+        to: prevScrollRangeRef.current.to + pendingScrollAdjust.current,
+      };
+
+      if (newRange.from < 0 || newRange.from < currentRange.from) {
+        prevScrollRangeRef.current = null;
+        pendingScrollAdjust.current = 0;
+        return;
+      }
+
+      timeScale.setVisibleLogicalRange(newRange);
+
+      // 초기화
+      prevScrollRangeRef.current = null;
+      pendingScrollAdjust.current = 0;
+    }
+  }, [candles]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
