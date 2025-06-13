@@ -60,6 +60,6 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             }
         }
 
-        return message;
+        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
 }

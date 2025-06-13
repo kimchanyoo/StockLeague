@@ -20,7 +20,11 @@ public class WebSocketTestController {
     @MessageMapping("/test")
     public void testEcho(String message, Principal principal) {
         log.info(">>> 받은 메시지: {}", message);
-        log.info(">>> Principal: {}", principal);
+        if (principal == null) {
+            log.warn("❗ Principal is null!");
+            return;
+        }
+        log.info(">>> Principal.getName() = {}", principal.getName());
 
         String username = principal.getName();
         String destination = "/user/" + username + "/queue/notifications";
