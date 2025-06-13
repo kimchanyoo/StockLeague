@@ -4,6 +4,7 @@ import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.TokenRedisService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -47,12 +48,14 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             accessor.setUser(auth);
             accessor.getSessionAttributes().put("user", auth);
 
-            log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", auth.getPrincipal().toString());
+            Object principal = auth.getPrincipal();
+            log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", principal != null ? principal : "null");
         } else {
-            if (accessor.getUser() == null) {
-                Principal sessionUser = (Principal) accessor.getSessionAttributes().get("user");
-                if (sessionUser != null) {
-                    accessor.setUser(sessionUser);
+            Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+            if (accessor.getUser() == null && sessionAttributes != null) {
+                Object user = sessionAttributes.get("user");
+                if (user instanceof Principal principal) {
+                    accessor.setUser(principal);
                 }
             }
         }
