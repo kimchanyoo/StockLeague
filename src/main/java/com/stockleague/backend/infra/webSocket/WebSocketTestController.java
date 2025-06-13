@@ -30,7 +30,11 @@ public class WebSocketTestController {
         String destination = "/user/" + username + "/queue/notifications";
         String payload = "서버에서 보낸 메시지: \"" + message + "\"";
 
-        log.info(">>> [{}] 에게 메시지 전송: {}", destination, payload);
-        messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
+        try {
+            messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
+            log.info("✅ [{}] 에게 메시지 전송 성공: {}", destination, payload);
+        } catch (Exception e) {
+            log.error("❌ [{}] 에게 메시지 전송 실패", destination, e);
+        }
     }
 }
