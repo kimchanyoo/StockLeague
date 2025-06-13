@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -42,44 +43,20 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                 throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
             }
 
-            Long userId = jwtProvider.getUserId(token);
-            Principal principal = new StompPrincipal(String.valueOf(userId));
-            accessor.setUser(principal);
-            accessor.getSessionAttributes().put("user", principal);
+            Authentication auth = jwtProvider.getAuthentication(token);
+            accessor.setUser(auth);
+            accessor.getSessionAttributes().put("user", auth);
 
-            log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
+            log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", auth.getPrincipal().toString());
         } else {
-            Object userAttr = accessor.getSessionAttributes().get("user");
-            if (userAttr instanceof Principal) {
-                accessor.setUser((Principal) userAttr);
+            if (accessor.getUser() == null) {
+                Principal sessionUser = (Principal) accessor.getSessionAttributes().get("user");
+                if (sessionUser != null) {
+                    accessor.setUser(sessionUser);
+                }
             }
         }
 
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
-    }
-
-    public static class StompPrincipal implements Principal {
-        private final String name;
-
-        public StompPrincipal(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Principal)) return false;
-            return name.equals(((Principal) o).getName());
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
+        return message;
     }
 }

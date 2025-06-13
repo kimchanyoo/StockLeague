@@ -2,7 +2,6 @@ package com.stockleague.backend.global.config;
 
 
 import com.stockleague.backend.auth.jwt.JwtProvider;
-import com.stockleague.backend.global.interceptor.LoggingChannelInterceptor;
 import com.stockleague.backend.global.interceptor.WebSocketSecurityInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +17,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
-    private final LoggingChannelInterceptor loggingChannelInterceptor;
-    private final JwtProvider jwtProvider;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -36,6 +33,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(webSocketSecurityInterceptor, loggingChannelInterceptor);
+        registration.interceptors(webSocketSecurityInterceptor);
     }
 }
