@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "/api/v1/stocks",
                                 "/api/v1/stocks/*/candles",
                                 "/api/v1/openapi/**",
-                                "/ws/**"
+                                "/ws/**",
+                                "/ws-debug/active-users"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
                         .anyRequest().authenticated() // 나머지는 로그인한 사용자만 접근 가능
