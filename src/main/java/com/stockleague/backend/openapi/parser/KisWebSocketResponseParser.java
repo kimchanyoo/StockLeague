@@ -34,19 +34,32 @@ public class KisWebSocketResponseParser {
     public List<StockPriceDto> parsePlainText(String trId, String body) {
         List<StockPriceDto> result = new ArrayList<>();
         try {
-            if (!"H0STCNT0".equals(trId)) return result;
+            if (!"H0STCNT0".equals(trId)) {
+                log.debug("지원하지 않는 trId: {}", trId);
+                return result;
+            }
 
             String[] parts = body.split("\\^");
             int FIELD_COUNT = 48;
 
+            log.debug("받은 body 필드 수: {}", parts.length);
+
             for (int i = 0; i + FIELD_COUNT <= parts.length; i += FIELD_COUNT) {
                 String[] block = Arrays.copyOfRange(parts, i, i + FIELD_COUNT);
+                if (block.length != FIELD_COUNT) {
+                    log.warn("블록 필드 수 불일치: {}개 - {}", block.length, Arrays.toString(block));
+                    continue;
+                }
+
                 StockPriceDto dto = parsePlainTextBlock(trId, block);
-                if (dto != null) result.add(dto);
+                if (dto != null) {
+                    result.add(dto);
+                } else {
+                    log.warn("DTO 변환 실패: {}", Arrays.toString(block));
+                }
             }
 
             return result;
-
         } catch (Exception e) {
             log.error("실시간 평문 파싱 실패 (trId: {}): {}", trId, body, e);
             return result;
@@ -66,7 +79,7 @@ public class KisWebSocketResponseParser {
             setField(data, "stck_hgpr", parts[4]);
             setField(data, "stck_lwpr", parts[5]);
             setField(data, "stck_clpr", parts[6]);
-            setField(data, "stck_prpr", parts[6]);  // 현재가 = 종가로 대체
+            setField(data, "stck_prpr", parts[6]);
             setField(data, "prdy_vrss", parts[44]);
             setField(data, "prdy_vrss_sign", parts[46]);
             setField(data, "acml_vol", parts[47]);

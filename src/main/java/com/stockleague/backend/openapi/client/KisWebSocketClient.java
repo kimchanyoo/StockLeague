@@ -3,11 +3,19 @@ package com.stockleague.backend.openapi.client;
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
+import jakarta.annotation.PreDestroy;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -32,9 +40,13 @@ public class KisWebSocketClient {
 
     private final OpenApiTokenRedisService openApiTokenRedisService;
     private final KisWebSocketResponseParser parser;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
     private static final List<String> TICKERS = List.of("005930");
+
+    private WebSocket webSocket;
+    private boolean isConnected = false;
 
     private final Map<String, String> encryptionKeyMap = new ConcurrentHashMap<>();
     private final Map<String, String> encryptionIvMap = new ConcurrentHashMap<>();
@@ -48,14 +60,36 @@ public class KisWebSocketClient {
     private static final String SUCCESS_MSG_CD = "OPSP0000";
     private static final String ENCRYPTED_FLAG_Y = "Y";
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady() {
-        log.info("[WebSocket] 서버 완전 초기화 후 WebSocket 연결 시도");
+    private int reconnectAttempts = 0;
+
+    @Scheduled(cron = "0 55 8 * * MON-FRI")
+    public void scheduledConnect() {
+        log.info("[스케줄러] 오전 8:55 WebSocket 연결 시작");
         connect();
     }
 
+    @Scheduled(cron = "0 40 15 * * MON-FRI")
+    public void scheduledDisconnect() {
+        log.info("[스케줄러] 오후 15:40 WebSocket 연결 종료 요청");
+        disconnect();
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        log.info("[WebSocket] 서버 초기화 - 실시간 연결 준비");
+
+        if (isMarketTime()) {
+            connect();
+        } else {
+            log.info("[WebSocket] 장시간 외 - 초기 연결 생략");
+        }
+    }
+
     public void connect() {
-        log.info("[DEBUG] KisWebSocketClient 실행 시작됨");
+        if (isConnected) {
+            log.info("이미 WebSocket에 연결되어 있습니다.");
+            return;
+        }
 
         String approvalKey = openApiTokenRedisService.getRealTimeKey();
         if (approvalKey == null || approvalKey.isEmpty()) {
@@ -71,10 +105,29 @@ public class KisWebSocketClient {
         client.newWebSocketBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .buildAsync(URI.create(WS_URL), createWebSocketListener(approvalKey))
+                .thenAccept(ws -> {
+                    this.webSocket = ws;
+                    this.isConnected = true;
+                    reconnectAttempts = 0;
+                })
                 .exceptionally(ex -> {
                     log.error("WebSocket 연결 예외 발생", ex);
                     return null;
                 });
+    }
+
+    public void disconnect() {
+        if (webSocket != null && isConnected) {
+            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Market closed");
+            log.info("WebSocket 정상 종료 요청 전송");
+            isConnected = false;
+            webSocket = null;
+        }
+    }
+
+    @PreDestroy
+    public void onShutdown() {
+        disconnect();
     }
 
     private WebSocket.Listener createWebSocketListener(String approvalKey) {
@@ -124,14 +177,35 @@ public class KisWebSocketClient {
             public void onError(WebSocket webSocket, Throwable error) {
                 log.error("WebSocket 오류 발생", error);
                 WebSocket.Listener.super.onError(webSocket, error);
+                KisWebSocketClient.this.webSocket = null;
+                retryWithBackoff();
             }
 
             @Override
             public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
                 log.info("WebSocket 종료: [{}] {}", statusCode, reason);
+                isConnected = false;
+                KisWebSocketClient.this.webSocket = null;
+                retryWithBackoff();
                 return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
             }
         };
+    }
+
+    private void retryWithBackoff() {
+        if (isConnected || webSocket != null) {
+            log.info("재연결 시도 중단 (이미 연결됨)");
+            return;
+        }
+
+        reconnectAttempts++;
+        long delay = Math.min((1L << reconnectAttempts), 300);
+        log.warn("재연결 시도 예정 ({}회차, {}ms 후)", reconnectAttempts, delay);
+
+        scheduler.schedule(() -> {
+            log.info("재연결 시도 중...");
+            connect();
+        }, delay, TimeUnit.SECONDS);
     }
 
     private void sendApprovalAndSubscribe(WebSocket webSocket, String approvalKey, String trId, String ticker) {
@@ -228,7 +302,7 @@ public class KisWebSocketClient {
 
     private void handlePlainMessage(String message) {
         try {
-            String[] parts = message.split("\\|", 4);
+            String[] parts = message.split("\\|");
             if (parts.length < 4) {
                 log.warn("잘못된 평문 메시지: {}", message);
                 return;
@@ -236,6 +310,8 @@ public class KisWebSocketClient {
 
             String trId = parts[1];
             String body = parts[3];
+
+            log.debug("WebSocket 평문 메시지 필드 수: {}", body.split("\\^").length);
 
             List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
             if (!dtos.isEmpty()) {
@@ -247,6 +323,15 @@ public class KisWebSocketClient {
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
         }
+    }
+
+    private boolean isMarketTime() {
+        LocalDateTime now = LocalDateTime.now();
+        DayOfWeek day = now.getDayOfWeek();
+        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) return false;
+
+        LocalTime time = now.toLocalTime();
+        return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
     }
 
     public static String decryptAes256(String base64CipherText, String key, String iv) throws GeneralSecurityException {

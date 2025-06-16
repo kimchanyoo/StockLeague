@@ -21,7 +21,7 @@ public class WebSocketTestController {
     public void testEcho(String message, Principal principal) {
         log.info(">>> 받은 메시지: {}", message);
         if (principal == null) {
-            log.warn("❗ Principal is null!");
+            log.warn("Principal is null!");
             return;
         }
         log.info(">>> Principal.getName() = {}", principal.getName());
@@ -32,9 +32,9 @@ public class WebSocketTestController {
 
         try {
             messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
-            log.info("✅ [{}] 에게 메시지 전송 성공: {}", destination, payload);
+            log.info("[{}] 에게 메시지 전송 성공: {}", destination, payload);
         } catch (Exception e) {
-            log.error("❌ [{}] 에게 메시지 전송 실패", destination, e);
+            log.error("[{}] 에게 메시지 전송 실패", destination, e);
         }
     }
 }
