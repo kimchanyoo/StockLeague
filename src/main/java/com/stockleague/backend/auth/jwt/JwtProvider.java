@@ -107,7 +107,7 @@ public class JwtProvider {
         String role = user.getRole().name(); // USER or ADMIN
 
         return new UsernamePasswordAuthenticationToken(
-                userId.toString(),
+                userId,
                 null,
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role))
         );

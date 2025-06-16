@@ -46,7 +46,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             }
 
             Authentication auth = jwtProvider.getAuthentication(token);
-            String userId = auth.getName();
+            String userId = auth.getName().toString();
 
             Principal principal = new StompPrincipal(userId);
             accessor.setUser(principal);
