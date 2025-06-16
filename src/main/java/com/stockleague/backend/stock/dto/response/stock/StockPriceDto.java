@@ -29,6 +29,9 @@ public record StockPriceDto(
         @Schema(description = "전일 대비 가격 차이", example = "300")
         int priceChange,
 
+        @Schema(description = "전일 대비율", example = "2.15")
+        int pricePercent,
+
         @Schema(description = "등락 부호 (1:상승, 2:하락, 3:보합)", example = "1")
         int changeSign,
 

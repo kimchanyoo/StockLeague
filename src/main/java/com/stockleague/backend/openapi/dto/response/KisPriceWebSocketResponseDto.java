@@ -1,23 +1,28 @@
 package com.stockleague.backend.openapi.dto.response;
 
 import lombok.Getter;
+import lombok.Setter;
 
 
 @Getter
+@Setter
 public class KisPriceWebSocketResponseDto {
     private Header header;
     private Body body;
 
     @Getter
+    @Setter
     public static class Header {
         private String tr_id;   // 메시지 유형 ID (예: H0STCNT0)
         private String tr_key;  // 종목 코드 (예: 005930)
     }
 
     @Getter
+    @Setter
     public static class Body {
         private String stck_prpr;        // 현재가
         private String prdy_vrss;        // 전일 대비
+        private String prdy_ctrt;        // 전일 대비율
         private String prdy_vrss_sign;   // 등락 부호 (1:상승, 2:하락, 3:보합)
         private String acml_vol;         // 누적 거래량
         private String stck_oprc;        // 시가

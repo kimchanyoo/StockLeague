@@ -48,32 +48,29 @@ public class KisWebSocketClient {
     private WebSocket webSocket;
     private boolean isConnected = false;
 
-    private final Map<String, String> encryptionKeyMap = new ConcurrentHashMap<>();
-    private final Map<String, String> encryptionIvMap = new ConcurrentHashMap<>();
-
-    private static final String MSG_CD = "msg_cd";
-    private static final String OUTPUT = "output";
-    private static final String TR_ID = "tr_id";
-    private static final String TR_KEY = "tr_key";
-    private static final String ENCRYPT = "encrypt";
-    private static final String CIPHER_TEXT = "cipher_text";
-    private static final String SUCCESS_MSG_CD = "OPSP0000";
-    private static final String ENCRYPTED_FLAG_Y = "Y";
-
     private int reconnectAttempts = 0;
 
+    /**
+     * 평일 오전 8시 59분 20초에 WebSocket 연결 시도
+     */
     @Scheduled(cron = "20 59 8 * * MON-FRI")
     public void scheduledConnect() {
-        log.info("[스케줄러] 오전 8:55 WebSocket 연결 시작");
+        log.info("[스케줄러] 오전 8:59 WebSocket 연결 시작");
         connect();
     }
 
+    /**
+     * 평일 오후 3시 30분 31초에 WebSocket 연결 종료
+     */
     @Scheduled(cron = "31 30 15 * * MON-FRI")
     public void scheduledDisconnect() {
-        log.info("[스케줄러] 오후 15:40 WebSocket 연결 종료 요청");
+        log.info("[스케줄러] 오후 15:30 WebSocket 연결 종료 요청");
         disconnect();
     }
 
+    /**
+     * 서버 시작 시 장중이면 자동 연결 수행
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         log.info("[WebSocket] 서버 초기화 - 실시간 연결 준비");
@@ -85,6 +82,9 @@ public class KisWebSocketClient {
         }
     }
 
+    /**
+     * WebSocket 연결 로직 (이미 연결 상태면 중복 연결 방지)
+     */
     public void connect() {
         if (isConnected) {
             log.info("이미 WebSocket에 연결되어 있습니다.");
@@ -100,6 +100,9 @@ public class KisWebSocketClient {
         initWebSocket(approvalKey);
     }
 
+    /**
+     * WebSocket 연결 초기화 및 비동기 리스너 등록
+     */
     private void initWebSocket(String approvalKey) {
         HttpClient client = HttpClient.newHttpClient();
         client.newWebSocketBuilder()
@@ -116,6 +119,9 @@ public class KisWebSocketClient {
                 });
     }
 
+    /**
+     * WebSocket 연결 종료
+     */
     public void disconnect() {
         if (webSocket != null && isConnected) {
             webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Market closed");
@@ -125,58 +131,38 @@ public class KisWebSocketClient {
         }
     }
 
+    /**
+     * 애플리케이션 종료 시 WebSocket 연결 종료
+     */
     @PreDestroy
     public void onShutdown() {
         disconnect();
+        scheduler.shutdownNow();
     }
 
+    /**
+     * WebSocket 리스너 생성 (평문 메시지 수신 처리)
+     */
     private WebSocket.Listener createWebSocketListener(String approvalKey) {
         return new WebSocket.Listener() {
-
             @Override
             public void onOpen(WebSocket webSocket) {
                 log.info("WebSocket 연결 성공");
-                TICKERS.forEach(ticker -> {
-                    sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker);
-//                    sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
-                });
+                TICKERS.forEach(ticker -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker));
                 WebSocket.Listener.super.onOpen(webSocket);
             }
 
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
                 String message = data.toString();
-
-                // JSON 포맷이면 기존 로직 사용
-                if (message.trim().startsWith("{")) {
-                    try {
-                        JSONObject json = new JSONObject(message);
-                        String trId = json.optJSONObject("header").optString(TR_ID, "");
-                        if ("PINGPONG".equals(trId)) {
-                            log.debug("PINGPONG 메시지 무시");
-                            return WebSocket.Listener.super.onText(webSocket, data, last);
-                        }
-
-                        log.debug("[WebSocket 수신 JSON]: {}", message);
-                        handleIncomingMessage(message);
-
-                    } catch (Exception e) {
-                        log.error("WebSocket JSON 메시지 처리 중 예외 발생", e);
-                    }
-
-                } else {
-                    // 평문 메시지 처리
-                    log.debug("[WebSocket 수신 평문]: {}", message);
-                    handlePlainMessage(message);
-                }
-
+                log.debug("[WebSocket 수신 평문]: {}", message);
+                handlePlainMessage(message);
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
 
             @Override
             public void onError(WebSocket webSocket, Throwable error) {
                 log.error("WebSocket 오류 발생", error);
-                WebSocket.Listener.super.onError(webSocket, error);
                 KisWebSocketClient.this.webSocket = null;
                 retryWithBackoff();
             }
@@ -192,28 +178,31 @@ public class KisWebSocketClient {
         };
     }
 
+    /**
+     * 재연결을 위한 백오프 전략 (최대 5분 지연)
+     */
     private void retryWithBackoff() {
-        if (isConnected || webSocket != null) {
-            log.info("재연결 시도 중단 (이미 연결됨)");
-            return;
-        }
+        if (isConnected || webSocket != null) return;
 
         reconnectAttempts++;
         long delay = Math.min((1L << reconnectAttempts), 300);
-        log.warn("재연결 시도 예정 ({}회차, {}ms 후)", reconnectAttempts, delay);
+        log.warn("재연결 시도 예정 ({}회차, {}초 후)", reconnectAttempts, delay);
 
-        scheduler.schedule(() -> {
-            log.info("재연결 시도 중...");
-            connect();
-        }, delay, TimeUnit.SECONDS);
+        scheduler.schedule(this::connect, delay, TimeUnit.SECONDS);
     }
 
+    /**
+     * 실시간 키를 포함한 구독 요청 메시지 전송
+     */
     private void sendApprovalAndSubscribe(WebSocket webSocket, String approvalKey, String trId, String ticker) {
         String message = buildSubscribeMessage(approvalKey, trId, ticker);
         webSocket.sendText(message, true);
         log.info("인증 + 구독 요청 전송: {} / {}", trId, ticker);
     }
 
+    /**
+     * 구독 메시지 JSON 생성
+     */
     private String buildSubscribeMessage(String approvalKey, String trId, String trKey) {
         return String.format("""
             {
@@ -233,73 +222,9 @@ public class KisWebSocketClient {
             """, approvalKey, trId, trKey);
     }
 
-    private void handleIncomingMessage(String data) {
-        try {
-            JSONObject json = new JSONObject(data);
-            JSONObject header = json.optJSONObject("header");
-            JSONObject body = json.optJSONObject("body");
-
-            if (header == null) {
-                log.warn("WebSocket 수신 메시지에 header가 없습니다: {}", data);
-                return;
-            }
-
-            String trKey = header.optString(TR_KEY, "");
-            String encrypt = header.optString(ENCRYPT, "N");
-
-
-            if (body == null) {
-                log.info("body가 없는 WebSocket 메시지: {}", data);
-                return;
-            }
-
-            if (SUCCESS_MSG_CD.equals(body.optString(MSG_CD)) && body.has(OUTPUT)) {
-                handleKeyExchange(body, trKey);
-            } else if (ENCRYPTED_FLAG_Y.equals(encrypt) && body.has(OUTPUT)) {
-                handleEncryptedMessage(body, trKey);
-            } else {
-                log.info("평문 데이터 수신: {}", data);
-            }
-        } catch (Exception e) {
-            log.error("실시간 메시지 처리 중 예외 발생", e);
-        }
-    }
-
-    private void handleKeyExchange(JSONObject body, String trKey) {
-        JSONObject output = body.getJSONObject(OUTPUT);
-        String iv = output.optString("iv", null);
-        String key = output.optString("key", null);
-
-        if (iv != null && key != null) {
-            encryptionIvMap.put(trKey, iv);
-            encryptionKeyMap.put(trKey, key);
-            log.info("구독 성공 → key/iv 저장됨 ({})", trKey);
-        }
-    }
-
-    private void handleEncryptedMessage(JSONObject body, String trKey) {
-        JSONObject output = body.getJSONObject(OUTPUT);
-        String cipherText = output.optString(CIPHER_TEXT);
-        String iv = encryptionIvMap.get(trKey);
-        String key = encryptionKeyMap.get(trKey);
-
-        if (iv != null && key != null && cipherText != null) {
-            try {
-                String decrypted = decryptAes256(cipherText, key, iv);
-                log.info("복호화된 실시간 데이터 [{}]: {}", trKey, decrypted);
-
-                handlePlainMessage(decrypted);
-
-            } catch (Exception e) {
-                log.error("복호화 실패 (trKey: {})", trKey, e);
-            }
-        } else {
-            if (iv == null) log.warn("IV 누락됨 (trKey: {})", trKey);
-            if (key == null) log.warn("KEY 누락됨 (trKey: {})", trKey);
-            if (cipherText == null) log.warn("cipher_text 누락됨 (trKey: {})", trKey);
-        }
-    }
-
+    /**
+     * 평문 메시지를 파싱하여 StockPriceDto 리스트로 변환
+     */
     private void handlePlainMessage(String message) {
         try {
             String[] parts = message.split("\\|");
@@ -311,20 +236,20 @@ public class KisWebSocketClient {
             String trId = parts[1];
             String body = parts[3];
 
-            log.debug("WebSocket 평문 메시지 필드 수: {}", body.split("\\^").length);
-
             List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
             if (!dtos.isEmpty()) {
                 dtos.forEach(dto -> log.info("실시간 평문 종목 시세 객체 생성: {}", dto));
             } else {
                 log.debug("DTO 파싱 결과 없음: {}", message);
             }
-
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
         }
     }
 
+    /**
+     * 현재 시간이 장중인지 여부 확인 (평일 9:00~15:30)
+     */
     private boolean isMarketTime() {
         LocalDateTime now = LocalDateTime.now();
         DayOfWeek day = now.getDayOfWeek();
@@ -332,16 +257,5 @@ public class KisWebSocketClient {
 
         LocalTime time = now.toLocalTime();
         return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
-    }
-
-    public static String decryptAes256(String base64CipherText, String key, String iv) throws GeneralSecurityException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "AES");
-        IvParameterSpec ivParam = new IvParameterSpec(iv.getBytes(StandardCharsets.UTF_8));
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParam);
-
-        byte[] decodedBytes = Base64.getDecoder().decode(base64CipherText);
-        byte[] decryptedBytes = cipher.doFinal(decodedBytes);
-        return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 }
