@@ -62,13 +62,13 @@ public class KisWebSocketClient {
 
     private int reconnectAttempts = 0;
 
-    @Scheduled(cron = "0 55 8 * * MON-FRI")
+    @Scheduled(cron = "20 59 8 * * MON-FRI")
     public void scheduledConnect() {
         log.info("[스케줄러] 오전 8:55 WebSocket 연결 시작");
         connect();
     }
 
-    @Scheduled(cron = "0 40 15 * * MON-FRI")
+    @Scheduled(cron = "31 30 15 * * MON-FRI")
     public void scheduledDisconnect() {
         log.info("[스케줄러] 오후 15:40 WebSocket 연결 종료 요청");
         disconnect();
