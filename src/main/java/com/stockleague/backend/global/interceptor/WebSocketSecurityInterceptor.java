@@ -46,14 +46,16 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             }
 
             Authentication auth = jwtProvider.getAuthentication(token);
-            String userId = auth.getName().toString();
+            String userId = auth.getName();
 
-            Principal principal = new StompPrincipal(userId);
+            String userName = "user_" + userId;
+
+            Principal principal = new StompPrincipal(userName);
             accessor.setUser(principal);
             accessor.getSessionAttributes().put("user", principal);
 
 
-            log.info("[WebSocket] WebSocket 인증 성공 - userId: {}", userId);
+            log.info("[WebSocket] WebSocket 인증 성공 - userId: {}, username: {}", userId, userName);
         } else {
             Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
             if (accessor.getUser() == null && sessionAttributes != null) {
