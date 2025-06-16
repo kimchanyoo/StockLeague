@@ -37,4 +37,13 @@ public class WebSocketTestController {
             log.error("[{}] 에게 메시지 전송 실패", destination, e);
         }
     }
+
+    @MessageMapping("/broadcast")
+    public void broadcastTest(String message) {
+        log.info(">>> 브로드캐스트 메시지 수신: {}", message);
+
+        String payload = "전체 사용자에게 보낸 메시지: \"" + message + "\"";
+        messagingTemplate.convertAndSend("/topic/broadcast", payload);
+        log.info("[/topic/broadcast] 에게 브로드캐스트 전송 성공: {}", payload);
+    }
 }
