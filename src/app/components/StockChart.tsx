@@ -65,6 +65,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const [offset, setOffset] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const noMoreDataRef = useRef(false);
+  const loadMoreCandlesRef = useRef<() => void>(() => {});
 
   // 봉 데이터 불러오기 (interval, ticker 변경 시)
   useEffect(() => {
@@ -133,6 +134,10 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       })
       .finally(() => setIsLoading(false));
   }, [isLoading, offset, selectedInterval, ticker]);
+
+  useEffect(() => {
+    loadMoreCandlesRef.current = loadMoreCandles;
+  }, [loadMoreCandles]);
 
   const toggleMA = (period: number) => {
     clearLines();
@@ -231,11 +236,10 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
     const visibleRangeHandler = (range: LogicalRange | null) => {
       if (!range || !isMounted) return;
       if (lastRangeFrom.current === range.from) return;
-
       lastRangeFrom.current = range.from;
       
-      if (range.from < 100) {
-        loadMoreCandles();
+      if (range.from < 100 && !noMoreDataRef.current) {
+        loadMoreCandlesRef.current();
       }
     };
     timeScale.subscribeVisibleLogicalRangeChange(visibleRangeHandler);
@@ -263,7 +267,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       candlestickSeriesRef.current = null;
       maRefs.current = {};
     };
-  }, [loadMoreCandles]);
+  }, []);
 
   // candles 데이터가 바뀔 때마다 데이터만 갱신
   useEffect(() => {
