@@ -1,6 +1,7 @@
 package com.stockleague.backend.openapi.client;
 
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
+import com.stockleague.backend.kafka.producer.StockPriceProducer;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
@@ -30,6 +31,7 @@ import java.util.concurrent.CompletionStage;
 @RequiredArgsConstructor
 public class KisWebSocketClient {
 
+    private final StockPriceProducer stockPriceProducer;
     private final OpenApiTokenRedisService openApiTokenRedisService;
     private final KisWebSocketResponseParser parser;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -233,7 +235,7 @@ public class KisWebSocketClient {
 
             List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
             for (StockPriceDto dto : dtos) {
-                log.info("실시간 평문 종목 시세 전송: {}", dto);
+                stockPriceProducer.send(dto);
                 messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
             }
         } catch (Exception e) {
