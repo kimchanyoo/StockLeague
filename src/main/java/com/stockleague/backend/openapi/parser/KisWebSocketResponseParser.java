@@ -71,26 +71,26 @@ public class KisWebSocketResponseParser {
      * <p>내부적으로 각 필드 인덱스를 enum {@link KisFieldIndex}를 통해 참조하며,
      * 실시간 시세를 JSON 기반 DTO 객체 구조로 구성해 반환합니다.</p>
      *
-     * @param trId 트랜잭션 ID
+     * @param trId  트랜잭션 ID
      * @param parts 실시간 평문 메시지 블록 (단일 종목의 시세 필드 배열)
      * @return 구성된 {@link KisPriceWebSocketResponseDto} 객체
      */
     private KisPriceWebSocketResponseDto mapToDto(String trId, String[] parts) {
         KisPriceWebSocketResponseDto.Header header = new KisPriceWebSocketResponseDto.Header();
         header.setTr_id(trId);
-        header.setTr_key(parts[KisFieldIndex.TICKER.ordinal()]);
+        header.setTr_key(parts[KisFieldIndex.TICKER.index()]);
 
         KisPriceWebSocketResponseDto.Body body = new KisPriceWebSocketResponseDto.Body();
         body.setStck_bsop_date(LocalDate.now().format(DATE_FORMATTER));
-        body.setStck_oprc(parts[KisFieldIndex.OPEN.ordinal()]);
-        body.setStck_hgpr(parts[KisFieldIndex.HIGH.ordinal()]);
-        body.setStck_lwpr(parts[KisFieldIndex.LOW.ordinal()]);
-        body.setStck_clpr(parts[KisFieldIndex.CLOSE.ordinal()]);
-        body.setStck_prpr(parts[KisFieldIndex.CURRENT_PRICE.ordinal()]);
-        body.setPrdy_vrss(parts[KisFieldIndex.PRICE_CHANGE.ordinal()]);
-        body.setPrdy_ctrt(parts[KisFieldIndex.PRICE_CHANGE_PERCENT.ordinal()]);
-        body.setPrdy_vrss_sign(parts[KisFieldIndex.CHANGE_SIGN.ordinal()]);
-        body.setAcml_vol(parts[KisFieldIndex.ACC_VOLUME.ordinal()]);
+        body.setStck_oprc(parts[KisFieldIndex.OPEN.index()]);
+        body.setStck_hgpr(parts[KisFieldIndex.HIGH.index()]);
+        body.setStck_lwpr(parts[KisFieldIndex.LOW.index()]);
+        body.setStck_clpr(parts[KisFieldIndex.CLOSE.index()]);
+        body.setStck_prpr(parts[KisFieldIndex.CURRENT_PRICE.index()]);
+        body.setPrdy_vrss(parts[KisFieldIndex.PRICE_CHANGE.index()]);
+        body.setPrdy_ctrt(parts[KisFieldIndex.PRICE_CHANGE_PERCENT.index()]);
+        body.setPrdy_vrss_sign(parts[KisFieldIndex.CHANGE_SIGN.index()]);
+        body.setAcml_vol(parts[KisFieldIndex.ACC_VOLUME.index()]);
 
         KisPriceWebSocketResponseDto response = new KisPriceWebSocketResponseDto();
         response.setHeader(header);
@@ -99,16 +99,27 @@ public class KisWebSocketResponseParser {
     }
 
     public enum KisFieldIndex {
-        TICKER,               // 0 종목코드
-        TIME,                 // 1 체결시간
-        CURRENT_PRICE,        // 2 현재가
-        CHANGE_SIGN,          // 3 등락부호
-        PRICE_CHANGE,         // 4 전일 대비 가격
-        PRICE_CHANGE_PERCENT, // 5 전일 대비 퍼센트
-        OPEN,                 // 6 시가
-        HIGH,                 // 7 고가
-        LOW,                  // 8 저가
-        CLOSE,                // 9 종가
-        ACC_VOLUME            // 10 누적 거래량
+        TICKER(0),
+        TIME(1),
+        CURRENT_PRICE(2),
+        CHANGE_SIGN(3),
+        PRICE_CHANGE(4),
+        PRICE_CHANGE_PERCENT(5),
+        AVG_PRICE(6),
+        OPEN(7),
+        HIGH(8),
+        LOW(9),
+        CLOSE(10),
+        ACC_VOLUME(11);
+
+        private final int idx;
+
+        KisFieldIndex(int idx) {
+            this.idx = idx;
+        }
+
+        public int index() {
+            return idx;
+        }
     }
 }

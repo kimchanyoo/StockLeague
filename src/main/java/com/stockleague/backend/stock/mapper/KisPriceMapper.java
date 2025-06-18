@@ -31,7 +31,7 @@ public class KisPriceMapper {
                 parseIntOrFallback(body.getStck_clpr(), body.getStck_prpr()), // 종가 없을 경우 현재가 대체
                 parseInt(body.getStck_prpr()),
                 parseInt(body.getPrdy_vrss()),
-                parseInt(body.getPrdy_ctrt()),
+                parseDouble(body.getPrdy_ctrt()),
                 parseInt(body.getPrdy_vrss_sign()),
                 parseLong(body.getAcml_vol())
         );
@@ -58,6 +58,14 @@ public class KisPriceMapper {
             return Long.parseLong(str.trim());
         } catch (Exception e) {
             return 0L;
+        }
+    }
+
+    private double parseDouble(String str) {
+        try {
+            return Double.parseDouble(str.trim());
+        } catch (Exception e) {
+            return 0.0;
         }
     }
 }
