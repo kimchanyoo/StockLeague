@@ -43,7 +43,7 @@ public class StockPriceRedisService {
                 StockPriceDto lastDto = objectMapper.readValue(latestJson, StockPriceDto.class);
 
                 if (isDuplicate(lastDto, dto)) {
-                    log.debug("⚠️ Redis 중복 저장 생략: {} (동일 시세)", dto);
+                    log.debug("Redis 중복 저장 생략: {} (동일 시세)", dto);
                     return;
                 }
             }
@@ -51,10 +51,41 @@ public class StockPriceRedisService {
             String value = objectMapper.writeValueAsString(dto);
             double score = dto.datetime().toEpochSecond(ZoneOffset.ofHours(9));
             redisTemplate.opsForZSet().add(key, value, score);
-            log.debug("✅ Redis 저장: [{}] score={}, value={}", key, score, value);
+            log.debug("Redis 저장: [{}] score={}, value={}", key, score, value);
 
         } catch (JsonProcessingException e) {
             log.error("[Redis] 시세 저장 실패 (직렬화 오류): {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Redis에서 특정 시간 범위의 시세 데이터를 조회
+     * <p>key: stock:price:{ticker}</p>
+     * <p>score 범위: from ~ to (epochSecond 기준)</p>
+     *
+     * @param ticker 종목 코드
+     * @param from 시작 시각
+     * @param to 종료 시각
+     * @return 해당 시간 범위의 시세 데이터 목록
+     */
+    public List<StockPriceDto> findBetween(String ticker, LocalDateTime from, LocalDateTime to) {
+        try {
+            String key = getKey(ticker);
+            double fromScore = from.toEpochSecond(ZoneOffset.ofHours(9));
+            double toScore = to.toEpochSecond(ZoneOffset.ofHours(9));
+
+            Set<String> range = redisTemplate.opsForZSet().rangeByScore(key, fromScore, toScore);
+            if (range == null) return Collections.emptyList();
+
+            List<StockPriceDto> result = new ArrayList<>();
+            for (String json : range) {
+                result.add(objectMapper.readValue(json, StockPriceDto.class));
+            }
+            return result;
+
+        } catch (Exception e) {
+            log.error("[Redis] 분봉 데이터 조회 실패: {}", e.getMessage());
+            return Collections.emptyList();
         }
     }
 
