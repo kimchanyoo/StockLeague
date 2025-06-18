@@ -12,26 +12,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -41,6 +33,7 @@ public class KisWebSocketClient {
     private final OpenApiTokenRedisService openApiTokenRedisService;
     private final KisWebSocketResponseParser parser;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final SimpMessagingTemplate messagingTemplate;
 
     private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
     private static final List<String> TICKERS = List.of("005930");
@@ -182,7 +175,9 @@ public class KisWebSocketClient {
      * 재연결을 위한 백오프 전략 (최대 5분 지연)
      */
     private void retryWithBackoff() {
-        if (isConnected || webSocket != null) return;
+        if (isConnected || webSocket != null) {
+            return;
+        }
 
         reconnectAttempts++;
         long delay = Math.min((1L << reconnectAttempts), 300);
@@ -205,21 +200,21 @@ public class KisWebSocketClient {
      */
     private String buildSubscribeMessage(String approvalKey, String trId, String trKey) {
         return String.format("""
-            {
-              "header": {
-                "approval_key": "%s",
-                "custtype": "P",
-                "tr_type": "1",
-                "content-type": "utf-8"
-              },
-              "body": {
-                "input": {
-                  "tr_id": "%s",
-                  "tr_key": "%s"
+                {
+                  "header": {
+                    "approval_key": "%s",
+                    "custtype": "P",
+                    "tr_type": "1",
+                    "content-type": "utf-8"
+                  },
+                  "body": {
+                    "input": {
+                      "tr_id": "%s",
+                      "tr_key": "%s"
+                    }
+                  }
                 }
-              }
-            }
-            """, approvalKey, trId, trKey);
+                """, approvalKey, trId, trKey);
     }
 
     /**
@@ -237,10 +232,9 @@ public class KisWebSocketClient {
             String body = parts[3];
 
             List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
-            if (!dtos.isEmpty()) {
-                dtos.forEach(dto -> log.info("실시간 평문 종목 시세 객체 생성: {}", dto));
-            } else {
-                log.debug("DTO 파싱 결과 없음: {}", message);
+            for (StockPriceDto dto : dtos) {
+                log.info("실시간 평문 종목 시세 전송: {}", dto);
+                messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
             }
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
@@ -253,7 +247,9 @@ public class KisWebSocketClient {
     private boolean isMarketTime() {
         LocalDateTime now = LocalDateTime.now();
         DayOfWeek day = now.getDayOfWeek();
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) return false;
+        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+            return false;
+        }
 
         LocalTime time = now.toLocalTime();
         return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
