@@ -2,6 +2,7 @@ package com.stockleague.backend.stock.mapper;
 
 import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,13 +19,13 @@ public class KisPriceMapper {
      * @param response KIS WebSocket 실시간 시세 응답 DTO
      * @return 변환된 {@link StockPriceDto} 객체
      */
-    public StockPriceDto toStockPriceDto(KisPriceWebSocketResponseDto response) {
+    public StockPriceDto toStockPriceDto(KisPriceWebSocketResponseDto response, LocalDateTime dateTime) {
         KisPriceWebSocketResponseDto.Header header = response.getHeader();
         KisPriceWebSocketResponseDto.Body body = response.getBody();
 
         return new StockPriceDto(
                 header.getTr_key(),
-                body.getStck_bsop_date(),
+                dateTime,
                 parseInt(body.getStck_oprc()),
                 parseInt(body.getStck_hgpr()),
                 parseInt(body.getStck_lwpr()),

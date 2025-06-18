@@ -3,6 +3,7 @@ package com.stockleague.backend.openapi.parser;
 import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.mapper.KisPriceMapper;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +21,7 @@ public class KisWebSocketResponseParser {
     private final KisPriceMapper kisPriceMapper;
 
     private static final int MIN_FIELD_COUNT = 46;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     /**
      * 평문으로 수신한 메시지 본문을 파싱하여 종목별 시세 정보를 리스트로 반환
@@ -50,11 +51,17 @@ public class KisWebSocketResponseParser {
             System.arraycopy(parts, i, block, 0, MIN_FIELD_COUNT);
 
             try {
+                String timeStr = block[KisFieldIndex.TIME.index()];
+                String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                LocalDateTime dateTime = LocalDateTime.parse(dateStr + timeStr, DATETIME_FORMATTER);
+
                 KisPriceWebSocketResponseDto dto = mapToDto(trId, block);
-                StockPriceDto stockPriceDto = kisPriceMapper.toStockPriceDto(dto);
+                dto.getBody().setStck_bsop_date(dateStr);
+
+                StockPriceDto stockPriceDto = kisPriceMapper.toStockPriceDto(dto, dateTime);
                 result.add(stockPriceDto);
             } catch (Exception e) {
-                log.error("StockPriceDto 파싱 중 예외 발생: {}", (Object) block, e);
+                log.error("StockPriceDto 파싱 중 예외 발생: {}", block, e);
             }
         }
 
@@ -81,7 +88,6 @@ public class KisWebSocketResponseParser {
         header.setTr_key(parts[KisFieldIndex.TICKER.index()]);
 
         KisPriceWebSocketResponseDto.Body body = new KisPriceWebSocketResponseDto.Body();
-        body.setStck_bsop_date(LocalDate.now().format(DATE_FORMATTER));
         body.setStck_oprc(parts[KisFieldIndex.OPEN.index()]);
         body.setStck_hgpr(parts[KisFieldIndex.HIGH.index()]);
         body.setStck_lwpr(parts[KisFieldIndex.LOW.index()]);

@@ -1,6 +1,7 @@
 package com.stockleague.backend.stock.dto.response.stock;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 
 @Schema(description = "단일 종목의 실시간 시세 정보")
 public record StockPriceDto(
@@ -8,8 +9,8 @@ public record StockPriceDto(
         @Schema(description = "종목코드", example = "005930")
         String ticker,
 
-        @Schema(description = "기준일자 (yyyyMMdd)", example = "20250529")
-        String date,
+        @Schema(description = "기준일자", example = "2025-06-18T13:35:00")
+        LocalDateTime datetime,
 
         @Schema(description = "시가", example = "72000")
         int openPrice,
