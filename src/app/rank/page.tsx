@@ -57,7 +57,7 @@ export default function Rank() {
   };
 
   return (
-    <div className="container">
+    <div className="rank_container">
       <h1 className="title">👑 랭킹 👑</h1>
       <div className="rankBox">
         <div className="rankCategory">

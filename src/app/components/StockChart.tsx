@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  createChart,
-  UTCTimestamp,
-  Time,
-  IChartApi,
-  ISeriesApi,
-  LogicalRange,
-} from "lightweight-charts";
+import { createChart, UTCTimestamp, Time, IChartApi, ISeriesApi, LogicalRange } from "lightweight-charts";
 import styles from "@/app/styles/components/StockChart.module.css";
 import TimeIntervalSelector from "./TimeIntervalSelector";
 import MovingAverageSelector from "./MovingAverageSelector";
@@ -16,6 +9,18 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { IconButton, Tooltip } from '@mui/material';
 import { getCandleData, CandleData, Interval } from '@/lib/api/stock';
+import { useAuth } from "@/context/AuthContext";
+import { Client, IMessage } from "@stomp/stompjs";
+
+function getIntervalMs(interval: Interval): number {
+  const ms: Record<Interval, number> = {
+    "1m": 60_000,  "3m": 180_000, "5m": 300_000,
+    "10m": 600_000,"15m": 900_000,"30m": 1_800_000,"60m": 3_600_000,
+    d: 86_400_000, w: 604_800_000,
+    m: 2_592_000_000 /* 30 일 */, y: 31_536_000_000,
+  };
+  return ms[interval] ?? 60_000;
+}
 
 // 초기 로드 및 추가 로드 개수 정의
 const INITIAL_LOAD_COUNTS: Record<Interval, number> = {
@@ -67,7 +72,59 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const noMoreDataRef = useRef(false);
   const loadMoreCandlesRef = useRef<() => void>(() => {});
 
-  // 봉 데이터 불러오기 (interval, ticker 변경 시)
+  const { accessToken } = useAuth();
+
+  // 봉 데이터 불러오기 (분봉)
+  useEffect(() => {
+    if (!ticker || !accessToken) return;
+
+    const client = new Client({
+      webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
+      connectHeaders: { Authorization: `Bearer ${accessToken}` },
+      reconnectDelay: 15_000,
+      heartbeatIncoming: 10_000,
+      heartbeatOutgoing: 10_000,
+
+      onConnect: () => {
+        client.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
+          try {
+            const data = JSON.parse(message.body) as CandleData;
+            const incomingTime = new Date(data.dateTime).getTime();
+
+            setCandles((prev) => {
+              if (prev.length === 0) return [data];
+              const last = prev[prev.length - 1];
+              const lastTime = new Date(last.dateTime).getTime();
+
+              if (incomingTime === lastTime) {
+                // 마지막 봉 갱신
+                return [...prev.slice(0, -1), data];
+              } else if (incomingTime > lastTime) {
+                // 새로운 봉 추가
+                return [...prev, data];
+              } else {
+                return prev;
+              }
+            });
+          } catch (err) {
+            console.error("실시간 데이터 처리 오류:", err);
+          }
+        });
+      },
+
+      onStompError: (frame) => {
+        console.error("WebSocket STOMP 오류:", frame.headers["message"]);
+      },
+    });
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
+  }, [ticker, selectedInterval, accessToken]);
+
+  // 봉 데이터 불러오기 (일, 주, 월, 년)
   useEffect(() => {
     if (!ticker) return;
     const initialLoadCount = INITIAL_LOAD_COUNTS[selectedInterval] || 100;
@@ -94,6 +151,54 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
     requestedOffsets.current.clear();
     noMoreDataRef.current = false;
   }, [ticker, selectedInterval]);
+
+  /**
+   * WebSocket 누락 대비 백업 polling
+   * 10초 간격으로 "마지막 봉 이후 1개"만 API로 확인
+   */
+  useEffect(() => {
+    if (!ticker) return;
+
+    // 분봉(1m~60m)에서만 polling. 일봉 이상은 실시간 필요 없으면 생략 가능
+    const realtimeIntervals = ["1m","3m","5m","10m","15m","30m","60m"];
+    if (!realtimeIntervals.includes(selectedInterval)) return;
+
+    const timer = setInterval(() => {
+      if (candles.length === 0) return;
+
+      const last = candles[candles.length - 1];
+      const lastTime = new Date(last.dateTime).getTime();
+      const intervalMs = getIntervalMs(selectedInterval);
+
+      // 마지막 봉 시간이 interval+3초 이상 지났으면 새 봉이 이미 저장됐을 가능성 ↑
+      if (Date.now() - lastTime >= intervalMs + 3000) {
+        getCandleData(ticker, selectedInterval, 0, 1 /* 최신 1개 */)
+          .then((data) => {
+            if (!data || data.length === 0) return;
+            const incoming = data[0];
+            const incomingTime = new Date(incoming.dateTime).getTime();
+
+            setCandles((prev) => {
+              const prevLastTime = new Date(prev[prev.length - 1].dateTime).getTime();
+
+              if (incomingTime === prevLastTime) {
+                // 저장된 값이 수정됐을 때(드물지만) 덮어쓰기
+                return [...prev.slice(0, -1), incoming];
+              }
+              if (incomingTime > prevLastTime) {
+                // 새 봉 추가
+                return [...prev, incoming];
+              }
+              return prev; // 과거 데이터면 무시
+            });
+          })
+          .catch((err) => console.error("polling 오류:", err));
+      }
+    }, 10_000); // 10초 주기
+
+    return () => clearInterval(timer);
+    // ⚠️ 의존성: 마지막 봉 시간이 바뀔 때만 effect 재설정
+  }, [candles.length && candles[candles.length - 1]?.dateTime, ticker, selectedInterval]);
 
   const loadMoreCandles = useCallback(() => {
     if (isLoading || !chartRef.current || requestedOffsets.current.has(offset)) return;
@@ -205,6 +310,11 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
 
     const chart = createChart(chartContainerRef.current, { layout: { textColor: 'black' } });
     chartRef.current = chart;
+    chart.timeScale().applyOptions(
+      ["1m","3m","5m","10m","15m","30m","60m"].includes(selectedInterval)
+        ? { timeVisible: true, secondsVisible: false }
+        : { timeVisible: false } // 일봉 이상
+    );
 
     const volumeChart = createChart(volumeContainerRef.current, {
       layout: { textColor: 'black', background: { color: 'white' } },
@@ -268,6 +378,16 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       maRefs.current = {};
     };
   }, []);
+  
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    chartRef.current.timeScale().applyOptions(
+      ["1m","3m","5m","10m","15m","30m","60m"].includes(selectedInterval)
+        ? { timeVisible: true, secondsVisible: false }
+        : { timeVisible: false }
+    );
+  }, [selectedInterval]);
 
   // candles 데이터가 바뀔 때마다 데이터만 갱신
   useEffect(() => {

@@ -37,7 +37,7 @@ export default function StockList() {
   const visibleStocks = dummyStockData.slice(0, visibleCount);
 
   return (
-    <div className="container">
+    <div className="stockList_container">
       <div className="containerBox">
         {/* 상단 탭 */}
          <TabMenu

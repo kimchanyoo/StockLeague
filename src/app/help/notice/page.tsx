@@ -45,7 +45,7 @@ export default function NoticeList() {
   };
 
   return (
-    <div className="container">
+    <div className="notice_container">
       <h1 className="title">공지사항</h1>
 
       <div className="search">
