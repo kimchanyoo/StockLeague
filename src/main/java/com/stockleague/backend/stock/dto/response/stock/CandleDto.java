@@ -1,6 +1,7 @@
 package com.stockleague.backend.stock.dto.response.stock;
 
 import com.stockleague.backend.stock.domain.StockDailyPrice;
+import com.stockleague.backend.stock.domain.StockMinutePrice;
 import com.stockleague.backend.stock.domain.StockMonthlyPrice;
 import com.stockleague.backend.stock.domain.StockWeeklyPrice;
 import com.stockleague.backend.stock.domain.StockYearlyPrice;
@@ -85,6 +86,18 @@ public record CandleDto(
         return new CandleDto(
                 entity.getStock().getStockTicker(),
                 entity.getDate().toString(),
+                entity.getOpenPrice(),
+                entity.getHighPrice(),
+                entity.getLowPrice(),
+                entity.getClosePrice(),
+                entity.getVolume()
+        );
+    }
+
+    public static CandleDto from(StockMinutePrice entity) {
+        return new CandleDto(
+                entity.getStock().getStockTicker(),
+                entity.getCandleTime().toString(),
                 entity.getOpenPrice(),
                 entity.getHighPrice(),
                 entity.getLowPrice(),

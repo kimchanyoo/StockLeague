@@ -36,7 +36,7 @@ public class StockService {
     private final StockMonthlyPriceRepository monthlyRepo;
     private final StockWeeklyPriceRepository weeklyRepo;
     private final StockDailyPriceRepository dailyRepo;
-    private final StockMinutePriceRepository minutePriceRepository;
+    private final StockMinutePriceRepository minuteRepo;
 
     public StockListResponseDto getAllStocks() {
 
@@ -53,6 +53,27 @@ public class StockService {
         return new StockListResponseDto(true, "종목 리스트 조회 테스트", stockDtos);
     }
 
+    /**
+     * 주어진 종목 티커(ticker)와 캔들 타입(interval)에 따라 캔들 데이터를 페이징 조회한다.
+     *
+     * <p>지원하는 interval 값:</p>
+     * <ul>
+     *   <li>"y" - 연봉</li>
+     *   <li>"m" - 월봉</li>
+     *   <li>"w" - 주봉</li>
+     *   <li>"d" - 일봉</li>
+     *   <li>"1", "3", "5", "10", "15", "30", "60" - 분봉 (정수 문자열)</li>
+     * </ul>
+     * 페이징은 offset과 limit 기반이며, 최신 순으로 정렬된 데이터를 반환한다.
+     *
+     * @param ticker   조회할 종목 티커 (예: "005930")
+     * @param interval 캔들 타입 ("y", "m", "w", "d", 또는 분 단위 문자열: "1", "3" 등)
+     * @param offset   페이징 offset (0부터 시작)
+     * @param limit    페이지당 데이터 개수
+     * @return CandleDto 리스트 (최신 순 정렬)
+     * @throws GlobalException 종목이 존재하지 않을 경우
+     * @throws IllegalArgumentException 지원하지 않는 interval인 경우
+     */
     public List<CandleDto> getCandles(String ticker, String interval, int offset, int limit) {
 
         Stock stock = stockRepository.findByStockTicker(ticker)
@@ -74,7 +95,16 @@ public class StockService {
             case "d" -> dailyRepo.findAllByStockIdOrderByDateDesc(stockId, pageable)
                     .map(CandleDto::from)
                     .toList();
-            default -> throw new IllegalArgumentException("지원하지 않는 interval입니다: " + interval);
+            default -> {
+                if (interval.matches("\\d+")) {
+                    int minuteInterval = Integer.parseInt(interval);
+                    yield minuteRepo.findAllByStockIdAndIntervalOrderByCandleTimeDesc(stockId, minuteInterval, pageable)
+                            .map(CandleDto::from)
+                            .toList();
+                } else {
+                    throw new IllegalArgumentException("지원하지 않는 interval입니다: " + interval);
+                }
+            }
         };
     }
 
@@ -132,7 +162,7 @@ public class StockService {
             return;
         }
 
-        boolean exists = minutePriceRepository.existsByStockAndIntervalAndCandleTime(stock, interval, from);
+        boolean exists = minuteRepo.existsByStockAndIntervalAndCandleTime(stock, interval, from);
         if (exists) {
             log.debug("[분봉 생성] 중복 분봉 데이터 - 저장 생략: {} {}분 {}", ticker, interval, from);
             return;
@@ -150,7 +180,7 @@ public class StockService {
                 .build();
 
         try {
-            minutePriceRepository.save(candle);
+            minuteRepo.save(candle);
             log.info("[분봉 생성] 저장 성공: {} {}분 {}", ticker, interval, from);
         } catch (Exception e) {
             log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, from, e.getMessage(), e);

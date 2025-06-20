@@ -73,14 +73,17 @@ public class StockController {
             summary = "봉 데이터 조회",
             description = """
                     특정 종목에 대한 봉 데이터를 조회합니다.
-                    interval 값에 따라 연봉/월봉/일봉 데이터를 반환합니다.
-                    y: 연봉
-                    m: 월봉
-                    w: 주봉
-                    d: 일봉
+                    interval 값에 따라 연봉/월봉/주봉/일봉/분봉 데이터를 반환합니다.
+                    - y: 연봉
+                    - m: 월봉
+                    - w: 주봉
+                    - d: 일봉
+                    - 1, 3, 5, 10, 15, 30, 60: 분봉 (숫자 문자열로 입력)
                     offset과 limit은 페이징 처리를 위한 값입니다.
-                    offset = 0, limit = 20 → 1페이지
-                    offset = 20, limit = 20 → 2페이지
+                    
+                    예시:
+                    - offset = 0, limit = 20 → 1페이지
+                    - offset = 20, limit = 20 → 2페이지
                     """,
             responses = {
                     @ApiResponse(
@@ -134,7 +137,10 @@ public class StockController {
     public ResponseEntity<List<CandleDto>> getCandles(
             @PathVariable String ticker,
 
-            @Parameter(description = "봉 데이터 단위 (y: 연봉, m: 월봉, w: 주봉, d: 일봉)", example = "y")
+            @Parameter(
+                    description = "봉 데이터 단위 (y: 연봉, m: 월봉, w: 주봉, d: 일봉, 숫자 문자열: 분봉 예: 1, 3, 5, 10, 15, 30, 60)",
+                    example = "5"
+            )
             @RequestParam String interval,
 
             @Parameter(description = "조회 오프셋 (건 단위)", example = "0")
