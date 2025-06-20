@@ -70,7 +70,7 @@ const Portfolio: React.FC = () => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+          <Tooltip formatter={(value) => `${(+value).toFixed(2)}%`}/>
           <Legend />
         </PieChart>
       </ResponsiveContainer>

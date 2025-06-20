@@ -4,7 +4,7 @@ import "./guide.css";
 
 export default function Guide() {
   return (
-    <div className="container">
+    <div className="guide_container">
       <h1 className="title">
         이용안내
       </h1>

@@ -71,7 +71,7 @@ export default function Trade() {
   }, [selectedStock]);
 
   return (
-    <div className="container">
+    <div className="trade_container">
       <div className="stockList_section">
         <StockSelector onSelect={setSelectedStock}/>
       </div>

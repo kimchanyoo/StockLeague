@@ -91,6 +91,13 @@ export const deleteWatchlist = async (watchlistId: number): Promise<DeleteWatchl
   return res.data;
 };
 
+// utils
+const toApiInterval = (interval: Interval): string => {
+  const minuteMatch = interval.match(/^(\d+)m$/); // 1m ~ 60m
+  if (minuteMatch) return minuteMatch[1];         // "5m" → "5"
+  return interval;                                // d / w / m / y는 그대로
+};
+
 // 봉 데이터 조회 함수
 export const getCandleData = async (
   ticker: string,
@@ -98,8 +105,10 @@ export const getCandleData = async (
   offset: number,
   limit: number
 ): Promise<CandleData[]> => {
+  const apiInterval = toApiInterval(interval); // 🔹 여기에 적용해야 함
+
   const res = await axiosInstance.get(`/api/v1/stocks/${ticker}/candles`, {
-    params: { interval, offset, limit },
+    params: { interval: apiInterval, offset, limit },
   });
   return res.data;
 };

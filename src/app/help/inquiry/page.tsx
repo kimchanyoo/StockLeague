@@ -48,7 +48,7 @@ export default function InquiryList() {
   // 로그인하지 않았을 때 안내문 표시
   if (!isLoggedIn) {
     return (
-      <div className="container">
+      <div className="inquiry_container">
         <h1 className="title">1:1 문의</h1>
         <div className="loginOverlay">
           <p>로그인이 필요합니다.</p>
