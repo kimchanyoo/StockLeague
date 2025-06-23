@@ -49,7 +49,7 @@ public class StockPriceRedisService {
             }
 
             String value = objectMapper.writeValueAsString(dto);
-            double score = dto.datetime().toEpochSecond(ZoneOffset.ofHours(9));
+            double score = dto.datetime().toInstant(ZoneOffset.ofHours(9)).toEpochMilli();
             redisTemplate.opsForZSet().add(key, value, score);
             log.debug("Redis 저장: [{}] score={}, value={}", key, score, value);
 

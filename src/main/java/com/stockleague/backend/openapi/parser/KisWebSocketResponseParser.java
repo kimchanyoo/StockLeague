@@ -116,7 +116,7 @@ public class KisWebSocketResponseParser {
         HIGH(8),
         LOW(9),
         CLOSE(10),
-        ACC_VOLUME(11);
+        ACC_VOLUME(13);
 
         private final int idx;
 

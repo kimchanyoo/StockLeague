@@ -137,10 +137,14 @@ public class StockService {
         String ticker = stock.getStockTicker();
 
         LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
-        LocalDateTime from = now.minusMinutes(interval);
+        int currentMinute = now.getMinute();
+        int normalizedMinute = (currentMinute / interval) * interval;
+        LocalDateTime candleTime = now.withMinute(normalizedMinute).withSecond(0).withNano(0);
 
-        List<StockPriceDto> prices = redisService.findBetween(ticker, from, now);
+        LocalDateTime from = candleTime;
+        LocalDateTime to = candleTime.plusMinutes(interval);
 
+        List<StockPriceDto> prices = redisService.findBetween(ticker, from, to);
         if (prices.isEmpty()) {
             log.warn("[분봉 생성] Redis 시세 없음 - {} {}분 {}", ticker, interval, from);
             return;
@@ -153,14 +157,13 @@ public class StockService {
         long high = prices.stream().mapToLong(StockPriceDto::currentPrice).max().orElse(open);
         long low = prices.stream().mapToLong(StockPriceDto::currentPrice).min().orElse(open);
 
-        long volume;
-        try {
-            volume = prices.get(prices.size() - 1).accumulatedVolume()
-                    - prices.get(0).accumulatedVolume();
-        } catch (Exception e) {
-            log.error("[분봉 생성] 누적 거래량 계산 실패 - {} {}분 {}, 이유: {}", ticker, interval, from, e.getMessage(), e);
+        Long startVol = prices.get(0).accumulatedVolume();
+        Long endVol = prices.get(prices.size() - 1).accumulatedVolume();
+        if (startVol == null || endVol == null || endVol < startVol) {
+            log.warn("[분봉 생성] 잘못된 누적 거래량: start={}, end={}", startVol, endVol);
             return;
         }
+        long volume = endVol - startVol;
 
         boolean exists = minuteRepo.existsByStockAndIntervalAndCandleTime(stock, interval, from);
         if (exists) {
