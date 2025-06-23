@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.repository;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.domain.StockMinutePrice;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,4 +43,7 @@ public interface StockMinutePriceRepository extends JpaRepository<StockMinutePri
             int interval,
             Pageable pageable
     );
+
+    List<StockMinutePrice> findAllByStockAndCandleTimeBetweenOrderByCandleTimeAsc(
+            Stock stock, LocalDateTime start, LocalDateTime end);
 }
