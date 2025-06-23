@@ -189,4 +189,15 @@ public class StockService {
             log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, from, e.getMessage(), e);
         }
     }
+
+    /**
+     * Redis ZSET에 저장된 데이터 중 시간이 오래된 데이터를 삭제
+     */
+    public void removeOldRedisPricesAll() {
+        List<Stock> stocks = stockRepository.findAll();
+
+        for (Stock stock : stocks) {
+            redisService.removeOldPrices(stock.getStockTicker());
+        }
+    }
 }

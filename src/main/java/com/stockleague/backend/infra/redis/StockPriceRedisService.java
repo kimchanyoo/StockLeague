@@ -90,12 +90,18 @@ public class StockPriceRedisService {
     }
 
     /**
-     * Redis에서 특정 종목의 시세 데이터를 전부 삭제
+     * 65분보다 오래된 시세 데이터를 Redis ZSET에서 제거
      *
      * @param ticker 종목 코드
      */
-    public void deleteAll(String ticker) {
-        redisTemplate.delete(getKey(ticker));
+    public void removeOldPrices(String ticker) {
+        String key = getKey(ticker);
+
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(65);
+        double thresholdScore = threshold.toEpochSecond(ZoneOffset.ofHours(9));
+
+        Long removed = redisTemplate.opsForZSet().removeRangeByScore(key, 0, thresholdScore);
+        log.info("[Redis] 오래된 시세 제거 완료 - {}: {}건 삭제 (기준 시각: {})", ticker, removed, threshold);
     }
 
     /**

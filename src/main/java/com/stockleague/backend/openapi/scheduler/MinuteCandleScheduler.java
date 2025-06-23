@@ -77,4 +77,12 @@ public class MinuteCandleScheduler {
         log.info("[60분봉] 생성 시작");
         stockService.aggregateAndSave(60);
     }
+
+    /** 오래된 분봉 데이터 제거 */
+    @Scheduled(cron = "0 */3 * * * MON-FRI")
+    public void cleanupRedisOldPrices() {
+        if (!isMarketOpen()) return;
+        log.info("");
+        stockService.removeOldRedisPricesAll();
+    }
 }
