@@ -54,9 +54,9 @@ public class StockMinutePriceService {
         LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         int currentMinute = now.getMinute();
         int normalizedMinute = (currentMinute / interval) * interval;
-        LocalDateTime candleTime = now.withMinute(normalizedMinute).withSecond(0).withNano(0);
 
-        LocalDateTime from = candleTime;
+        LocalDateTime candleTime = now.withMinute(normalizedMinute).withSecond(0).withNano(0);
+        LocalDateTime from = candleTime.minusSeconds(1);
         LocalDateTime to = candleTime.plusMinutes(interval);
 
         List<StockPriceDto> prices = redisService.findBetween(ticker, from, to);
