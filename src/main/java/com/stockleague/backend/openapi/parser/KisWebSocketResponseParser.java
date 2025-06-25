@@ -1,6 +1,7 @@
 package com.stockleague.backend.openapi.parser;
 
 import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.mapper.KisPriceMapper;
 import java.time.LocalDateTime;
@@ -104,6 +105,55 @@ public class KisWebSocketResponseParser {
         return response;
     }
 
+    /**
+     * 평문으로 수신한 호가 데이터를 파싱하여 {@link StockOrderBookDto} 객체로 변환합니다.
+     *
+     * <p>호가 데이터는 '^' 구분자로 분리된 필드 배열로 구성되며,
+     * 순서대로 매도호가, 매도잔량, 매수호가, 매수잔량이 포함됩니다.</p>
+     *
+     * <p>총 필드는 최소 43개 이상이어야 하며, 각 호가 및 잔량 필드는 다음 인덱스를 기준으로 파싱됩니다:</p>
+     * <ul>
+     *   <li>매도호가: fields[3] ~ fields[12]</li>
+     *   <li>매도잔량: fields[13] ~ fields[22]</li>
+     *   <li>매수호가: fields[23] ~ fields[32]</li>
+     *   <li>매수잔량: fields[33] ~ fields[42]</li>
+     * </ul>
+     *
+     * @param body  실시간 호가 평문 메시지 문자열 (^ 구분자 사용)
+     * @return 변환된 {@link StockOrderBookDto} 객체. 파싱 실패 시 null 반환
+     */
+    public StockOrderBookDto parseOrderBook(String body) {
+        try {
+            String[] fields = body.split("\\^");
+            String ticker = fields[0];
+
+            long[] askPrices = new long[10];
+            long[] askVolumes = new long[10];
+            long[] bidPrices = new long[10];
+            long[] bidVolumes = new long[10];
+
+            for (int i = 0; i < 10; i++) {
+                askPrices[i] = Long.parseLong(fields[KisOrderBookFieldIndex.ASK_PRICE_START.index() + i]);
+                askVolumes[i] = Long.parseLong(fields[KisOrderBookFieldIndex.ASK_VOLUME_START.index() + i]);
+                bidPrices[i] = Long.parseLong(fields[KisOrderBookFieldIndex.BID_PRICE_START.index() + i]);
+                bidVolumes[i] = Long.parseLong(fields[KisOrderBookFieldIndex.BID_VOLUME_START.index() + i]);
+            }
+
+            return new StockOrderBookDto(
+                    ticker,
+                    askPrices,
+                    askVolumes,
+                    bidPrices,
+                    bidVolumes,
+                    LocalDateTime.now()
+            );
+
+        } catch (Exception e) {
+            log.error("[호가 파싱 실패]: {}", body, e);
+            return null;
+        }
+    }
+
     public enum KisFieldIndex {
         TICKER(0),
         TIME(1),
@@ -126,6 +176,25 @@ public class KisWebSocketResponseParser {
 
         public int index() {
             return idx;
+        }
+    }
+
+    public enum KisOrderBookFieldIndex {
+        TICKER(0),
+        // 매도호가: 3 ~ 12
+        ASK_PRICE_START(3),
+        ASK_VOLUME_START(13),
+        BID_PRICE_START(23),
+        BID_VOLUME_START(33);
+
+        private final int index;
+
+        KisOrderBookFieldIndex(int index) {
+            this.index = index;
+        }
+
+        public int index() {
+            return index;
         }
     }
 }

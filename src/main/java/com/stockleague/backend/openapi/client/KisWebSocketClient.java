@@ -3,6 +3,7 @@ package com.stockleague.backend.openapi.client;
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
 import com.stockleague.backend.kafka.producer.StockPriceProducer;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
+import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
 import java.time.DayOfWeek;
@@ -144,13 +145,13 @@ public class KisWebSocketClient {
             public void onOpen(WebSocket webSocket) {
                 log.info("WebSocket 연결 성공");
                 TICKERS.forEach(ticker -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker));
+                TICKERS.forEach(ticker -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker));
                 WebSocket.Listener.super.onOpen(webSocket);
             }
 
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
                 String message = data.toString();
-                log.debug("[WebSocket 수신 평문]: {}", message);
                 handlePlainMessage(message);
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
@@ -220,7 +221,9 @@ public class KisWebSocketClient {
     }
 
     /**
-     * 평문 메시지를 파싱하여 StockPriceDto 리스트로 변환
+     * <p>평문 메시지를 파싱</p>
+     * <p>주가는 {@link StockPriceDto}로 파싱</p>
+     * <p>호가는 {@link StockOrderBookDto}로 파싱</p>
      */
     private void handlePlainMessage(String message) {
         try {
@@ -233,10 +236,15 @@ public class KisWebSocketClient {
             String trId = parts[1];
             String body = parts[3];
 
-            List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
-            for (StockPriceDto dto : dtos) {
-                stockPriceProducer.send(dto);
-                messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
+            if (trId.startsWith("H0STCNT0")) {
+                List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
+                for (StockPriceDto dto : dtos) {
+                    stockPriceProducer.send(dto);
+                    messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
+                }
+            } else if (trId.startsWith("H0STASP0")) {
+                StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
+                messagingTemplate.convertAndSend("/topic/orderbook/" + orderBookDto.ticker(), orderBookDto);
             }
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
