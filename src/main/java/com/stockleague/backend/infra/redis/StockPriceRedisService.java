@@ -90,14 +90,15 @@ public class StockPriceRedisService {
     }
 
     /**
-     * 65분보다 오래된 시세 데이터를 Redis ZSET에서 제거
+     * 하루보다 오래된 시세 데이터를 Redis ZSET에서 제거
      *
      * @param ticker 종목 코드
      */
     public void removeOldPrices(String ticker) {
         String key = getKey(ticker);
 
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(65);
+        int retentionMinutes = 1440;
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(retentionMinutes);
         double thresholdScore = threshold.toEpochSecond(ZoneOffset.ofHours(9));
 
         Long removed = redisTemplate.opsForZSet().removeRangeByScore(key, 0, thresholdScore);
