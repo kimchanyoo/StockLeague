@@ -56,12 +56,11 @@ public class StockMinutePriceService {
         int normalizedMinute = (currentMinute / interval) * interval;
 
         LocalDateTime candleTime = now.withMinute(normalizedMinute).withSecond(0).withNano(0);
-        LocalDateTime from = candleTime.minusSeconds(1);
-        LocalDateTime to = candleTime.plusMinutes(interval);
+        LocalDateTime to = candleTime.plusMinutes(interval).minusSeconds(1);
 
-        List<StockPriceDto> prices = redisService.findBetween(ticker, from, to);
+        List<StockPriceDto> prices = redisService.findBetween(ticker, candleTime, to);
         if (prices.isEmpty()) {
-            log.warn("[분봉 생성] Redis 시세 없음 - {} {}분 {}", ticker, interval, from);
+            log.warn("[분봉 생성] Redis 시세 없음 - {} {}분 {}", ticker, interval, candleTime);
             return;
         }
 
@@ -80,16 +79,16 @@ public class StockMinutePriceService {
         }
         long volume = endVol - startVol;
 
-        boolean exists = minuteRepo.existsByStockAndIntervalAndCandleTime(stock, interval, from);
+        boolean exists = minuteRepo.existsByStockAndIntervalAndCandleTime(stock, interval, candleTime);
         if (exists) {
-            log.debug("[분봉 생성] 중복 분봉 데이터 - 저장 생략: {} {}분 {}", ticker, interval, from);
+            log.debug("[분봉 생성] 중복 분봉 데이터 - 저장 생략: {} {}분 {}", ticker, interval, candleTime);
             return;
         }
 
         StockMinutePrice candle = StockMinutePrice.builder()
                 .stock(stock)
                 .interval(interval)
-                .candleTime(from)
+                .candleTime(candleTime)
                 .openPrice(open)
                 .highPrice(high)
                 .lowPrice(low)
@@ -99,9 +98,9 @@ public class StockMinutePriceService {
 
         try {
             minuteRepo.save(candle);
-            log.info("[분봉 생성] 저장 성공: {} {}분 {}", ticker, interval, from);
+            log.info("[분봉 생성] 저장 성공: {} {}분 {}", ticker, interval, candleTime);
         } catch (Exception e) {
-            log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, from, e.getMessage(), e);
+            log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, candleTime, e.getMessage(), e);
         }
     }
 

@@ -87,10 +87,9 @@ public class CandleScheduler {
     }
 
     /** 오래된 분봉 데이터 제거 */
-    @Scheduled(cron = "0 */3 * * * MON-FRI")
+    @Scheduled(cron = "0 10 0 * * SAT")
     public void cleanupRedisOldPrices() {
-        if (!isMarketOpen()) return;
-        log.info("오래된 분봉 데이터 제거");
+        log.info("주말 Redis 분봉 데이터 정리 시작");
         stockMinutePriceService.removeOldRedisPricesAll();
     }
 
@@ -100,7 +99,6 @@ public class CandleScheduler {
      */
     @Scheduled(cron = "0 40 15 * * MON-FRI")
     public void generateDailyCandles() {
-        if (!isMarketOpen()) return;
         log.info("일봉 생성 시작");
         stockDailyPriceService.generateDailyCandles();
     }
@@ -111,7 +109,6 @@ public class CandleScheduler {
      */
     @Scheduled(cron = "0 0 16 * * FRI")
     public void generateWeeklyCandles() {
-        if (!isMarketOpen()) return;
         log.info("주봉 생성 시작");
         stockWeeklyPriceService.generateWeeklyCandle();
     }
@@ -122,7 +119,6 @@ public class CandleScheduler {
      */
     @Scheduled(cron = "0 10 16 L * MON-FRI")
     public void generateMonthlyCandles() {
-        if (!isMarketOpen()) return;
         log.info("월봉 생성 시작");
         stockMonthlyPriceService.generateMonthlyCandles();
     }
@@ -133,7 +129,6 @@ public class CandleScheduler {
      */
     @Scheduled(cron = "0 20 16 31 12 *")
     public void generateYearlyCandles() {
-        if (!isMarketOpen()) return;
         log.info("연봉 생성 시작");
         stockYearlyPriceService.generateYearlyCandles();
     }

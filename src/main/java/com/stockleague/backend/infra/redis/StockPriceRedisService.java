@@ -3,6 +3,7 @@ package com.stockleague.backend.infra.redis;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -97,8 +98,7 @@ public class StockPriceRedisService {
     public void removeOldPrices(String ticker) {
         String key = getKey(ticker);
 
-        int retentionMinutes = 1440;
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(retentionMinutes);
+        LocalDateTime threshold = LocalDate.now().minusDays(1).atStartOfDay();
         double thresholdScore = threshold.toEpochSecond(ZoneOffset.ofHours(9));
 
         Long removed = redisTemplate.opsForZSet().removeRangeByScore(key, 0, thresholdScore);
