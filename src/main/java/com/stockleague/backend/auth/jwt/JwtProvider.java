@@ -34,11 +34,10 @@ public class JwtProvider {
     private Key getSigningKey() {
         try{
             byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
-            log.info("JWT key length: {}", keyBytes.length);
             return Keys.hmacShaKeyFor(keyBytes);
         }catch(Exception e){
             log.error("JWT key decode error: {}", e.getMessage());
-            return null;
+            throw new IllegalStateException("JWT 비밀키 설정이 잘못되었습니다.");
         }
     }
 
@@ -116,16 +115,6 @@ public class JwtProvider {
 
     // HTTP 요청에서 JWT 추출
     public String resolveToken(HttpServletRequest request) {
-        // 1. 쿠키 우선
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("access_token".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-
-        // 2. Swagger 테스트나 개발 편의용 헤더 처리
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);

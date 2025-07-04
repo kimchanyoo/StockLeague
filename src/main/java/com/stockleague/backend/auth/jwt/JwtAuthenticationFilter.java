@@ -1,15 +1,11 @@
 package com.stockleague.backend.auth.jwt;
 
-import com.stockleague.backend.global.exception.ErrorResponse;
-import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -26,8 +22,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        // 쿠키에서 JWT 추출
         String token = resolveToken(request);
+
+        if (token != null) {
+            log.info("[JWT] 추출된 accessToken (앞 10자): {}", token.substring(0, Math.min(10, token.length())));
+        } else {
+            log.warn("[JWT] Authorization 헤더에서 accessToken을 찾지 못했습니다.");
+        }
 
         // 토큰 유효성 검사
         if(token != null && jwtProvider.validateToken(token)) {
@@ -53,16 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest request) {
-        // 쿠키 우선
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("access_token".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-
-        // Swagger 테스트나 개발 편의용 헤더 처리
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);

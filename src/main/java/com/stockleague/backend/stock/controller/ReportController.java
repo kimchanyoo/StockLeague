@@ -3,12 +3,12 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.domain.Status;
 import com.stockleague.backend.stock.dto.request.report.CommentDeleteAdminRequestDto;
-import com.stockleague.backend.stock.dto.request.report.CommentReportRequestDto;
+import com.stockleague.backend.stock.dto.request.report.CommentReportCreateRequestDto;
 import com.stockleague.backend.stock.dto.response.report.CommentDeleteAdminResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportDetailResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportListResponseDto;
 import com.stockleague.backend.stock.dto.response.report.CommentReportRejectResponseDto;
-import com.stockleague.backend.stock.dto.response.report.CommentReportResponseDto;
+import com.stockleague.backend.stock.dto.response.report.CommentReportCreateResponseDto;
 import com.stockleague.backend.stock.service.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,13 +43,13 @@ public class ReportController {
     @Operation(summary = "댓글/대댓글 신고", description = "댓글 또는 대댓글을 신고합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "신고 성공",
-                    content = @Content(schema = @Schema(implementation = CommentReportResponseDto.class),
+                    content = @Content(schema = @Schema(implementation = CommentReportCreateResponseDto.class),
                             examples = @ExampleObject(name = "ReportCreateSuccess",
                                     summary = "신고 완료",
                                     value = """
                                             {
                                               "success": true,
-                                              "message": "신고가 정상적으로 접수되었습니다.",
+                                              "message": "신고가 정상적으로 접수되었습니다."
                                             }
                                             """
                             ))
@@ -97,14 +97,14 @@ public class ReportController {
                     )
             )
     })
-    public ResponseEntity<CommentReportResponseDto> createReport(
+    public ResponseEntity<CommentReportCreateResponseDto> createReport(
             @PathVariable Long targetId,
-            @Valid @RequestBody CommentReportRequestDto request,
+            @Valid @RequestBody CommentReportCreateRequestDto request,
             Authentication authentication
     ) {
         Long userId = (Long) authentication.getPrincipal();
 
-        CommentReportResponseDto response = reportService.createReport(request, userId, targetId);
+        CommentReportCreateResponseDto response = reportService.createReport(request, userId, targetId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

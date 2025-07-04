@@ -1,0 +1,49 @@
+package com.stockleague.backend.infra.webSocket;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
+
+@Slf4j
+@Controller
+public class WebSocketTestController {
+
+    private final SimpMessageSendingOperations messagingTemplate;
+
+    public WebSocketTestController(SimpMessageSendingOperations messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
+
+    @MessageMapping("/test")
+    public void testEcho(String message, Principal principal) {
+        log.info(">>> 받은 메시지: {}", message);
+        if (principal == null) {
+            log.warn("Principal is null!");
+            return;
+        }
+        log.info(">>> Principal.getName() = {}", principal.getName());
+
+        String username = principal.getName();
+        String destination = "/user/" + username + "/queue/notifications";
+        String payload = "서버에서 보낸 메시지: \"" + message + "\"";
+
+        try {
+            messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
+            log.info("[{}] 에게 메시지 전송 성공: {}", destination, payload);
+        } catch (Exception e) {
+            log.error("[{}] 에게 메시지 전송 실패", destination, e);
+        }
+    }
+
+    @MessageMapping("/broadcast")
+    public void broadcastTest(String message) {
+        log.info(">>> 브로드캐스트 메시지 수신: {}", message);
+
+        String payload = "전체 사용자에게 보낸 메시지: \"" + message + "\"";
+        messagingTemplate.convertAndSend("/topic/broadcast", payload);
+        log.info("[/topic/broadcast] 에게 브로드캐스트 전송 성공: {}", payload);
+    }
+}

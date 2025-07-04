@@ -38,20 +38,29 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/oauth/login")
-    @Operation(summary = "소셜 로그인", description = "클라이언트로부터 받은 소셜 로그인 인가 코드를 바탕으로 사용자 인증 및 JWT 토큰 발급")
+    @Operation(summary = "소셜 로그인",
+            description = """
+                    클라이언트로부터 받은 소셜 로그인 인가 코드를 바탕으로 사용자 인증 및 JWT 토큰을 발급합니다.  
+                    - 발급된 `accessToken`은 클라이언트가 직접 `localStorage` 등에 저장한 후,  
+                      이후 모든 요청에 대해 `Authorization: Bearer {accessToken}` 헤더로 전송해야 합니다.  
+                    - `refreshToken`은 `HttpOnly` 쿠키로 자동 저장되며, 클라이언트가 직접 접근할 수 없습니다.
+                    """)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "소셜 로그인 성공",
                     content = @Content(schema = @Schema(implementation = OAuthLoginResponseDto.class),
                             examples = {
                                     @ExampleObject(
                                             name = "SocialLoginSuccess",
-                                            summary = "소셜 로그인 성공",
+                                            summary = """
+                                                    `accessToken`은 클라이언트가 localStorage 등에 저장해야 하며,
+                                                     이후 요청에 Authorization 헤더로 전달해야 합니다.
+                                                    """,
                                             value = """
                                                     {
                                                        "success" : true,
                                                        "message" : "소셜 로그인 성공",
                                                        "isFirstLogin" : false,
-                                                       "tempAccessToken" : null,
+                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "nickname" : "테스트",
                                                        "role" : "USER"
                                                     }
@@ -63,9 +72,9 @@ public class AuthController {
                                             value = """
                                                     {
                                                        "success" : true,
-                                                       "message" : "소셜 로그인 성공",
+                                                       "message" : "추가 정보 입력 필요",
                                                        "isFirstLogin" : true,
-                                                       "tempAccessToken" : "eyJhbGciOiJIUzI1...",
+                                                       "accessToken" : "eyJhbGciOiJIUzI1...",
                                                        "nickname" : null,
                                                        "role" : null
                                                     }
@@ -108,10 +117,10 @@ public class AuthController {
             )
     })
     public ResponseEntity<OAuthLoginResponseDto> socialLogin(
-            @RequestBody @Valid OAuthLoginRequestDto request,
+            @RequestBody @Valid OAuthLoginRequestDto requestDto,
             HttpServletResponse response
     ) {
-        return ResponseEntity.ok(authService.login(request, response));
+        return ResponseEntity.ok(authService.login(requestDto, response));
     }
 
     @PostMapping("/logout")
@@ -168,7 +177,7 @@ public class AuthController {
                                                "success" : true,
                                                "message" : "추가 정보 입력이 완료되었습니다",
                                                "isFirstLogin" : false,
-                                               "tempAccessToken" : null,
+                                               "accessToken" : "eyJhbGciOiJIUzI1...",
                                                "nickname" : "테스트",
                                                "role" : "USER"
                                             }
@@ -230,7 +239,8 @@ public class AuthController {
                                     value = """
                                             {
                                                "success" : true,
-                                               "message" : "토큰이 재발급되었습니다."
+                                               "message" : "토큰이 재발급되었습니다.",
+                                               "accessToken" : "eyJhbGciOiJIUzI1..."
                                             }
                                             """
                             )

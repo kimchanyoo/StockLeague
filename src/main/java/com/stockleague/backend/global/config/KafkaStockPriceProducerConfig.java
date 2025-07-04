@@ -1,6 +1,6 @@
 package com.stockleague.backend.global.config;
 
-import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -13,10 +13,10 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @Configuration
-public class KafkaProducerConfig {
+public class KafkaStockPriceProducerConfig {
 
     @Bean
-    public ProducerFactory<String, NotificationEvent> notificationProducerFactory() {
+    public ProducerFactory<String, StockPriceDto> stockPriceProducerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -25,7 +25,7 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, NotificationEvent> notificationKafkaTemplate() {
-        return new KafkaTemplate<>(notificationProducerFactory());
+    public KafkaTemplate<String, StockPriceDto> stockPriceKafkaTemplate() {
+        return new KafkaTemplate<>(stockPriceProducerFactory());
     }
 }

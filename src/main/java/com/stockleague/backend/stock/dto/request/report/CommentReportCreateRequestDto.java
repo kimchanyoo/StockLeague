@@ -5,7 +5,7 @@ import com.stockleague.backend.stock.domain.Reason;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CommentReportRequestDto(
+public record CommentReportCreateRequestDto(
 
         @NotNull(message = "신고 사유는 비어 있을 수 없습니다.")
         Reason reason,

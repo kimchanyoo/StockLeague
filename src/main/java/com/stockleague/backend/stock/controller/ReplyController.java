@@ -73,7 +73,7 @@ public class ReplyController {
                             )
                     )
             ),
-            @ApiResponse(responseCode = "404", description = "종목 정보 없음",
+            @ApiResponse(responseCode = "404", description = "사용자, 댓글 또는 관심 종목 정보를 찾을 수 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = {
@@ -192,7 +192,7 @@ public class ReplyController {
                                             """
                             )
                     )
-            ),
+            )
     })
     public ResponseEntity<ReplyUpdateResponseDto> updateReply(
             @Valid @RequestBody ReplyUpdateRequestDto request,
