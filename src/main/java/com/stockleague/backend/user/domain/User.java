@@ -14,7 +14,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -78,6 +81,10 @@ public class User {
     @Column(name = "ban_reason")
     private String banReason;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @PrimaryKeyJoinColumn
+    private UserAsset userAsset;
+
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
@@ -133,5 +140,9 @@ public class User {
         this.isBanned = true;
         this.bannedAt = LocalDateTime.now();
         this.banReason = reason;
+    }
+
+    public void setUserAsset(UserAsset userAsset) {
+        this.userAsset = userAsset;
     }
 }

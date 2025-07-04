@@ -16,8 +16,10 @@ import com.stockleague.backend.global.validator.RedirectUriValidator;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.user.domain.OauthServerType;
 import com.stockleague.backend.user.domain.User;
+import com.stockleague.backend.user.domain.UserAsset;
 import com.stockleague.backend.user.domain.UserRole;
 import com.stockleague.backend.user.dto.response.NicknameCheckResponseDto;
+import com.stockleague.backend.user.repository.UserAssetRepository;
 import com.stockleague.backend.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +41,7 @@ public class AuthService {
     private final List<OAuthClient> oauthClients;
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
+    private final UserAssetRepository userAssetRepository;
     private final TokenRedisService redisService;
     private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
     private final TokenCookieHandler tokenCookieHandler;
@@ -104,6 +107,14 @@ public class AuthService {
                     .isOverFifteen(requestDto.isOverFifteen())
                     .build()
             );
+
+            UserAsset userAsset = userAssetRepository.save(UserAsset.builder()
+                    .user(user)
+                    .userId(user.getId())
+                    .build()
+            );
+
+            user.setUserAsset(userAsset);
 
             String accessToken = issueTokens(user, response);
 
