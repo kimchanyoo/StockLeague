@@ -244,7 +244,6 @@ public class KisWebSocketClient {
                 }
             } else if (trId.startsWith("H0STASP0")) {
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
-                log.debug("호가 데이터 수신: {}", orderBookDto);
                 messagingTemplate.convertAndSend("/topic/orderbook/" + orderBookDto.ticker(), orderBookDto);
             }
         } catch (Exception e) {
