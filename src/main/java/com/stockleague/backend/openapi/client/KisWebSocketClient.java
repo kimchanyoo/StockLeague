@@ -1,6 +1,7 @@
 package com.stockleague.backend.openapi.client;
 
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
+import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
 import com.stockleague.backend.kafka.producer.StockPriceProducer;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
@@ -34,6 +35,7 @@ public class KisWebSocketClient {
 
     private final StockPriceProducer stockPriceProducer;
     private final OpenApiTokenRedisService openApiTokenRedisService;
+    private final StockOrderBookRedisService stockOrderBookRedisService;
     private final KisWebSocketResponseParser parser;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final SimpMessagingTemplate messagingTemplate;
@@ -244,6 +246,9 @@ public class KisWebSocketClient {
                 }
             } else if (trId.startsWith("H0STASP0")) {
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
+                if(orderBookDto != null) {
+                    stockOrderBookRedisService.save(orderBookDto);
+                }
                 messagingTemplate.convertAndSend("/topic/orderbook/" + orderBookDto.ticker(), orderBookDto);
             }
         } catch (Exception e) {
