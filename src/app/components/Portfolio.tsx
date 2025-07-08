@@ -1,63 +1,73 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { getCashBalance } from "@/lib/api/user";
+import { getPortfolio } from "@/lib/api/user";
 
-// 예시 데이터
-const dummyStocks = [
-  {
-    ticker: "005930",
-    name: "삼성전자",
-    quantity: 10,
-    averagePurchasePrice: 60000,
-    currentPrice: 65000,
-    evaluationAmount: 650000,
-    returnRate: 8.3,
-  },
-  {
-    ticker: "035420",
-    name: "NAVER",
-    quantity: 5,
-    averagePurchasePrice: 180000,
-    currentPrice: 175000,
-    evaluationAmount: 875000,
-    returnRate: -2.8,
-  },
-];
-
+// 각 종목에 대한 색상 지정
+const COLORS = ["#FF5733", "#4CAF50", "#FF9800", "#3F51B5", "#9E9E9E"];
 // 주문 가능 금액
-const orderableMoney = 5000000;
 
 const Portfolio: React.FC = () => {
+  const [cash, setCash] = useState<number>(0);
+  const [stocks, setStocks] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 주문 가능 금액 불러오기
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [cashRes, portfolioRes] = await Promise.all([
+          getCashBalance(),
+          getPortfolio(),
+        ]);
+
+        setCash(cashRes);
+        setStocks(portfolioRes.stocks);
+      } catch (err: any) {
+        setError(err.message || "포트폴리오 데이터를 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   // 총 자산 계산 (모든 종목의 평가 금액 합산 + 주문 가능 금액)
   const totalAssets = useMemo(() => {
-    return (
-      orderableMoney +
-      dummyStocks.reduce((acc, stock) => acc + stock.evaluationAmount, 0)
-    );
-  }, [orderableMoney, dummyStocks]);
+    const stocksSum = stocks.reduce((acc, stock) => acc + stock.evaluationAmount, 0);
+    return stocksSum + cash;
+  }, [cash]);
 
-  // PieChart에 사용할 데이터 (각 종목의 평가 금액 비율 + 주문 가능 금액 비율)
-  const data = [
-    ...dummyStocks.map((stock) => ({
+   const chartData = useMemo(() => {
+    if (totalAssets === 0) return [];
+
+    const stockData = stocks.map((stock) => ({
       name: stock.name,
-      value: (stock.evaluationAmount / totalAssets) * 100,  // 각 종목의 자산 비율 (%)
-    })),
-    {
-      name: "주문 가능 금액",
-      value: (orderableMoney / totalAssets) * 100,  // 주문 가능 금액 비율 (%)
-    },
-  ];
+      value: (stock.evaluationAmount / totalAssets) * 100,
+    }));
 
-  // 각 종목에 대한 색상 지정 (다양한 색상 사용)
-  const COLORS = ["#FF5733", "#4CAF50", "#FF9800", "#3F51B5", "#9E9E9E"]; // 주문 가능 금액에 대한 색상도 추가
+    return [
+      ...stockData,
+      {
+        name: "주문 가능 금액",
+        value: (cash / totalAssets) * 100,
+      },
+    ];
+  }, [cash, totalAssets]);
+
+  if (loading) return <p>포트폴리오를 불러오는 중입니다...</p>;
+  if (error) return <p>❌ {error}</p>;
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             dataKey="value"
             nameKey="name"
             cx="50%"
@@ -66,7 +76,7 @@ const Portfolio: React.FC = () => {
             innerRadius={60}
             label={({ value }) => `${value.toFixed(2)}%`} // 퍼센트 표시
           >
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
