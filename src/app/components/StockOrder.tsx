@@ -6,15 +6,18 @@ import MyOrder from "./MyOrder";
 import TabMenu from "./TabMenu";
 import RemoveIcon  from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
+import { OrderbookData } from "@/lib/api/stock"
+import { Client } from "@stomp/stompjs";
 
 interface StockOrderProps {
   stockName: string;
+  ticker: string; 
   currentPrice: number;
 }
 
-const StockOrder = ({ stockName, currentPrice }: StockOrderProps) => {
+const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const myMoney = 1000000;
-
+  
   const [activeTab, setActiveTab] = useState<string>("체결 내역");
   const tabList = ["체결 내역", "미체결 내역"];
   const [useCurrentPrice, setUseCurrentPrice] = useState(false);
@@ -26,12 +29,56 @@ const StockOrder = ({ stockName, currentPrice }: StockOrderProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const totalPrice = quantity * price;
 
+  const [orderbook, setOrderbook] = useState<OrderbookData | null>(null);
+
+  useEffect(() => {
+    if (!ticker) return;
+
+    const client = new Client({
+      webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
+      reconnectDelay: 15_000,
+      heartbeatIncoming: 10_000,
+      heartbeatOutgoing: 10_000,
+
+      onConnect: () => {
+        client.subscribe(`/topic/orderbook/${ticker}`, (message) => {
+          try {
+            const data = JSON.parse(message.body) as OrderbookData;
+            setOrderbook(data);
+          } catch (err) {
+            console.error("호가 데이터 처리 오류:", err);
+          }
+        });
+      },
+
+      onStompError: (frame) => {
+        console.error("WebSocket STOMP 오류:", frame.headers["message"]);
+      },
+    });
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
+  }, [ticker]);
+
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight / 2 - el.clientHeight / 2;
+    if (!el) return;
+
+    const allHogas = el.querySelectorAll("[data-price]");
+    const currentPriceElement = Array.from(allHogas).find((div) => {
+      return Number(div.getAttribute("data-price")) === currentPrice;
+    });
+
+    if (currentPriceElement) {
+      currentPriceElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     }
-  }, []);
+  }, [stockName, currentPrice]);
 
   useEffect(() => {
     if (useCurrentPrice) {
@@ -85,6 +132,23 @@ const StockOrder = ({ stockName, currentPrice }: StockOrderProps) => {
     setPriceInput(price.toLocaleString());
   };
 
+  const bidOrders = orderbook?.bidPrices.map((price, i) => ({
+    price,
+    quantity: orderbook.bidVolumes[i],
+  })) ?? [];
+
+  const askOrders = orderbook?.askPrices.map((price, i) => ({
+    price,
+    quantity: orderbook.askVolumes[i],
+  })) ?? [];
+
+  // 최대값 (퍼센트 기준용)
+  const maxBidQty = Math.max(...bidOrders.map(o => o.quantity), 1);
+  const maxAskQty = Math.max(...askOrders.map(o => o.quantity), 1);
+  const currentQty =
+    bidOrders.find((o) => o.price === currentPrice)?.quantity ??
+    askOrders.find((o) => o.price === currentPrice)?.quantity ?? 0;
+
   return (
     <div className={styles.orderContainer}>
       <h1 className={styles.title}>{stockName} 주식주문</h1>
@@ -98,21 +162,58 @@ const StockOrder = ({ stockName, currentPrice }: StockOrderProps) => {
         {/* 왼쪽: 호가창 */}
         <div className={styles.quoteBox}>
           <div className={styles.scrollArea} ref={scrollRef}>
-            {/* 매도 호가 */}
-            {Array.from({ length: 30 }, (_, i) => {
-              const price = 75200 - i * 10;
+            {/* 매도 호가 (ask) - 위쪽 */}
+            {askOrders.map((order, i) => {
+              const percent = (order.quantity / maxAskQty) * 100;
               return (
-                <div key={`bid-${i}`} className={styles.bid} onClick={() => handlePriceClick(price)}>
-                  {price.toLocaleString()}원
+                <div
+                  key={`ask-${i}`}
+                  data-price={order.price}
+                  className={styles.ask}
+                  onClick={() => handlePriceClick(order.price)}
+                >
+                  <div
+                    className={styles.hogaOverlayBar}
+                    style={{ width: `${percent}%`, backgroundColor: "#93B9E1" }}
+                  />
+                  <div className={styles.hogaOverlayRow}>
+                    <span className={styles.hogaPrice}>{order.price.toLocaleString()}</span>
+                    <span className={styles.hogaQty}>{order.quantity.toLocaleString()}</span>
+                  </div>
                 </div>
               );
             })}
-            {/* 매수 호가 */}
-            {Array.from({ length: 30 }, (_, i) => {
-              const price = 74900 - i * 10;
+
+            {/* 현재가 */}
+            <div
+              data-price={currentPrice}
+              className={styles.centerLine}
+              onClick={() => handlePriceClick(currentPrice)}
+            >
+              <div className={styles.hogaOverlayRow}>
+                <span className={styles.hogaOverlayText}>{currentPrice.toLocaleString()}</span>
+                <span className={styles.hogaQty}>{currentQty.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* 매수 호가 (bid) - 아래쪽 */}
+            {bidOrders.map((order, i) => {
+              const percent = (order.quantity / maxBidQty) * 100;
               return (
-                <div key={`ask-${i}`} className={styles.ask} onClick={() => handlePriceClick(price)}>
-                  {price.toLocaleString()}원
+                <div
+                  key={`bid-${i}`}
+                  data-price={order.price}
+                  className={styles.bid}
+                  onClick={() => handlePriceClick(order.price)}
+                >
+                  <div
+                    className={styles.hogaOverlayBar}
+                    style={{ width: `${percent}%`, backgroundColor: "#F19999" }}
+                  />
+                  <div className={styles.hogaOverlayRow}>
+                    <span className={styles.hogaPrice}>{order.price.toLocaleString()}</span>
+                    <span className={styles.hogaQty}>{order.quantity.toLocaleString()}</span>
+                  </div>
                 </div>
               );
             })}
