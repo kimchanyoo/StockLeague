@@ -4,6 +4,7 @@ import com.stockleague.backend.notification.domain.Notification;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.CommentReport;
+import com.stockleague.backend.stock.domain.Order;
 import com.stockleague.backend.stock.domain.Watchlist;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -123,7 +124,7 @@ public class User {
 
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<User> users = new ArrayList<>();
+    private List<Order> users = new ArrayList<>();
 
     // 비즈니스 메서드
     public void updateNickname(String newNickname) {
