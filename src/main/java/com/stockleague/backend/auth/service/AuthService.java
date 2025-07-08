@@ -24,7 +24,9 @@ import com.stockleague.backend.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -111,6 +113,9 @@ public class AuthService {
             UserAsset userAsset = UserAsset.builder()
                     .user(user)
                     .userId(user.getId())
+                    .cashBalance(BigDecimal.valueOf(1_000_000L))
+                    .totalValuation(BigDecimal.valueOf(1_000_000L))
+                    .updatedAt(LocalDateTime.now())
                     .build();
 
             UserAsset savedUserAsset = userAssetRepository.save(userAsset);
