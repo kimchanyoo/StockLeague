@@ -108,13 +108,14 @@ public class AuthService {
                     .build()
             );
 
-            UserAsset userAsset = userAssetRepository.save(UserAsset.builder()
+            UserAsset userAsset = UserAsset.builder()
                     .user(user)
                     .userId(user.getId())
-                    .build()
-            );
+                    .build();
 
-            user.setUserAsset(userAsset);
+            UserAsset savedUserAsset = userAssetRepository.save(userAsset);
+
+            user.setUserAsset(savedUserAsset);
 
             String accessToken = issueTokens(user, response);
 
@@ -125,7 +126,7 @@ public class AuthService {
                     false, accessToken, nickname, role);
 
         } catch (DataIntegrityViolationException e) {
-            throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
+            throw new GlobalException(GlobalErrorCode.DATABASE_CONSTRAINT_VIOLATION);
         }
     }
 
