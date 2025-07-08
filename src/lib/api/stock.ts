@@ -58,6 +58,16 @@ export type Interval =
   | "1m" | "3m" | "5m" | "10m" | "15m" | "30m" | "60m"
   | "d" | "w" | "m" | "y";
 
+// 호가 데이터 타입
+export interface OrderbookData {
+  ticker: string;
+  askPrices: number[];
+  askVolumes: number[];
+  bidPrices: number[];
+  bidVolumes: number[];
+  timestamp: string;
+}
+
 // ─────────────────────────────
 // 종목 API
 // ─────────────────────────────
@@ -106,7 +116,6 @@ export const getCandleData = async (
   limit: number
 ): Promise<CandleData[]> => {
   const apiInterval = toApiInterval(interval); // 🔹 여기에 적용해야 함
-
   const res = await axiosInstance.get(`/api/v1/stocks/${ticker}/candles`, {
     params: { interval: apiInterval, offset, limit },
   });

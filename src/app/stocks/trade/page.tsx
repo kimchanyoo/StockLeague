@@ -112,7 +112,11 @@ export default function Trade() {
         )}
 
         <div className={`${!isLoggedIn ? "blur" : ""}`}>
-          <StockOrder stockName="삼성전자" currentPrice={75000} />
+          <StockOrder
+            stockName={selectedStock?.stockName ?? ""}
+            currentPrice={selectedStock?.currentPrice ?? 0}
+            ticker={selectedStock?.stockTicker ?? ""}
+          />
         </div>
       </div>
     </div>
