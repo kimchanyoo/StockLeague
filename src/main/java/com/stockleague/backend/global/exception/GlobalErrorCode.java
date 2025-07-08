@@ -42,6 +42,7 @@ public enum GlobalErrorCode {
     // 유저 관련
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     INVALID_WITHDRAW_CONFIRM_MESSAGE(HttpStatus.BAD_REQUEST, "탈퇴 문구가 일치하지 않습니다."),
+    ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저의 자산 정보가 존재하지 않습니다."),
 
     // 주식 관련
     INVALID_MARKET_TYPE(HttpStatus.BAD_REQUEST, "잘못된 시장 유형이 입력되었습니다."),
