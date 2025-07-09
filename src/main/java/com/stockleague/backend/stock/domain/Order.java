@@ -17,6 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,4 +87,21 @@ public class Order {
     @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderExecution> orderExecutions = new ArrayList<>();
+
+    public void updateExecutionInfo(BigDecimal executedAmount, BigDecimal totalExecutedPrice) {
+        this.executedAmount = executedAmount;
+        this.remainingAmount = this.orderAmount.subtract(executedAmount);
+
+        if (executedAmount.compareTo(BigDecimal.ZERO) > 0) {
+            this.averageExecutedPrice = totalExecutedPrice.divide(executedAmount, 2, RoundingMode.HALF_UP);
+        }
+
+        if (this.remainingAmount.compareTo(BigDecimal.ZERO) == 0) {
+            this.status = OrderStatus.EXECUTED;
+            this.executedAt = LocalDateTime.now();
+        } else if (this.remainingAmount.compareTo(this.orderAmount) < 0) {
+            this.status = OrderStatus.PARTIALLY_EXECUTED;
+            this.executedAt = LocalDateTime.now();
+        }
+    }
 }

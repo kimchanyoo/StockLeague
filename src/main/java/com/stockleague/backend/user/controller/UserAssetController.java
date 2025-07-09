@@ -1,7 +1,6 @@
 package com.stockleague.backend.user.controller;
 
 import com.stockleague.backend.user.dto.response.UserAssetResponseDto;
-import com.stockleague.backend.user.dto.response.UserProfileResponseDto;
 import com.stockleague.backend.user.service.UserAssetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
