@@ -10,7 +10,7 @@ import {
   AdminInquiryListResponse,
 } from "@/lib/api/inquiry";
 import { getAdminInquiries, getAdminInquiryDetail, createInquiryAnswer } from "@/lib/api/inquiry";
-import { categories } from "@/app/components/InquiryDropdown";
+import { categories } from "@/app/components/help/InquiryDropdown";
 
 const inquiriesPerPage = 10;
 const maxPageButtons = 10;

@@ -1,7 +1,7 @@
 "use client";
 
 import { Stock } from "@/lib/api/stock";
-import styles from "@/app/styles/components/MiniStockList.module.css";
+import styles from "@/app/styles/components/stock/MiniStockList.module.css";
 
 type Props = {
   stocks: Stock[];

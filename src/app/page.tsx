@@ -6,11 +6,11 @@ import DownIcon from '@mui/icons-material/ArrowDropDown';
 import RightIcon from '@mui/icons-material/ChevronRight';
 import SignUpIcon from '@mui/icons-material/PersonAdd';
 import SignInIcon from '@mui/icons-material/Login';
-import TabMenu from "@/app/components/TabMenu";
-import StockItem from "@/app/components/StockItem";
+import TabMenu from "@/app/components/utills/TabMenu";
+import StockItem from "@/app/components/stock/StockItem";
 import { useRouter } from "next/navigation";
-import MainStockChart from "./components/MainStockChart";
-import Portfolio from "./components/Portfolio";
+import MainStockChart from "./components/stock/MainStockChart";
+import Portfolio from "./components/user/Portfolio";
 import { useAuth } from "@/context/AuthContext";
 import { getNotices, Notice } from "@/lib/api/notice";
 

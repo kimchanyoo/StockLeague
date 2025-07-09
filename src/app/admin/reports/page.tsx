@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import ReportDetailModal from "@/app/components/ReportDetailModal";
+import ReportDetailModal from "@/app/components/admin/ReportDetailModal";
 import "./reports.css";
 import { fetchReports, Report, fetchReportDetail, ReportDetail, ReportStatus} from "@/lib/api/comment"; 
 

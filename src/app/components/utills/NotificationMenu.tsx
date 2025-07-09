@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import styles from "@/app/styles/components/Notification.module.css";
+import styles from "@/app/styles/components/utills/Notification.module.css";
 import CloseIcon from '@mui/icons-material/Close';
 import { useNotification } from "@/context/NotificationContext";
 

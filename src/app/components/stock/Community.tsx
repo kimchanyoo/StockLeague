@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import styles from "@/app/styles/components/Community.module.css";
+import styles from "@/app/styles/components/stock/Community.module.css";
 import Comment from "./Comment";
 import { getCommentsByTicker, postComment, Comment as CommentType } from "@/lib/api/comment";
 import { getTopStocks } from "@/lib/api/stock"

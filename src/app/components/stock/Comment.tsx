@@ -1,6 +1,6 @@
 'use client';
 
-import styles from '@/app/styles/components/Comment.module.css';
+import styles from '@/app/styles/components/stock/Comment.module.css';
 import { useState, useEffect } from 'react';
 import { 
   Comment as CommentType, 

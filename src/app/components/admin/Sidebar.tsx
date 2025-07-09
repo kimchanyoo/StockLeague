@@ -1,6 +1,6 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import styles from "@/app/styles/components/Sidebar.module.css";
+import styles from "@/app/styles/components/admin/Sidebar.module.css";
 
 const Sidebar = () => {
   const pathname = usePathname();

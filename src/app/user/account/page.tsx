@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import "./account.css";
-import Portfolio from "@/app/components/Portfolio";
+import Portfolio from "@/app/components/user/Portfolio";
 import { getCashBalance, getPortfolio } from "@/lib/api/user"
 
 export default function Account() {

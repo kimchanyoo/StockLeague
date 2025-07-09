@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import styles from "@/app/styles/components/StockItem.module.css";
+import styles from "@/app/styles/components/stock/StockItem.module.css";
 
 type StockItemProps = {
   code: string;

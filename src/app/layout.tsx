@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/app/components/Header";
-import AdminHeader from "@/app/components/AdminHeader";
+import AdminHeader from "@/app/components/admin/AdminHeader";
 import Footer from "@/app/components/Footer";
 import "@/app/styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext"; // AuthProvider를 임포트

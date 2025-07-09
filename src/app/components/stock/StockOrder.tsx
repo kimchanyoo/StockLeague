@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import styles from "@/app/styles/components/StockOrder.module.css";
-import MyOrder from "./MyOrder";
-import TabMenu from "./TabMenu";
+import styles from "@/app/styles/components/stock/StockOrder.module.css";
+import MyOrder from "../user/MyOrder";
+import TabMenu from "../utills/TabMenu";
 import RemoveIcon  from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 import { OrderbookData } from "@/lib/api/stock"
 import { Client } from "@stomp/stompjs";
+import { useAuth } from "@/context/AuthContext";
 
 interface StockOrderProps {
   stockName: string;
@@ -30,12 +31,16 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const totalPrice = quantity * price;
 
   const [orderbook, setOrderbook] = useState<OrderbookData | null>(null);
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     if (!ticker) return;
 
     const client = new Client({
       webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
+      connectHeaders: {
+        Authorization: `Bearer ${accessToken}`, 
+      },
       reconnectDelay: 15_000,
       heartbeatIncoming: 10_000,
       heartbeatOutgoing: 10_000,
@@ -44,6 +49,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         client.subscribe(`/topic/orderbook/${ticker}`, (message) => {
           try {
             const data = JSON.parse(message.body) as OrderbookData;
+            console.log("✅ 실시간 호가 데이터:", data); // 🔍 확인 포인트
             setOrderbook(data);
           } catch (err) {
             console.error("호가 데이터 처리 오류:", err);
@@ -66,6 +72,10 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    if (!accessToken) {
+      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀");
+      return;
+    }
 
     const allHogas = el.querySelectorAll("[data-price]");
     const currentPriceElement = Array.from(allHogas).find((div) => {

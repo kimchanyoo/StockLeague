@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import styles from "@/app/styles/components/FilterMenu.module.css";
+import styles from "@/app/styles/components/stock/FilterMenu.module.css";
 import ListIcon from "@mui/icons-material/List";
 
 type FilterMenuProps = {

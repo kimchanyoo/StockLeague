@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createChart, UTCTimestamp, Time, IChartApi, ISeriesApi, LogicalRange } from "lightweight-charts";
-import styles from "@/app/styles/components/StockChart.module.css";
+import styles from "@/app/styles/components/stock/StockChart.module.css";
 import TimeIntervalSelector from "./TimeIntervalSelector";
 import MovingAverageSelector from "./MovingAverageSelector";
 import DeleteIcon from '@mui/icons-material/Delete';

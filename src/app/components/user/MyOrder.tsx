@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import styles from "@/app/styles/components/MyOrder.module.css";
+import styles from "@/app/styles/components/user/MyOrder.module.css";
 
 interface MyOrderProps {
   activeTab: string;

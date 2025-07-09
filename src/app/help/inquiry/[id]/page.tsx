@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { getInquiryDetail, InquiryDetailResponse } from '@/lib/api/inquiry';  // API 함수 임포트
-import { categories } from "@/app/components/InquiryDropdown"
+import { categories } from "@/app/components/help/InquiryDropdown"
 import "./inquiryDetailPage.css";
 
 export default function InquiryDetailPage() {

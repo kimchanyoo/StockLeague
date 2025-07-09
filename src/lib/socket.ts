@@ -18,7 +18,7 @@ export const connectStomp = (
     console.log("Received accessToken:", accessToken);
 
     const config: StompConfig = {
-      webSocketFactory: () => new SockJS(socketUrl) as any,
+      webSocketFactory: () => new WebSocket(socketUrl) as any,
       connectHeaders: {
         Authorization: `Bearer ${accessToken}`,
       },

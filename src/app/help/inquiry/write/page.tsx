@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import InquriyDropdown from "@/app/components/InquiryDropdown";
+import InquriyDropdown from "@/app/components/help/InquiryDropdown";
 import { createInquiry, updateInquiry, getInquiryDetail } from "@/lib/api/inquiry"; 
 import { useSearchParams, useRouter } from "next/navigation";
 import "./write.css";

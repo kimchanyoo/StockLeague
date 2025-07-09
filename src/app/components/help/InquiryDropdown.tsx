@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import styles from "@/app/styles/components/InquriyDropdown.module.css";
+import styles from "@/app/styles/components/help/InquriyDropdown.module.css";
 
 interface Props {
   value?: string;

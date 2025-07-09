@@ -1,4 +1,4 @@
-.guide_container {
+.guide-container {
     max-width: 1440px;
     min-width: 1100px;
     width: 100vw;
@@ -9,13 +9,13 @@
     justify-content: center;
 }
 
-.title {
+.guide-title {
     font-size: 3rem;
     font-weight: bold;
     padding: 30px;
 }
 
-.contents {
+.guide-contents {
     width: 80%;
     height: 500px;
     border: 1px solid rgba(118, 118, 128, 0.12);
