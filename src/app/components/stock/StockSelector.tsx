@@ -1,7 +1,7 @@
 "use client";
 
 import {useState, useEffect} from "react";
-import styles from "@/app/styles/components/StockSelector.module.css";
+import styles from "@/app/styles/components/stock/StockSelector.module.css";
 import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
 import MiniStockList from "./MiniStockList";

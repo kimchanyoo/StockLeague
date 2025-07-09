@@ -1,7 +1,7 @@
 "use client";
 
 import "./nickname.css";
-import NextButton from "@/app/components/NextButton";
+import NextButton from "@/app/components/utills/NextButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";

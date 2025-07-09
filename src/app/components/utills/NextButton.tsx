@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import styles from "@/app/styles/components/NextButton.module.css";
+import styles from "@/app/styles/components/utills/NextButton.module.css";
 
 interface NextButtonProps {
   text: string; // 버튼에 표시될 텍스트

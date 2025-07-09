@@ -45,10 +45,10 @@ export default function NoticeList() {
   };
 
   return (
-    <div className="notice_container">
-      <h1 className="title">공지사항</h1>
+    <div className="notice-container">
+      <h1 className="notice-title">공지사항</h1>
 
-      <div className="search">
+      <div className="notice-search">
         <input type="text" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} placeholder="검색어를 입력하세요"/>
         <button onClick={handleSearch}><SearchIcon /></button>
       </div>

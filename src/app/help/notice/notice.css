@@ -1,4 +1,4 @@
-.notice_container {
+.notice-container {
   max-width: 1440px;
   min-width: 1100px;
   width: 100vw;
@@ -9,13 +9,13 @@
   justify-content: center;
 }
 
-.title {
+.notice-title {
   font-size: 3rem;
   font-weight: bold;
   padding: 30px;
 }
 
-.search {
+.notice-search {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -25,7 +25,7 @@
   padding-bottom: 30px;
   border-bottom: 1px solid #999999;
 }
-.search input {
+.notice-search input {
   width: 50%;
   height: 50px;
   border: 1px solid #999999;
@@ -33,7 +33,7 @@
   margin-left: 3%;
   padding: 10px;
 }
-.search button {
+.notice-search button {
   color: white;
   background-color: #006ADD;
   font-size: 1rem;

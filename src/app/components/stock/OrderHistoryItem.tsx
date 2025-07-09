@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import styles from "@/app/styles/components/OrderHistoryItem.module.css";
+import styles from "@/app/styles/components/stock/OrderHistoryItem.module.css";
 
 type OrderHistoryItemProps = {
   code: string;
@@ -34,7 +34,7 @@ const OrderHistoryItem: React.FC<OrderHistoryItemProps> = ({
     orderType === "매수" ? styles.orderType_buy : styles.orderType_sell;
 
   return (
-    <div className={styles.orderHistoryItem}>
+    <div className={styles.orderHistoryItem} data-code={code}>
       <div>{name}</div>
       <div>{orderAmount.toLocaleString()}</div>
       <div>{orderPrice.toLocaleString()}</div>

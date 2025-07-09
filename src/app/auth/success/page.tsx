@@ -1,7 +1,7 @@
 "use client";
 
 import "./success.css";
-import NextButton from "@/app/components/NextButton";
+import NextButton from "@/app/components/utills/NextButton";
 import { useRouter } from "next/navigation";
 
 export default function Success() {

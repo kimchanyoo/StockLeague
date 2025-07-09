@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import TabMenu from "@/app/components/TabMenu";
-import OrderHistoryItem from "@/app/components/OrderHistoryItem";
+import TabMenu from "@/app/components/utills/TabMenu";
+import OrderHistoryItem from "@/app/components/stock/OrderHistoryItem";
 import "./order-history.css";
 
 // 더미 데이터 생성
@@ -11,7 +11,7 @@ const dummyStockData = Array.from({ length: 100 }, (_, i) => ({
   name: `종목 ${i + 1}`,
   orderAmount: 100000 + i * 1000,
   orderPrice: 10000 + i * 10,
-  orderType: i % 2 === 0 ? "매수" : "매도",
+  orderType: (i % 2 === 0 ? "매수" : "매도") as "매수" | "매도",
   orderStatus: i % 3 === 0 ? "체결" : "미체결",
   orderQuantity: 10 + i,
   executedQuantity: i % 3 === 0 ? 10 + i : 0,

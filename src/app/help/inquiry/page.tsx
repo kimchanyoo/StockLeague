@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import "./inquiry.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import MoreVert from "@/app/components/MoreVert";
+import MoreVert from "@/app/components/help/MoreVert";
 import { getInquiries, Inquiry, deleteInquiry } from "@/lib/api/inquiry";
 import { useAuth } from '@/context/AuthContext'; // 추가
 
@@ -48,8 +48,8 @@ export default function InquiryList() {
   // 로그인하지 않았을 때 안내문 표시
   if (!isLoggedIn) {
     return (
-      <div className="inquiry_container">
-        <h1 className="title">1:1 문의</h1>
+      <div className="inquiry-container">
+        <h1 className="inquiry-title">1:1 문의</h1>
         <div className="loginOverlay">
           <p>로그인이 필요합니다.</p>
           <Link href="/auth/login">
@@ -61,8 +61,8 @@ export default function InquiryList() {
   }
   
   return (
-    <div className="container">
-      <h1 className="title">
+    <div className="inquiry-container">
+      <h1 className="inquiry-title">
         1:1 문의
         <span>StockLeague 서비스 이용 중 불편한 점이 있으신가요?</span>
       </h1>

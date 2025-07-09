@@ -1,7 +1,7 @@
 "use client";
 
 import "./admin.css";
-import Sidebar from "@/app/components/Sidebar";
+import Sidebar from "@/app/components/admin/Sidebar";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";

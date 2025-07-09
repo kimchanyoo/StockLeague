@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "@/app/styles/components/ReportDetailModal.module.css"
+import styles from "@/app/styles/components/amdin/ReportDetailModal.module.css"
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { ReportDetail, forceDeleteComment, deleteCommentWithWarning, banUser, rejectReport } from "@/lib/api/comment";

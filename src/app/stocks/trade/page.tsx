@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import "./trade.css";
-import StockOrder from "@/app/components/StockOrder";
-import StockSelector from "@/app/components/StockSelector";
-import StockChart from "@/app/components/StockChart";
-import Community from "@/app/components/Community";
+import StockOrder from "@/app/components/stock/StockOrder";
+import StockSelector from "@/app/components/stock/StockSelector";
+import StockChart from "@/app/components/stock/StockChart";
+import Community from "@/app/components/stock/Community";
 import { useAuth } from "@/context/AuthContext";
 import { Stock, getWatchlist, addWatchlist, deleteWatchlist } from "@/lib/api/stock";
 

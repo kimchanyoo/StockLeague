@@ -1,8 +1,8 @@
 import React from "react";
-import styles from "@/app/styles/components/AdminHeader.module.css";
-import UserMenu from "./UserMenu";
+import styles from "@/app/styles/components/admin/AdminHeader.module.css";
+import UserMenu from "../utills/UserMenu";
 import { useAuth } from "@/context/AuthContext";
-import NotificationMenu from "./NotificationMenu";
+import NotificationMenu from "../utills/NotificationMenu";
 
 
 const AdminHeader = () => {

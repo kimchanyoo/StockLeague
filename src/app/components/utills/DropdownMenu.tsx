@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import styles from "@/app/styles/components/DropdownMenu.module.css";
+import styles from "@/app/styles/components/utills/DropdownMenu.module.css";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 

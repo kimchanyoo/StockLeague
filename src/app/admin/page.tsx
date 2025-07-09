@@ -14,8 +14,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 // 더미 데이터
 const data = [

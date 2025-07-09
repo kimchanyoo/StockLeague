@@ -1,9 +1,9 @@
 import Link from "next/link";
 import styles from "@/app/styles/components/Header.module.css";
-import DropdownMenu from "./DropdownMenu";
-import MobileMenu from "./MobileMenu";
-import UserMenu from "./UserMenu";
-import NotificationMenu from "./NotificationMenu";
+import DropdownMenu from "./utills/DropdownMenu";
+import MobileMenu from "./utills/MobileMenu";
+import UserMenu from "./utills/UserMenu";
+import NotificationMenu from "./utills/NotificationMenu";
 import { useAuth } from "@/context/AuthContext";
 
 

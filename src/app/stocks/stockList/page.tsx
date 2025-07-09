@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import TabMenu from "@/app/components/TabMenu";
+import TabMenu from "@/app/components/utills/TabMenu";
 import "./stockList.css";
-import StockItem from "@/app/components/StockItem";
+import StockItem from "@/app/components/stock/StockItem";
 import DownIcon from '@mui/icons-material/ArrowDropDown';
 
   // 예시용 더미 데이터 생성
