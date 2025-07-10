@@ -183,8 +183,8 @@ public class KisWebSocketResponseParser {
         TICKER(0),
         // 매도호가: 3 ~ 12
         ASK_PRICE_START(3),
-        ASK_VOLUME_START(13),
-        BID_PRICE_START(23),
+        ASK_VOLUME_START(23),
+        BID_PRICE_START(13),
         BID_VOLUME_START(33);
 
         private final int index;
