@@ -76,8 +76,12 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
 
   // 봉 데이터 불러오기 (분봉)
   useEffect(() => {
-    if (!ticker || !accessToken) return;
-
+    if (!ticker) return;
+    if (!accessToken) {
+      console.warn("❌ accessToken 없음, WebSocket 연결 생략");
+      return;
+    }
+    
     const client = new Client({
       webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
       connectHeaders: { Authorization: `Bearer ${accessToken}` },
@@ -90,6 +94,8 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
           try {
             const data = JSON.parse(message.body) as CandleData;
             const incomingTime = new Date(data.dateTime).getTime();
+            
+            console.log("실시간 봉 수신", data);
 
             setCandles((prev) => {
               if (prev.length === 0) return [data];

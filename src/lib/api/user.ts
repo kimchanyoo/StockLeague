@@ -25,10 +25,9 @@ export interface PortfolioResponse {
 // ─────────────────────────────
 
 // 보유자산
-export const getCashBalance = async (): Promise<number> => {
-  const res = await axiosInstance.get('/api/v1/portfolio/cash', {
-  });
-  return res.data;
+export const getCashBalance = async () => {
+  const res = await axiosInstance.get('/api/v1/asset');
+  return Number(res.data.cashBalance);
 };
 
 // 포트폴리오

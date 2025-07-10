@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "./account.css";
 import Portfolio from "@/app/components/user/Portfolio";
-import { getCashBalance, getPortfolio } from "@/lib/api/user"
-
+import { getCashBalance } from "@/lib/api/user"
+// import { getPortfolio } from "@/lib/api/user"
 export default function Account() {
   const [cash, setCash] = useState<number>(0);
   const [stocks, setStocks] = useState<any[]>([]);
@@ -15,13 +15,11 @@ export default function Account() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [cashResult, portfolioResult] = await Promise.all([
+        const [cashResult, ] = await Promise.all([
           getCashBalance(),
-          getPortfolio(),
         ]);
 
         setCash(cashResult);
-        setStocks(portfolioResult.stocks);
       } catch (err: any) {
         setError(err.message || "데이터를 불러오는 데 실패했습니다.");
       } finally {
@@ -72,7 +70,7 @@ export default function Account() {
           <div className="portfolio">
             <h2>보유자산 포트폴리오</h2>
             <div className="graph">
-              <Portfolio/>
+              {/* <Portfolio /> */}
             </div>
           </div>
         </div>

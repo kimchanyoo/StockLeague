@@ -2,9 +2,10 @@
 
 import "./terms.css";
 import NextButton from "@/app/components/utills/NextButton";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Terms() {
 
@@ -12,9 +13,8 @@ export default function Terms() {
   const [isAgreed, setIsAgreed] = useState(false);
   const [isOverFifteen, setIsOverFifteen] = useState(false);
   const { setData } = useSocialSignup();
-  const searchParams = useSearchParams();
 
-  const accessToken = searchParams.get("accessToken");
+  const { accessToken } = useAuth();
 
   const handleNextClick = () => {
      if (isAgreed && isOverFifteen) {
