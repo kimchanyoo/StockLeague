@@ -49,7 +49,6 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         client.subscribe(`/topic/orderbook/${ticker}`, (message) => {
           try {
             const data = JSON.parse(message.body) as OrderbookData;
-            console.log("✅ 실시간 호가 데이터:", data); // 🔍 확인 포인트
             setOrderbook(data);
           } catch (err) {
             console.error("호가 데이터 처리 오류:", err);
