@@ -113,8 +113,8 @@ public class AuthService {
             UserAsset userAsset = UserAsset.builder()
                     .user(user)
                     .userId(user.getId())
-                    .cashBalance(BigDecimal.valueOf(1_000_000L))
-                    .totalValuation(BigDecimal.valueOf(1_000_000L))
+                    .cashBalance(BigDecimal.valueOf(10_000_000L))
+                    .totalValuation(BigDecimal.valueOf(10_000_000L))
                     .updatedAt(LocalDateTime.now())
                     .build();
 
