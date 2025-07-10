@@ -113,9 +113,9 @@ public class KisWebSocketResponseParser {
      *
      * <p>총 필드는 최소 43개 이상이어야 하며, 각 호가 및 잔량 필드는 다음 인덱스를 기준으로 파싱됩니다:</p>
      * <ul>
-     *   <li>매도호가: fields[3] ~ fields[12]</li>
-     *   <li>매도잔량: fields[13] ~ fields[22]</li>
-     *   <li>매수호가: fields[23] ~ fields[32]</li>
+     *   li>매수호가: fields[3] ~ fields[12]</li>
+     *   <li>매도호가: fields[13] ~ fields[22]</li>
+     *   <li>매도잔량: fields[23] ~ fields[32]</li>
      *   <li>매수잔량: fields[33] ~ fields[42]</li>
      * </ul>
      *
@@ -181,11 +181,13 @@ public class KisWebSocketResponseParser {
 
     public enum KisOrderBookFieldIndex {
         TICKER(0),
-        // 매도호가: 3 ~ 12
-        ASK_PRICE_START(3),
-        ASK_VOLUME_START(23),
-        BID_PRICE_START(13),
-        BID_VOLUME_START(33);
+
+        // 실데이터 기준 인덱스
+        ASK_PRICE_START(3),   // 매도호가: fields[3] ~ fields[12]
+        BID_PRICE_START(13),  // 매수호가: fields[13] ~ fields[22]
+        ASK_VOLUME_START(23), // 매도잔량: fields[23] ~ fields[32]
+        BID_VOLUME_START(33); // 매수잔량: fields[33] ~ fields[42]
+
 
         private final int index;
 

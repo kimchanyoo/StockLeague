@@ -245,7 +245,6 @@ public class KisWebSocketClient {
                     messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
                 }
             } else if (trId.startsWith("H0STASP0")) {
-                log.info("[호가 수신 body]: {}", body);
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
                 if(orderBookDto != null) {
                     stockOrderBookRedisService.save(orderBookDto);
