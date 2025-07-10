@@ -7,6 +7,7 @@ import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.repository.StockMinutePriceRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
@@ -51,10 +52,10 @@ public class StockMinutePriceService {
     private void generateMinuteCandle(Stock stock, int interval) {
         String ticker = stock.getStockTicker();
 
-        LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
-        int currentMinute = now.getMinute();
-        int normalizedMinute = (currentMinute / interval) * interval;
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+        LocalDateTime now = LocalDateTime.now(zone).truncatedTo(ChronoUnit.MINUTES);
 
+        int normalizedMinute = (now.getMinute() / interval) * interval;
         LocalDateTime candleTime = now.withMinute(normalizedMinute).withSecond(0).withNano(0);
         LocalDateTime to = candleTime.plusMinutes(interval).minusNanos(1);
 
