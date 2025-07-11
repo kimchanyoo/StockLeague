@@ -7,6 +7,7 @@ import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
 import com.stockleague.backend.stock.domain.Order;
 import com.stockleague.backend.stock.domain.OrderExecution;
 import com.stockleague.backend.stock.domain.OrderType;
+import com.stockleague.backend.stock.domain.ReservedCash;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.order.BuyOrderRequestDto;
 import com.stockleague.backend.stock.dto.request.order.SellOrderRequestDto;
@@ -15,9 +16,13 @@ import com.stockleague.backend.stock.dto.response.order.SellOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.repository.OrderExecutionRepository;
 import com.stockleague.backend.stock.repository.OrderRepository;
+import com.stockleague.backend.stock.repository.ReservedCashRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.user.domain.User;
+import com.stockleague.backend.user.domain.UserAsset;
+import com.stockleague.backend.user.domain.UserStock;
 import com.stockleague.backend.user.repository.UserRepository;
+import com.stockleague.backend.user.repository.UserStockRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +40,8 @@ public class OrderService {
     private final OrderExecutionRepository orderExecutionRepository;
     private final StockRepository stockRepository;
     private final UserRepository userRepository;
+    private final ReservedCashRepository reservedCashRepository;
+    private final UserStockRepository userStockRepository;
     private final OrderQueueRedisService orderQueueRedisService;
     private final StockOrderBookRedisService stockOrderBookRedisService;
 
@@ -64,6 +71,9 @@ public class OrderService {
 
         orderRepository.save(order);
 
+        BigDecimal reservedAmount = order.getOrderPrice().multiply(order.getOrderAmount());
+        reserveCash(user, order, reservedAmount);
+
         BigDecimal remaining = tryImmediateBuyExecution(order);
         if (remaining.compareTo(BigDecimal.ZERO) > 0) {
             orderQueueRedisService.saveWaitingOrder(order);
@@ -85,6 +95,8 @@ public class OrderService {
     public SellOrderResponseDto sell(Long userId, SellOrderRequestDto requestDto) {
         User user = getUserById(userId);
         Stock stock = getStockByTicker(requestDto.ticker());
+
+        lockSellStock(user, stock, requestDto.orderAmount());
 
         Order order = Order.builder()
                 .user(user)
@@ -190,14 +202,19 @@ public class OrderService {
         if (!executions.isEmpty()) {
             orderExecutionRepository.saveAll(executions);
             order.updateExecutionInfo(executedTotal, totalPrice);
+
+            applyBuyStock(order.getUser(), order.getStock(), executedTotal);
+
+            if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) == 0) {
+                finalizeReservedCash(order, totalPrice);
+            }
         }
 
         return remaining;
     }
 
     /**
-     * 현재 Redis에 저장된 호가 정보를 기반으로 주어진 매도 주문을 즉시 체결 가능한지 확인하고,
-     * 가능한 범위 내에서 부분 혹은 전체 체결을 수행합니다.
+     * 현재 Redis에 저장된 호가 정보를 기반으로 주어진 매도 주문을 즉시 체결 가능한지 확인하고, 가능한 범위 내에서 부분 혹은 전체 체결을 수행합니다.
      * <ul>
      *     <li>호가 정보는 Redis에서 가져옵니다.</li>
      *     <li>주문 가격 이하인 매수 호가(bid)와 체결 가능 수량을 비교하여 매칭합니다.</li>
@@ -256,9 +273,182 @@ public class OrderService {
         if (!executions.isEmpty()) {
             orderExecutionRepository.saveAll(executions);
             order.updateExecutionInfo(executedTotal, totalPrice);
+            finalizeSellStock(order.getUser(), order.getStock(), executedTotal);
+            applySellRevenue(order.getUser(), totalPrice);
         }
 
         return remaining;
     }
 
+    /**
+     * 매수 체결 시, 유저의 보유 주식 정보를 갱신합니다.
+     * <ul>
+     *     <li>UserStock이 없으면 새로 생성합니다.</li>
+     *     <li>기존에 보유하고 있으면 수량을 증가시킵니다.</li>
+     * </ul>
+     *
+     * @param user   사용자
+     * @param stock  종목
+     * @param amount 매수 체결 수량
+     */
+    private void applyBuyStock(User user, Stock stock, BigDecimal amount) {
+        UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+                .orElse(null);
+
+        if (userStock == null) {
+            userStock = UserStock.builder()
+                    .user(user)
+                    .stock(stock)
+                    .quantity(amount)
+                    .lockedQuantity(BigDecimal.ZERO)
+                    .build();
+        } else {
+            userStock.increaseQuantity(amount);
+        }
+
+        userStockRepository.save(userStock);
+    }
+
+    /**
+     * 매도 주문 시, 유저가 보유한 주식 수량을 동결합니다.
+     * <ul>
+     *     <li>보유 수량이 부족한 경우 예외를 발생시킵니다.</li>
+     *     <li>동결 수량은 주문 수량만큼 증가합니다.</li>
+     * </ul>
+     *
+     * @param user   매도하는 사용자
+     * @param stock  매도할 종목
+     * @param amount 매도 수량
+     * @throws GlobalException USER_STOCK_NOT_FOUND - 사용자가 해당 종목을 보유하고 있지 않은 경우
+     * @throws GlobalException NOT_ENOUGH_STOCK - 사용자가 해당 종목을 충분하게 보유하고 있지 않은 경우
+     */
+    private void lockSellStock(User user, Stock stock, BigDecimal amount) {
+        UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
+
+        if (!userStock.hasEnoughForSell(amount)) {
+            throw new GlobalException(GlobalErrorCode.NOT_ENOUGH_STOCK);
+        }
+
+        userStock.lockQuantity(amount);
+    }
+
+    /**
+     * 매도 주문 체결 시, 동결된 주식 수량을 실제 매도된 만큼 차감합니다.
+     * <ul>
+     *     <li>매도 체결 수량만큼 lockedQuantity 감소</li>
+     *     <li>보유 수량(quantity)도 함께 감소</li>
+     * </ul>
+     *
+     * @param user           사용자
+     * @param stock          종목
+     * @param executedAmount 체결 수량
+     * @throws GlobalException USER_STOCK_NOT_FOUND - 사용자가 해당 종목을 보유하고 있지 않은 경우
+     */
+    private void finalizeSellStock(User user, Stock stock, BigDecimal executedAmount) {
+        UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
+
+        userStock.executeSell(executedAmount);
+    }
+
+
+
+    /**
+     * 매도 체결 금액을 유저 자산에 추가합니다.
+     * <ul>
+     *     <li>유저의 현금 자산(cashBalance)을 체결 금액만큼 증가시킵니다.</li>
+     * </ul>
+     *
+     * @param user    사용자
+     * @param revenue 매도 수익
+     * @throws GlobalException ASSET_NOT_FOUND - 사용자의 자산 정보가 존재하지 않은 경우
+     */
+    private void applySellRevenue(User user, BigDecimal revenue) {
+        UserAsset asset = user.getUserAsset();
+        if (asset == null) {
+            throw new GlobalException(GlobalErrorCode.ASSET_NOT_FOUND);
+        }
+        asset.addCash(revenue);
+    }
+
+    /**
+     * 매수 주문 시, 사용자의 현금 자산에서 주문 금액만큼을 예약 처리합니다.
+     * <ul>
+     *     <li>유저의 보유 현금이 주문 금액보다 적을 경우 예외를 발생시킵니다.</li>
+     *     <li>자산에서 주문 금액을 차감하고, 해당 주문에 대한 예약 현금 정보를 생성하여 저장합니다.</li>
+     *     <li>Order와 ReservedCash는 1:1 관계로 연관 설정됩니다.</li>
+     * </ul>
+     *
+     * @param user   주문을 생성한 사용자
+     * @param order  현금을 예약할 주문 객체
+     * @param amount 예약할 금액 (주문 가격 × 주문 수량)
+     * @throws GlobalException NOT_ENOUGH_CASH - 사용자의 보유 현금이 부족한 경우
+     */
+    private void reserveCash(User user, Order order, BigDecimal amount) {
+        UserAsset asset = user.getUserAsset();
+        if (asset == null || asset.getCashBalance().compareTo(amount) < 0) {
+            throw new GlobalException(GlobalErrorCode.NOT_ENOUGH_CASH);
+        }
+
+        asset.subtractCash(amount);
+
+        ReservedCash reservedCash = ReservedCash.builder()
+                .user(user)
+                .order(order)
+                .reservedAmount(amount)
+                .refunded(false)
+                .build();
+
+        reservedCashRepository.save(reservedCash);
+        order.setReservedCash(reservedCash);
+    }
+
+    /**
+     * 매수 주문 체결 완료 후 예약된 현금을 정산하고 남은 금액을 환불합니다.
+     * <ul>
+     *     <li>실제 체결 금액이 예약 금액보다 적은 경우, 차액을 유저 자산에 환불합니다.</li>
+     *     <li>환불 여부는 ReservedCash 엔티티의 refunded 필드를 true로 설정합니다.</li>
+     * </ul>
+     *
+     * @param order        체결된 주문
+     * @param actualCost   실제 체결 금액
+     * @throws GlobalException RESERVED_CASH_NOT_FOUND - 예약 현금 정보가 없는 경우
+     */
+    private void finalizeReservedCash(Order order, BigDecimal actualCost) {
+        ReservedCash reservedCash = reservedCashRepository.findByOrder(order)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.RESERVED_CASH_NOT_FOUND));
+
+        BigDecimal reserved = reservedCash.getReservedAmount();
+        BigDecimal refund = reserved.subtract(actualCost);
+
+        if (refund.compareTo(BigDecimal.ZERO) > 0) {
+            UserAsset asset = order.getUser().getUserAsset();
+            if (asset == null) {
+                throw new GlobalException(GlobalErrorCode.ASSET_NOT_FOUND);
+            }
+            asset.addCash(refund);
+        }
+
+        reservedCash.markAsRefunded();
+    }
+
+    /**
+     * 매도 주문이 체결되지 않은 경우, 동결된 주식 수량을 해제합니다.
+     * <ul>
+     *     <li>매도 주문 취소 또는 미체결 상태에서 유저의 lockedQuantity를 복원합니다.</li>
+     *     <li>보유 수량(quantity)에는 영향을 주지 않습니다.</li>
+     * </ul>
+     *
+     * @param user   사용자
+     * @param stock  종목
+     * @param amount 해제할 수량
+     * @throws GlobalException USER_STOCK_NOT_FOUND - 사용자가 해당 종목을 보유하고 있지 않은 경우
+     */
+    private void unlockSellStock(User user, Stock stock, BigDecimal amount) {
+        UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
+
+        userStock.unlockQuantity(amount);
+    }
 }

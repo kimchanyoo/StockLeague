@@ -5,6 +5,7 @@ import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.CommentReport;
 import com.stockleague.backend.stock.domain.Order;
+import com.stockleague.backend.stock.domain.ReservedCash;
 import com.stockleague.backend.stock.domain.Watchlist;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -27,11 +28,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -124,9 +127,16 @@ public class User {
 
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> users = new ArrayList<>();
+    private List<Order> orders = new ArrayList<>();
 
-    // 비즈니스 메서드
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserStock> userStocks = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReservedCash> reservedCashes = new ArrayList<>();
+
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;
     }
@@ -145,9 +155,5 @@ public class User {
         this.isBanned = true;
         this.bannedAt = LocalDateTime.now();
         this.banReason = reason;
-    }
-
-    public void setUserAsset(UserAsset userAsset) {
-        this.userAsset = userAsset;
     }
 }

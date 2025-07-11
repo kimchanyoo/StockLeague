@@ -1,5 +1,6 @@
 package com.stockleague.backend.stock.domain;
 
+import com.stockleague.backend.user.domain.UserStock;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -78,4 +79,8 @@ public class Stock {
     @Builder.Default
     @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserStock> userStocks = new ArrayList<>();
 }

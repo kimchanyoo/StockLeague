@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,10 +26,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
+@Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -87,6 +90,9 @@ public class Order {
     @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderExecution> orderExecutions = new ArrayList<>();
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private ReservedCash reservedCash;
 
     public void updateExecutionInfo(BigDecimal executedAmount, BigDecimal totalExecutedPrice) {
         this.executedAmount = executedAmount;

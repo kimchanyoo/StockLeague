@@ -43,6 +43,9 @@ public enum GlobalErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     INVALID_WITHDRAW_CONFIRM_MESSAGE(HttpStatus.BAD_REQUEST, "탈퇴 문구가 일치하지 않습니다."),
     ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저의 자산 정보가 존재하지 않습니다."),
+    USER_STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 종목에 대한 사용자의 보유 정보가 없습니다."),
+    NOT_ENOUGH_CASH(HttpStatus.BAD_REQUEST, "보유한 현금이 부족합니다."),
+    RESERVED_CASH_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 주문의 예약 자산 정보를 찾을 수 없습니다."),
 
     // 주식 관련
     INVALID_MARKET_TYPE(HttpStatus.BAD_REQUEST, "잘못된 시장 유형이 입력되었습니다."),
@@ -54,6 +57,7 @@ public enum GlobalErrorCode {
     INVALID_ACTION_TYPE(HttpStatus.BAD_REQUEST, "잘못된 처리 결과가 입력되었습니다."),
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 신고를 찾을 수 없습니다."),
     ORDERBOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "호가를 찾을 수 없습니다."),
+    NOT_ENOUGH_STOCK(HttpStatus.BAD_REQUEST, "충분한 주식을 보유하고 있지 않습니다."),
 
     // 잘못된 필드값 입력
     MISSING_FIELDS(HttpStatus.BAD_REQUEST, "내용을 모두 입력해야 합니다."),
