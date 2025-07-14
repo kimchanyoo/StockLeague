@@ -5,6 +5,7 @@ public enum OrderStatus {
     PARTIALLY_EXECUTED,
     EXECUTED,
     CANCELED,
+    CANCELED_AFTER_PARTIAL,
     EXPIRED,
     FAILED
 }

@@ -12,6 +12,7 @@ import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.order.BuyOrderRequestDto;
 import com.stockleague.backend.stock.dto.request.order.SellOrderRequestDto;
 import com.stockleague.backend.stock.dto.response.order.BuyOrderResponseDto;
+import com.stockleague.backend.stock.dto.response.order.CancelOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.order.SellOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.repository.OrderExecutionRepository;
@@ -123,7 +124,7 @@ public class OrderService {
      *
      * @param userId 조회할 사용자 ID
      * @return User 엔티티
-     * @throws GlobalException USER_NOT_FOUND
+     * @throws GlobalException USER_NOT_FOUND - 유저가 존재하지 않는 경우
      */
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
@@ -135,7 +136,7 @@ public class OrderService {
      *
      * @param ticker 조회할 종목 티커
      * @return Stock 엔티티
-     * @throws GlobalException STOCK_NOT_FOUND
+     * @throws GlobalException STOCK_NOT_FOUND - 주식이 존재하지 않는 경우
      */
     private Stock getStockByTicker(String ticker) {
         return stockRepository.findByStockTicker(ticker)
@@ -319,8 +320,11 @@ public class OrderService {
      * @param user   매도하는 사용자
      * @param stock  매도할 종목
      * @param amount 매도 수량
-     * @throws GlobalException USER_STOCK_NOT_FOUND - 사용자가 해당 종목을 보유하고 있지 않은 경우
-     * @throws GlobalException NOT_ENOUGH_STOCK - 사용자가 해당 종목을 충분하게 보유하고 있지 않은 경우
+     * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
+     *          <ul>
+     *              <li>{@code USER_STOCK_NOT_FOUND} - 사용자가 해당 종목을 보유하고 있지 않은 경우</li>
+     *              <li>{@code NOT_ENOUGH_STOCK} - 사용자가 해당 종목을 충분하게 보유하고 있지 않은 경우</li>
+     *          </ul>
      */
     private void lockSellStock(User user, Stock stock, BigDecimal amount) {
         UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
@@ -367,7 +371,7 @@ public class OrderService {
     private void applySellRevenue(User user, BigDecimal revenue) {
         UserAsset asset = user.getUserAsset();
         if (asset == null) {
-            throw new GlobalException(GlobalErrorCode.ASSET_NOT_FOUND);
+            throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
         }
         asset.addCash(revenue);
     }
@@ -425,7 +429,7 @@ public class OrderService {
         if (refund.compareTo(BigDecimal.ZERO) > 0) {
             UserAsset asset = order.getUser().getUserAsset();
             if (asset == null) {
-                throw new GlobalException(GlobalErrorCode.ASSET_NOT_FOUND);
+                throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
             }
             asset.addCash(refund);
         }
@@ -450,5 +454,74 @@ public class OrderService {
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
 
         userStock.unlockQuantity(amount);
+    }
+
+    /**
+     * 사용자의 매수 또는 매도 주문을 취소합니다.
+     * <p>
+     * 취소 요청은 다음 조건을 만족해야 합니다:
+     * <ul>
+     *     <li>주문이 완료(EXECUTED)되거나 취소(CANCELED)되지 않은 상태여야 합니다.</li>
+     *     <li>해당 주문의 소유자(userId)만 취소할 수 있습니다.</li>
+     * </ul>
+     * 주문 유형에 따른 처리 방식은 다음과 같습니다:
+     * <ul>
+     *     <li><b>매수 주문 (BUY)</b>: 예약된 현금을 환불하고, 예약 상태를 'refunded'로 표시합니다.</li>
+     *     <li><b>매도 주문 (SELL)</b>: 동결된 주식 수량(lockedQuantity)을 해제합니다.</li>
+     * </ul>
+     * 또한 주문은 Redis 대기 큐에서 제거되며, 남은 주문 수량은 0으로 설정됩니다.
+     *
+     * @param userId  주문 취소를 요청한 사용자 ID
+     * @param orderId 취소할 주문 ID
+     * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
+     *          <ul>
+     *              <li>{@code ORDER_NOT_FOUND} - 주문이 존재하지 않는 경우</li>
+     *              <li>{@code UNAUTHORIZED_ORDER_ACCESS} - 다른 사용자의 주문을 취소하려는 경우</li>
+     *              <li>{@code INVALID_ORDER_STATE} - 이미 완료되었거나 취소된 주문인 경우</li>
+     *              <li>{@code RESERVED_CASH_NOT_FOUND} - 매수 주문의 예약 현금 정보가 없는 경우</li>
+     *              <li>{@code USER_ASSET_NOT_FOUND} - 사용자 자산 정보가 존재하지 않는 경우</li>
+     *          </ul>
+     */
+    @Transactional
+    public CancelOrderResponseDto cancelOrder(Long userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
+
+        if (!order.getUser().getId().equals(userId)) {
+            throw new GlobalException(GlobalErrorCode.UNAUTHORIZED_ORDER_ACCESS);
+        }
+
+        if (order.isCompletedOrCanceled()) {
+            throw new GlobalException(GlobalErrorCode.INVALID_ORDER_STATE);
+        }
+
+        order.markAsCanceled();
+        order.setRemainingAmount(BigDecimal.ZERO);
+
+        orderQueueRedisService.removeOrderFromQueue(
+                order.getOrderType(),
+                order.getStock().getStockTicker(),
+                order.getId()
+        );
+
+        if (order.getOrderType() == OrderType.BUY) {
+            ReservedCash reservedCash = reservedCashRepository.findByOrder(order)
+                    .orElseThrow(() -> new GlobalException(GlobalErrorCode.RESERVED_CASH_NOT_FOUND));
+
+            if (!reservedCash.isRefunded()) {
+                BigDecimal refundAmount = reservedCash.getReservedAmount();
+                UserAsset asset = order.getUser().getUserAsset();
+                if (asset == null) {
+                    throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
+                }
+                asset.addCash(refundAmount);
+                reservedCash.markAsRefunded();
+            }
+
+        } else {
+            unlockSellStock(order.getUser(), order.getStock(), order.getRemainingAmount());
+        }
+
+        return CancelOrderResponseDto.from();
     }
 }

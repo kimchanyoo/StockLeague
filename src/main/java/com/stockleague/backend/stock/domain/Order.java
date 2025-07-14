@@ -110,4 +110,16 @@ public class Order {
             this.executedAt = LocalDateTime.now();
         }
     }
+
+    public void markAsCanceled() {
+        if (this.status == OrderStatus.PARTIALLY_EXECUTED) {
+            this.status = OrderStatus.CANCELED_AFTER_PARTIAL;
+        } else {
+            this.status = OrderStatus.CANCELED;
+        }
+    }
+
+    public boolean isCompletedOrCanceled() {
+        return this.status == OrderStatus.CANCELED || this.status == OrderStatus.EXECUTED;
+    }
 }

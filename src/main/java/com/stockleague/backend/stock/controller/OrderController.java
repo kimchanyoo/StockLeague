@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.stock.dto.request.order.BuyOrderRequestDto;
 import com.stockleague.backend.stock.dto.request.order.SellOrderRequestDto;
 import com.stockleague.backend.stock.dto.response.order.BuyOrderResponseDto;
+import com.stockleague.backend.stock.dto.response.order.CancelOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.order.SellOrderResponseDto;
 import com.stockleague.backend.stock.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -149,6 +152,106 @@ public class OrderController {
     ) {
         Long userId = (Long) authentication.getPrincipal();
         SellOrderResponseDto response = orderService.sell(userId, requestDto);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{orderId}/cancel")
+    @Operation(
+            summary = "주문 취소",
+            description = "사용자가 자신의 매수 또는 매도 주문을 취소합니다. " +
+                    "이미 체결된 수량은 되돌릴 수 없으며, 남은 수량만 취소됩니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "주문 취소 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "CancelOrderSuccess",
+                                    summary = "주문 취소 성공 응답 예시",
+                                    value = """
+                                        {
+                                            "success": true,
+                                            "message": "주문이 성공적으로 취소되었습니다."
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "사용자, 주문, 자산 정보 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "OrderNotFound",
+                                            summary = "존재하지 않는 주문",
+                                            value = """
+                                            {
+                                                "success": false,
+                                                "message": "주문을 찾을 수 없습니다.",
+                                                "errorCode": "ORDER_NOT_FOUND"
+                                            }
+                                            """
+                                    ),
+                                    @ExampleObject(
+                                            name = "UnauthorizedAccess",
+                                            summary = "주문에 대한 권한 없음",
+                                            value = """
+                                            {
+                                                "success": false,
+                                                "message": "해당 주문에 대한 권한이 없습니다.",
+                                                "errorCode": "UNAUTHORIZED_ORDER_ACCESS"
+                                            }
+                                            """
+                                    ),
+                                    @ExampleObject(
+                                            name = "ReservedCashNotFound",
+                                            summary = "예약된 현금 정보 없음",
+                                            value = """
+                                            {
+                                                "success": false,
+                                                "message": "해당 주문의 예약 자산 정보를 찾을 수 없습니다.",
+                                                "errorCode": "RESERVED_CASH_NOT_FOUND"
+                                            }
+                                            """
+                                    ),
+                                    @ExampleObject(
+                                            name = "UserAssetNotFound",
+                                            summary = "사용자 자산 정보 없음",
+                                            value = """
+                                            {
+                                                "success": false,
+                                                "message": "해당 유저의 자산 정보가 존재하지 않습니다.",
+                                                "errorCode": "USER_ASSET_NOT_FOUND"
+                                            }
+                                            """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "취소 불가능한 주문 상태",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "InvalidOrderState",
+                                    summary = "취소할 수 없는 상태",
+                                    value = """
+                                    {
+                                        "success": false,
+                                        "message": "해당 주문은 취소할 수 없는 상태입니다.",
+                                        "errorCode": "INVALID_ORDER_STATE"
+                                    }
+                                    """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<CancelOrderResponseDto> cancelOrder(
+            Authentication authentication,
+            @PathVariable Long orderId
+    ) {
+        Long userId = (Long) authentication.getPrincipal();
+        CancelOrderResponseDto response = orderService.cancelOrder(userId, orderId);
+
         return ResponseEntity.ok(response);
     }
 }

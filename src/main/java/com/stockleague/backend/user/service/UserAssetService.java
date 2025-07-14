@@ -37,7 +37,7 @@ public class UserAssetService {
         UserAsset asset = user.getUserAsset();
 
         if (asset == null) {
-            throw new GlobalException(GlobalErrorCode.ASSET_NOT_FOUND);
+            throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
         }
 
         return UserAssetResponseDto.from(asset);
