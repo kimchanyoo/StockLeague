@@ -6,9 +6,11 @@ import MyOrder from "../user/MyOrder";
 import TabMenu from "../utills/TabMenu";
 import RemoveIcon  from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
-import { OrderbookData } from "@/lib/api/stock"
+import { postBuyOrder, postSellOrder, OrderbookData } from "@/lib/api/stock";
+import { getCashBalance } from "@/lib/api/user";
 import { Client } from "@stomp/stompjs";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "react-hot-toast";
 
 interface StockOrderProps {
   stockName: string;
@@ -17,7 +19,7 @@ interface StockOrderProps {
 }
 
 const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
-  const myMoney = 1000000;
+  const [myMoney, setMyMoney] = useState<number>(0);
   
   const [activeTab, setActiveTab] = useState<string>("체결 내역");
   const tabList = ["체결 내역", "미체결 내역"];
@@ -32,6 +34,20 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
 
   const [orderbook, setOrderbook] = useState<OrderbookData | null>(null);
   const { accessToken } = useAuth();
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const balance = await getCashBalance();
+        setMyMoney(balance);
+      } catch (err) {
+        console.error("보유 현금 조회 실패:", err);
+        toast.error("보유 자산 정보를 불러오지 못했습니다.");
+      }
+    };
+
+    fetchBalance();
+  }, []);
 
   useEffect(() => {
     if (!ticker) return;
@@ -96,17 +112,46 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     }
   }, [useCurrentPrice, currentPrice]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const orderData = {
-      type: orderType,
-      stock: stockName,
-      quantity,
-      price,
-      totalPrice
+
+    if (!ticker || quantity <= 0 || price <= 0) {
+      toast.error("주문 정보를 다시 확인해주세요.");
+      return;
+    }
+
+    const request = {
+      ticker,
+      orderPrice: price,
+      orderAmount: quantity,
     };
-    console.log("주문 데이터:", orderData);
-    // 서버 전송 처리 가능
+
+    try {
+      if (orderType === "buy") {
+        const res = await postBuyOrder(request);
+        if (res.success) {
+          toast.success(res.message || "매수 주문이 접수되었습니다.");
+          setQuantity(0);
+          setPriceInput(currentPrice.toString());
+          setPrice(currentPrice);
+        } else {
+          toast.error(res.message || "매수 주문 실패");
+        }
+      } else {
+        const res = await postSellOrder(request);
+        if (res.success) {
+          toast.success(res.message || "매도 주문이 접수되었습니다.");
+          setQuantity(0);
+          setPriceInput(currentPrice.toString());
+          setPrice(currentPrice);
+        } else {
+          toast.error(res.message || "매도 주문 실패");
+        }
+      }
+    } catch (error) {
+      console.error("주문 오류:", error);
+      toast.error("주문 처리 중 오류가 발생했습니다.");
+    }
   };
 
   const handleQuantityRatioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -150,6 +195,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     price,
     quantity: orderbook.askVolumes[i],
   })) ?? [];
+
 
   // 최대값 (퍼센트 기준용)
   const maxBidQty = Math.max(...bidOrders.map(o => o.quantity), 1);
