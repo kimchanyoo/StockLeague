@@ -68,6 +68,30 @@ export interface OrderbookData {
   timestamp: string;
 }
 
+// 매수 주문 데이터 타입
+export interface BuyOrderRequest {
+  ticker: string;
+  orderPrice: number;
+  orderAmount: number;
+}
+export interface BuyOrderResponse {
+  success: boolean;
+  message: string;
+  errorCode?: string;
+}
+
+// 매도 주문 데이터 타입
+export interface SellOrderRequest {
+  ticker: string;
+  orderPrice: number;
+  orderAmount: number;
+}
+export interface SellOrderResponse {
+  success: boolean;
+  message: string;
+  errorCode?: string;
+}
+
 // ─────────────────────────────
 // 종목 API
 // ─────────────────────────────
@@ -119,5 +143,17 @@ export const getCandleData = async (
   const res = await axiosInstance.get(`/api/v1/stocks/${ticker}/candles`, {
     params: { interval: apiInterval, offset, limit },
   });
+  return res.data;
+};
+
+// 매수 주문
+export const postBuyOrder = async ( data: BuyOrderRequest ): Promise<BuyOrderResponse> => {
+  const res = await axiosInstance.post("/api/v1/order/buy", data);
+  return res.data;
+};
+
+// 매도 주문
+export const postSellOrder = async ( data: SellOrderRequest ): Promise<SellOrderResponse> => {
+  const res = await axiosInstance.post("/api/v1/order/sell", data);
   return res.data;
 };

@@ -95,8 +95,6 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
             const data = JSON.parse(message.body) as CandleData;
             const incomingTime = new Date(data.dateTime).getTime();
             
-            console.log("실시간 봉 수신", data);
-
             setCandles((prev) => {
               if (prev.length === 0) return [data];
               const last = prev[prev.length - 1];
