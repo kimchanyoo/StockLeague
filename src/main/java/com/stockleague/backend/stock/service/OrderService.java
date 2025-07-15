@@ -13,6 +13,8 @@ import com.stockleague.backend.stock.dto.request.order.BuyOrderRequestDto;
 import com.stockleague.backend.stock.dto.request.order.SellOrderRequestDto;
 import com.stockleague.backend.stock.dto.response.order.BuyOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.order.CancelOrderResponseDto;
+import com.stockleague.backend.stock.dto.response.order.OrderListResponseDto;
+import com.stockleague.backend.stock.dto.response.order.OrderSummaryDto;
 import com.stockleague.backend.stock.dto.response.order.SellOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.repository.OrderExecutionRepository;
@@ -29,6 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -523,5 +529,76 @@ public class OrderService {
         }
 
         return CancelOrderResponseDto.from();
+    }
+
+    /**
+     * 사용자의 주문 내역을 페이지 단위로 조회합니다.
+     * <p>
+     * 주문은 작성 시각(createdAt) 기준 내림차순으로 정렬되며,
+     * 매수(BUY), 매도(SELL) 구분 없이 전체 주문 내역이 포함됩니다.
+     * </p>
+     *
+     * @param userId 조회 대상 사용자 ID
+     * @param page   조회할 페이지 번호 (1부터 시작)
+     * @param size   페이지당 항목 수
+     * @return 사용자의 주문 내역 리스트와 페이지 정보가 포함된 응답 DTO {@link OrderListResponseDto}
+     * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
+     *          <ul>
+     *              <li>{@code INVALID_PAGINATION} - 페이지 번호 또는 크기가 1 미만인 경우</li>
+     *              <li>{@code USER_NOT_FOUND} - 사용자가 존재하지 않는 경우</li>
+     *          </ul>
+     */
+    @Transactional(readOnly = true)
+    public OrderListResponseDto listMyOrders(Long userId, int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("createdAt")));
+        Page<Order> orderPage = orderRepository.findByUser(user, pageable);
+
+        List<OrderSummaryDto> contents = orderPage.getContent().stream()
+                .map(OrderSummaryDto::from)
+                .toList();
+
+        return new OrderListResponseDto(
+                true,
+                contents,
+                page,
+                size,
+                orderPage.getTotalElements(),
+                orderPage.getTotalPages()
+        );
+    }
+
+    /**
+     * 사용자의 개별 주문 상세 정보를 조회합니다.
+     * <p>
+     * 요청한 사용자 본인의 주문에 대해서만 상세 정보를 반환하며,
+     * 주문이 존재하지 않거나 권한이 없는 경우 예외를 발생시킵니다.
+     * </p>
+     *
+     * @param userId 조회 대상 사용자 ID
+     * @param orderId 조회 대상 주문 ID
+     * @return 사용자의 주문 내역 리스트와 페이지 정보가 포함된 응답 DTO {@link OrderSummaryDto}
+     * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
+     *          <ul>
+     *              <li>{@code ORDER_NOT_FOUND} - 주문이 존재하지 않는 경우</li>
+     *              <li>{@code UNAUTHORIZED_ORDER_ACCESS} - 다른 사용자의 주문을 취소하려는 경우</li>
+     *          </ul>
+     */
+    @Transactional(readOnly = true)
+    public OrderSummaryDto getOrderDetail(Long userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
+
+        if (!order.getUser().getId().equals(userId)) {
+            throw new GlobalException(GlobalErrorCode.UNAUTHORIZED_ORDER_ACCESS);
+        }
+
+        return OrderSummaryDto.from(order);
     }
 }
