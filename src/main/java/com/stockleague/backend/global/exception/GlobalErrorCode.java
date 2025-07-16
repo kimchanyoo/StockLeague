@@ -38,6 +38,7 @@ public enum GlobalErrorCode {
 
     // === 주문(Order) ===
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다."),
+    ORDER_EXECUTIONS_NOT_FOUND(HttpStatus.NOT_FOUND, "체결 내역을 찾을 수 없습니다."),
     INVALID_ORDER_STATE(HttpStatus.BAD_REQUEST, "해당 주문은 취소할 수 없는 상태입니다."),
     UNAUTHORIZED_ORDER_ACCESS(HttpStatus.UNAUTHORIZED, "해당 주문에 대한 권한이 없습니다."),
     RESERVED_CASH_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 주문의 예약 자산 정보를 찾을 수 없습니다."),
