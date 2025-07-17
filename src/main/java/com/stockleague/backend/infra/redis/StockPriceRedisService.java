@@ -73,7 +73,7 @@ public class StockPriceRedisService {
         try {
             String key = getKey(ticker);
             double fromScore = from.toEpochSecond(ZoneOffset.ofHours(9));
-            double toScore = to.toEpochSecond(ZoneOffset.ofHours(9)) + 0.999;
+            double toScore = to.toEpochSecond(ZoneOffset.ofHours(9));
 
             Set<String> range = redisTemplate.opsForZSet().rangeByScore(key, fromScore, toScore);
             if (range == null) return Collections.emptyList();
@@ -98,7 +98,7 @@ public class StockPriceRedisService {
     public void removeOldPrices(String ticker) {
         String key = getKey(ticker);
 
-        LocalDateTime threshold = LocalDate.now().minusDays(1).atStartOfDay();
+        LocalDateTime threshold = LocalDate.now().minusDays(2).atStartOfDay();
         double thresholdScore = threshold.toEpochSecond(ZoneOffset.ofHours(9));
 
         Long removed = redisTemplate.opsForZSet().removeRangeByScore(key, 0, thresholdScore);

@@ -52,19 +52,17 @@ public class StockMinutePriceService {
     private void generateMinuteCandle(Stock stock, int interval) {
         String ticker = stock.getStockTicker();
 
-        ZoneId zone = ZoneId.of("Asia/Seoul");
-        LocalDateTime now = LocalDateTime.now(zone).truncatedTo(ChronoUnit.MINUTES);
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul")).truncatedTo(ChronoUnit.MINUTES);
+        LocalDateTime from = now.minusMinutes(interval);
+        LocalDateTime to = now;
 
-        int normalizedMinute = (now.getMinute() / interval) * interval;
-        LocalDateTime candleTime = now.withMinute(normalizedMinute).withSecond(0).withNano(0);
-        LocalDateTime to = candleTime.plusMinutes(interval).minusNanos(1);
-
-        List<StockPriceDto> prices = redisService.findBetween(ticker, candleTime, to);
+        List<StockPriceDto> prices = redisService.findBetween(ticker, from, to);
         if (prices.isEmpty()) {
-            log.warn("[분봉 생성] Redis 시세 없음 - {} {}분 {}", ticker, interval, candleTime);
+            log.warn("[분봉 생성] Redis 시세 없음 - {} {}분 {}", ticker, interval, from);
             return;
         }
 
+        log.debug("[분봉 생성] Redis 시세 {}건 조회됨 - {} {}분 {}", prices.size(), ticker, interval, from);
         prices.sort(Comparator.comparing(StockPriceDto::datetime));
 
         long open = prices.get(0).currentPrice();
@@ -80,16 +78,16 @@ public class StockMinutePriceService {
         }
         long volume = endVol - startVol;
 
-        boolean exists = minuteRepo.existsByStockAndIntervalAndCandleTime(stock, interval, candleTime);
+        boolean exists = minuteRepo.existsByStockAndIntervalAndCandleTime(stock, interval, from);
         if (exists) {
-            log.debug("[분봉 생성] 중복 분봉 데이터 - 저장 생략: {} {}분 {}", ticker, interval, candleTime);
+            log.debug("[분봉 생성] 중복 분봉 데이터 - 저장 생략: {} {}분 {}", ticker, interval, from);
             return;
         }
 
         StockMinutePrice candle = StockMinutePrice.builder()
                 .stock(stock)
                 .interval(interval)
-                .candleTime(candleTime)
+                .candleTime(from)
                 .openPrice(open)
                 .highPrice(high)
                 .lowPrice(low)
@@ -99,9 +97,9 @@ public class StockMinutePriceService {
 
         try {
             minuteRepo.save(candle);
-            log.info("[분봉 생성] 저장 성공: {} {}분 {}", ticker, interval, candleTime);
+            log.info("[분봉 생성] 저장 성공: {} {}분 {}", ticker, interval, from);
         } catch (Exception e) {
-            log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, candleTime, e.getMessage(), e);
+            log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, from, e.getMessage(), e);
         }
     }
 
