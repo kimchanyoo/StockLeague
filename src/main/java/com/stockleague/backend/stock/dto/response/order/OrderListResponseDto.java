@@ -8,6 +8,6 @@ public record OrderListResponseDto(
         int page,
         int size,
         long totalCount,
-        long totalPage
+        long totalPages
 ) {
 }

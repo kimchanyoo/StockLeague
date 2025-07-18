@@ -275,7 +275,7 @@ public class OrderController {
                                     value = """
                                             {
                                                 "success": true,
-                                                "contents": [
+                                                "orders": [
                                                     {
                                                         "orderId": 1,
                                                         "stockTicker": "005930",
@@ -292,7 +292,7 @@ public class OrderController {
                                                 ],
                                                 "page": 1,
                                                 "size": 10,
-                                                "totalElements": 1,
+                                                "totalCount": 1,
                                                 "totalPages": 1
                                             }
                                             """
