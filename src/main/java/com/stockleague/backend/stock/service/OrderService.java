@@ -316,7 +316,7 @@ public class OrderService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("orderDate")));
         Page<Order> orderPage = orderRepository.findByUser(user, pageable);
 
         List<OrderSummaryDto> contents = orderPage.getContent().stream()
