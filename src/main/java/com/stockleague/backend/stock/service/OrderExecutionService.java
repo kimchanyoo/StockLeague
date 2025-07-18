@@ -230,7 +230,7 @@ public class OrderExecutionService {
             asset.addCash(refund);
         }
 
-        reservedCash.markAsRefunded();
+        reservedCash.markAsRefunded(refund);
     }
 
     /**

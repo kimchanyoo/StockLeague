@@ -48,8 +48,13 @@ public class ReservedCash {
     @Column(name = "reserved_amount", nullable = false, precision = 20, scale = 4)
     private BigDecimal reservedAmount;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean refunded = false;
+
+    @Builder.Default
+    @Column(name = "refunded_amount", nullable = false, precision = 20, scale = 4)
+    private BigDecimal refundedAmount = BigDecimal.ZERO;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -59,7 +64,8 @@ public class ReservedCash {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public void markAsRefunded() {
+    public void markAsRefunded(BigDecimal refundedAmount) {
         this.refunded = true;
+        this.refundedAmount = refundedAmount;
     }
 }

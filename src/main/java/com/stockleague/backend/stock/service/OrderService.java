@@ -196,7 +196,6 @@ public class OrderService {
                 .user(user)
                 .order(order)
                 .reservedAmount(amount)
-                .refunded(false)
                 .build();
 
         reservedCashRepository.save(reservedCash);
@@ -281,7 +280,7 @@ public class OrderService {
                     throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
                 }
                 asset.addCash(refundAmount);
-                reservedCash.markAsRefunded();
+                reservedCash.markAsRefunded(refundAmount);
             }
 
         } else {
