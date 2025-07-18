@@ -25,6 +25,49 @@ export default function Account() {
       } finally {
         setLoading(false);
       }
+      
+    };
+
+    fetchData();
+  }, []);
+
+  // 👇 API 데이터 불러오기 useEffect 안쪽
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [cashResult] = await Promise.all([getCashBalance()]);
+        setCash(cashResult);
+
+        // ✅ 더미 주식 데이터
+        const dummyStocks = [
+          {
+            ticker: "005930",
+            name: "삼성전자",
+            quantity: 10,
+            averagePurchasePrice: 70000,
+            currentPrice: 72000,
+            evaluationAmount: 720000,
+            returnRate: 2.85,
+          },
+          {
+            ticker: "000660",
+            name: "SK하이닉스",
+            quantity: 5,
+            averagePurchasePrice: 120000,
+            currentPrice: 110000,
+            evaluationAmount: 550000,
+            returnRate: -8.33,
+          },
+        ];
+
+        // 👇 실제로는 getPortfolio() 같은 API 결과를 사용
+        setStocks(dummyStocks);
+
+      } catch (err: any) {
+        setError(err.message || "데이터를 불러오는 데 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();

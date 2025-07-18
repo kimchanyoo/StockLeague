@@ -1,48 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TabMenu from "@/app/components/utills/TabMenu";
 import OrderHistoryItem from "@/app/components/stock/OrderHistoryItem";
+import { getMyOrder } from "@/lib/api/user";
 import "./order-history.css";
-
-// 더미 데이터 생성
-const dummyStockData = Array.from({ length: 100 }, (_, i) => ({
-  code: `STK${i + 1}`,
-  name: `종목 ${i + 1}`,
-  orderAmount: 100000 + i * 1000,
-  orderPrice: 10000 + i * 10,
-  orderType: (i % 2 === 0 ? "매수" : "매도") as "매수" | "매도",
-  orderStatus: i % 3 === 0 ? "체결" : "미체결",
-  orderQuantity: 10 + i,
-  executedQuantity: i % 3 === 0 ? 10 + i : 0,
-  unexecutedQuantity: i % 3 === 0 ? 0 : 10 + i,
-  averageExecutedPrice: i % 3 === 0 ? 10000 + i * 10 : 0,
-  createdAt: `2024-04-${(i % 30 + 1).toString().padStart(2, "0")} 14:00`,
-}));
 
 export default function OrderHistory() {
   const [activeTab, setActiveTab] = useState("전체");
   const [currentPage, setCurrentPage] = useState(1);
-  const tabList = ["전체", "체결", "미체결"];
-
+  const [orderData, setOrderData] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
   const maxPageButtons = 10;
 
-  // 필터링된 데이터
-  const filteredData = dummyStockData.filter((item) => {
+  const tabList = ["전체", "체결", "미체결"];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getMyOrder(currentPage, itemsPerPage);
+        setOrderData(res.contents || []);
+        setTotalPages(res.totalPages || 1);
+      } catch (err) {
+        console.error("주문 내역 조회 실패", err);
+      }
+    };
+    fetchData();
+  }, [currentPage]);
+
+  const filteredData = orderData.filter((item) => {
     if (activeTab === "전체") return true;
-    return item.orderStatus === activeTab;
+    if (activeTab === "체결")
+      return item.orderStatus === "EXECUTED" || item.orderStatus === "CANCELED_AFTER_PARTIAL";
+    if (activeTab === "미체결")
+      return item.orderStatus === "WAITING" || item.orderStatus === "PARTIALLY_EXECUTED";
+    return true;
   });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-  // 현재 페이지 데이터
-  const currentPageData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // 페이지 번호 그룹 계산
   const startPage = Math.floor((currentPage - 1) / maxPageButtons) * maxPageButtons + 1;
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
@@ -75,8 +70,8 @@ export default function OrderHistory() {
         </div>
 
         <div className="orderHistoryList">
-          {currentPageData.map((stock) => (
-            <OrderHistoryItem key={stock.code} {...stock} />
+          {filteredData.map((stock) => (
+            <OrderHistoryItem key={stock.orderId} {...stock} />
           ))}
         </div>
       </div>
@@ -103,3 +98,4 @@ export default function OrderHistory() {
     </div>
   );
 }
+

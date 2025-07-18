@@ -1,54 +1,113 @@
 "use client";
 
-import React from "react";
+import { useState, useEffect } from "react";
+import { getDetailMyOrder, OrderItem, OrderExecution, GetDetailMyOrderResponse } from "@/lib/api/user";
 import styles from "@/app/styles/components/stock/OrderHistoryItem.module.css";
 
-type OrderHistoryItemProps = {
-  code: string;
-  name: string;
-  orderAmount: number;
-  orderPrice: number;
-  orderType: "매수" | "매도";
-  orderStatus: string;
-  orderQuantity: number;
-  executedQuantity: number;
-  unexecutedQuantity: number;
-  averageExecutedPrice: number;
-  createdAt: string;
+type OrderHistoryItemProps = OrderItem;
+
+const translateOrderType = (type: string): string => {
+  return type === "BUY" ? "매수" : "매도";
+};
+
+const translateOrderStatus = (status: string): string => {
+  switch (status) {
+    case "WAITING":
+      return "미체결";
+    case "PARTIALLY_EXECUTED":
+      return "부분체결";
+    case "EXECUTED":
+      return "체결";
+    case "CANCELED":
+      return "취소";
+    case "CANCELED_AFTER_PARTIAL":
+      return "부분체결 후 취소";
+    case "EXPIRED":
+      return "만료";
+    case "FAILED":
+      return "실패";
+    default:
+      return status;
+  }
 };
 
 const OrderHistoryItem: React.FC<OrderHistoryItemProps> = ({
-  code,
-  name,
-  orderAmount,
-  orderPrice,
+  orderId,
+  stockTicker,
+  stockName,
   orderType,
   orderStatus,
-  orderQuantity,
-  executedQuantity,
-  unexecutedQuantity,
+  orderPrice,
+  orderAmount,
+  executedAmount,
+  remainingAmount,
   averageExecutedPrice,
   createdAt,
 }) => {
-  const typeClass =
-    orderType === "매수" ? styles.orderType_buy : styles.orderType_sell;
+  const [open, setOpen] = useState(false);
+  const [executions, setExecutions] = useState<OrderExecution[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const typeClass = orderType === "BUY" ? styles.orderType_buy : styles.orderType_sell;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchDetail = async () => {
+      setLoading(true);
+      try {
+        const res: GetDetailMyOrderResponse = await getDetailMyOrder(orderId);
+        if (res.success) {
+          setExecutions(res.executions);
+        }
+      } catch (error) {
+        console.error("세부 주문 내역 조회 실패", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetail();
+  }, [open]);
 
   return (
-    <div className={styles.orderHistoryItem} data-code={code}>
-      <div>{name}</div>
-      <div>{orderAmount.toLocaleString()}</div>
-      <div>{orderPrice.toLocaleString()}</div>
-      <div className={typeClass}>{orderType}</div>
-      <div>{orderStatus}</div>
-      <div>{orderQuantity}</div>
-      <div>{executedQuantity}</div>
-      <div>{unexecutedQuantity}</div>
-      <div>
-        {averageExecutedPrice === 0
-          ? "-"
-          : averageExecutedPrice.toLocaleString()}
+    <div className={styles.orderHistoryItemWrapper}>
+      <div
+        className={styles.orderHistoryItem}
+        onClick={() => setOpen((prev) => !prev)}
+        data-order-id={orderId}
+      >
+        <div>{stockName}</div>
+        <div>{orderAmount.toLocaleString()}</div>
+        <div>{orderPrice.toLocaleString()}</div>
+        <div className={typeClass}>{translateOrderType(orderType)}</div>
+        <div>{translateOrderStatus(orderStatus)}</div>
+        <div>{(executedAmount + remainingAmount).toLocaleString()}</div>
+        <div>{executedAmount.toLocaleString()}</div>
+        <div>{remainingAmount.toLocaleString()}</div>
+        <div>
+          {averageExecutedPrice === 0 ? "-" : averageExecutedPrice.toLocaleString()}
+        </div>
+        <div className={styles.createdAt}>{new Date(createdAt).toLocaleString()}</div>
       </div>
-      <div className={styles.createdAt}>{createdAt}</div>
+
+      {open && (
+        <div className={styles.orderDetailBox}>
+          {loading ? (
+            <div>로딩 중...</div>
+          ) : executions.length === 0 ? (
+            <div>체결 내역 없음</div>
+          ) : (
+            executions.map((exe) => (
+              <div key={exe.orderExecutionId} className={styles.detailRow}>
+                <div><strong>체결 단가:</strong> {exe.executedPrice.toLocaleString()}원</div>
+                <div><strong>체결 수량:</strong> {exe.executedAmount}주</div>
+                <div><strong>체결 시간:</strong> {new Date(exe.executedAt).toLocaleString()}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };
