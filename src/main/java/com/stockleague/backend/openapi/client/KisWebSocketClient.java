@@ -54,6 +54,7 @@ public class KisWebSocketClient {
     @Scheduled(cron = "20 59 8 * * MON-FRI")
     public void scheduledConnect() {
         log.info("[스케줄러] 오전 8:59 WebSocket 연결 시작");
+        disconnect();
         connect();
     }
 
@@ -121,12 +122,19 @@ public class KisWebSocketClient {
      * WebSocket 연결 종료
      */
     public void disconnect() {
-        if (webSocket != null && isConnected) {
-            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Market closed");
-            log.info("WebSocket 정상 종료 요청 전송");
-            isConnected = false;
-            webSocket = null;
+        if (webSocket != null) {
+            try {
+                webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Market closed");
+                log.info("WebSocket 정상 종료 요청 전송");
+            } catch (Exception e) {
+                log.warn("WebSocket 종료 중 예외", e);
+            }
+        } else {
+            log.info("WebSocket 객체가 null이므로 종료 요청 생략");
         }
+
+        isConnected = false;
+        webSocket = null;
     }
 
     /**
