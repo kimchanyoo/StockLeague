@@ -17,7 +17,7 @@ const MyOrder = ({ activeTab }: MyOrderProps) => {
   const fetchOrders = useCallback(async () => {
     try {
       const res = await getMyOrder(page, 20); // 20개씩 불러오기
-      const newOrders = res.contents;
+      const newOrders = res.orders;
 
       setOrders((prev) => [...prev, ...newOrders]);
       setHasMore(page < res.totalPages);

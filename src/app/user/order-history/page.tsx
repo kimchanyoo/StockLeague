@@ -20,7 +20,7 @@ export default function OrderHistory() {
     const fetchData = async () => {
       try {
         const res = await getMyOrder(currentPage, itemsPerPage);
-        setOrderData(res.contents || []);
+        setOrderData(res.orders || []);
         setTotalPages(res.totalPages || 1);
       } catch (err) {
         console.error("주문 내역 조회 실패", err);

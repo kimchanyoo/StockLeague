@@ -55,9 +55,11 @@ const OrderHistoryItem: React.FC<OrderHistoryItemProps> = ({
 
     const fetchDetail = async () => {
       setLoading(true);
+      console.log("getDetailMyOrder 호출됨");
       try {
         const res: GetDetailMyOrderResponse = await getDetailMyOrder(orderId);
         if (res.success) {
+          console.log("세부 주문 내역 응답", res.executions);
           setExecutions(res.executions);
         }
       } catch (error) {

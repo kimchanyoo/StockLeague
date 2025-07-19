@@ -50,10 +50,10 @@ export interface OrderItem {
 // 전체 응답 타입
 export interface OrderListResponse {
   success: boolean;
-  contents: OrderItem[];
+  orders: OrderItem[];
   page: number;
   size: number;
-  totalElements: number;
+  totalCount: number;
   totalPages: number;
 }
 
