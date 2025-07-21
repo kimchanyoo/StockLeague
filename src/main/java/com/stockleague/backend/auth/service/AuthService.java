@@ -114,7 +114,6 @@ public class AuthService {
                     .user(user)
                     .userId(user.getId())
                     .cashBalance(BigDecimal.valueOf(10_000_000L))
-                    .totalValuation(BigDecimal.valueOf(10_000_000L))
                     .updatedAt(LocalDateTime.now())
                     .build();
 

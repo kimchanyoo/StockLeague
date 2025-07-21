@@ -16,10 +16,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -44,6 +46,9 @@ public class UserStock {
 
     @Column(name = "locked_quantity", nullable = false)
     private BigDecimal lockedQuantity;
+
+    @Column(name = "avg_buy_price", nullable = false, precision = 20, scale = 2)
+    private BigDecimal avgBuyPrice;
 
     /**
      * 매도 주문 생성 시 동결: 보유 수량에서 주문 수량만큼 차감 후 locked로 이동

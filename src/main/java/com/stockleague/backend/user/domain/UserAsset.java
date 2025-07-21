@@ -35,9 +35,6 @@ public class UserAsset {
     @Column(name = "cash_balance", nullable = false)
     private BigDecimal cashBalance;
 
-    @Column(name = "total_valuation", nullable = false)
-    private BigDecimal totalValuation;
-
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
@@ -48,9 +45,5 @@ public class UserAsset {
 
     public void subtractCash(BigDecimal amount) {
         this.cashBalance = this.cashBalance.subtract(amount);
-    }
-
-    public void updateValuation(BigDecimal totalValuation) {
-        this.totalValuation = totalValuation;
     }
 }

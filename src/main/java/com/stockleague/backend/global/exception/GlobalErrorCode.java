@@ -71,7 +71,10 @@ public enum GlobalErrorCode {
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 공지사항을 찾을 수 없습니다."),
 
     // === 관심 종목 ===
-    WATCHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관심 종목을 찾을 수 없습니다.");
+    WATCHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관심 종목을 찾을 수 없습니다."),
+
+    // === Redis ===
+    REDIS_DESERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 데이터 역직렬화에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;

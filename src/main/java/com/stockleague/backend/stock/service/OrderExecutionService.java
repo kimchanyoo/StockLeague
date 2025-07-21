@@ -24,6 +24,7 @@ import com.stockleague.backend.user.domain.UserStock;
 import com.stockleague.backend.user.repository.UserRepository;
 import com.stockleague.backend.user.repository.UserStockRepository;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -108,7 +109,7 @@ public class OrderExecutionService {
             orderExecutionRepository.saveAll(executions);
             order.updateExecutionInfo(executedTotal, totalPrice);
 
-            applyBuyStock(order.getUser(), order.getStock(), executedTotal);
+            applyBuyStock(order.getUser(), order.getStock(), executedTotal, order.getAverageExecutedPrice());
 
             if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) == 0) {
                 finalizeReservedCash(order, totalPrice);
@@ -211,8 +212,8 @@ public class OrderExecutionService {
      *     <li>환불 여부는 ReservedCash 엔티티의 refunded 필드를 true로 설정합니다.</li>
      * </ul>
      *
-     * @param order        체결된 주문
-     * @param actualCost   실제 체결 금액
+     * @param order      체결된 주문
+     * @param actualCost 실제 체결 금액
      * @throws GlobalException RESERVED_CASH_NOT_FOUND - 예약 현금 정보가 없는 경우
      */
     private void finalizeReservedCash(Order order, BigDecimal actualCost) {
@@ -254,15 +255,17 @@ public class OrderExecutionService {
     /**
      * 매수 체결 시, 유저의 보유 주식 정보를 갱신합니다.
      * <ul>
-     *     <li>UserStock이 없으면 새로 생성합니다.</li>
-     *     <li>기존에 보유하고 있으면 수량을 증가시킵니다.</li>
+     *     <li>UserStock이 없으면 새로 생성하며 평균 단가는 체결 단가로 설정됩니다.</li>
+     *     <li>기존에 보유하고 있으면 수량과 평균 단가를 갱신합니다.</li>
+     *     <li>평균 단가는 가중 평균 방식으로 계산됩니다.</li>
      * </ul>
      *
-     * @param user   사용자
-     * @param stock  종목
-     * @param amount 매수 체결 수량
+     * @param user          사용자
+     * @param stock         종목
+     * @param amount        매수 체결 수량
+     * @param executedPrice 매수 체결 단가
      */
-    private void applyBuyStock(User user, Stock stock, BigDecimal amount) {
+    private void applyBuyStock(User user, Stock stock, BigDecimal amount, BigDecimal executedPrice) {
         UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
                 .orElse(null);
 
@@ -272,9 +275,20 @@ public class OrderExecutionService {
                     .stock(stock)
                     .quantity(amount)
                     .lockedQuantity(BigDecimal.ZERO)
+                    .avgBuyPrice(executedPrice)
                     .build();
         } else {
+            BigDecimal currentQty = userStock.getQuantity();
+            BigDecimal currentAvgPrice = userStock.getAvgBuyPrice();
+
+            BigDecimal totalQty = currentQty.add(amount);
+            BigDecimal totalValuation = currentAvgPrice.multiply(currentQty)
+                    .add(executedPrice.multiply(amount));
+
+            BigDecimal newAvgPrice = totalValuation.divide(totalQty, 2, RoundingMode.HALF_UP);
+
             userStock.increaseQuantity(amount);
+            userStock.setAvgBuyPrice(newAvgPrice);
         }
 
         userStockRepository.save(userStock);
@@ -283,18 +297,17 @@ public class OrderExecutionService {
     /**
      * 사용자의 개별 주문 상세 정보를 조회합니다.
      * <p>
-     * 요청한 사용자 본인의 주문에 대해서만 상세 정보를 반환하며,
-     * 주문이 존재하지 않거나 권한이 없는 경우 예외를 발생시킵니다.
+     * 요청한 사용자 본인의 주문에 대해서만 상세 정보를 반환하며, 주문이 존재하지 않거나 권한이 없는 경우 예외를 발생시킵니다.
      * </p>
      *
-     * @param userId 조회 대상 사용자 ID
+     * @param userId  조회 대상 사용자 ID
      * @param orderId 조회 대상 주문 ID
      * @return 사용자의 주문 내역 리스트와 페이지 정보가 포함된 응답 DTO {@link OrderSummaryDto}
      * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
-     *          <ul>
-     *              <li>{@code ORDER_NOT_FOUND} - 주문이 존재하지 않는 경우</li>
-     *              <li>{@code UNAUTHORIZED_ORDER_ACCESS} - 다른 사용자의 주문을 취소하려는 경우</li>
-     *          </ul>
+     *                         <ul>
+     *                             <li>{@code ORDER_NOT_FOUND} - 주문이 존재하지 않는 경우</li>
+     *                             <li>{@code UNAUTHORIZED_ORDER_ACCESS} - 다른 사용자의 주문을 취소하려는 경우</li>
+     *                         </ul>
      */
     @Transactional(readOnly = true)
     public OrderExecutionListResponseDto getOrderExecutions(Long userId, Long orderId) {
@@ -317,8 +330,7 @@ public class OrderExecutionService {
     /**
      * 사용자의 전체 체결 내역을 페이지 단위로 조회합니다.
      * <p>
-     * 체결 내역은 체결 시각(executedAt) 기준 내림차순으로 정렬되며,
-     * 매수(BUY), 매도(SELL) 구분 없이 모든 체결 내역이 포함됩니다.
+     * 체결 내역은 체결 시각(executedAt) 기준 내림차순으로 정렬되며, 매수(BUY), 매도(SELL) 구분 없이 모든 체결 내역이 포함됩니다.
      * </p>
      *
      * @param userId 조회 대상 사용자 ID
@@ -326,10 +338,10 @@ public class OrderExecutionService {
      * @param size   페이지당 항목 수
      * @return 사용자의 체결 내역 리스트와 페이지 정보가 포함된 응답 DTO {@link ExecutionHistoryResponseDto}
      * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
-     *          <ul>
-     *              <li>{@code INVALID_PAGINATION} - 페이지 번호 또는 크기가 1 미만인 경우</li>
-     *              <li>{@code USER_NOT_FOUND} - 사용자가 존재하지 않는 경우</li>
-     *          </ul>
+     *                         <ul>
+     *                             <li>{@code INVALID_PAGINATION} - 페이지 번호 또는 크기가 1 미만인 경우</li>
+     *                             <li>{@code USER_NOT_FOUND} - 사용자가 존재하지 않는 경우</li>
+     *                         </ul>
      */
     @Transactional(readOnly = true)
     public ExecutionHistoryResponseDto listUserExecutions(Long userId, int page, int size) {
@@ -361,9 +373,8 @@ public class OrderExecutionService {
     /**
      * 사용자의 전체 미체결 주문 내역을 페이지 단위로 조회합니다.
      * <p>
-     * 미체결 주문은 상태가 {@code WAITING} 또는 {@code PARTIALLY_EXECUTED}인 주문으로 정의됩니다.
-     * 결과는 주문 생성 시각({@code createdAt}) 기준 내림차순으로 정렬되어 반환됩니다.
-     * 매수(BUY), 매도(SELL) 구분 없이 모든 미체결 주문이 포함됩니다.
+     * 미체결 주문은 상태가 {@code WAITING} 또는 {@code PARTIALLY_EXECUTED}인 주문으로 정의됩니다. 결과는 주문 생성 시각({@code createdAt}) 기준 내림차순으로
+     * 정렬되어 반환됩니다. 매수(BUY), 매도(SELL) 구분 없이 모든 미체결 주문이 포함됩니다.
      * </p>
      *
      * @param userId 조회 대상 사용자 ID
@@ -371,10 +382,10 @@ public class OrderExecutionService {
      * @param size   페이지당 항목 수
      * @return 사용자의 미체결 주문 리스트와 페이지 정보가 포함된 응답 DTO {@link UnexecutedOrderListResponseDto}
      * @throws GlobalException 다음과 같은 예외가 발생할 수 있습니다:
-     *          <ul>
-     *              <li>{@code INVALID_PAGINATION} - 페이지 번호 또는 크기가 1 미만인 경우</li>
-     *              <li>{@code USER_NOT_FOUND} - 사용자가 존재하지 않는 경우</li>
-     *          </ul>
+     *                         <ul>
+     *                             <li>{@code INVALID_PAGINATION} - 페이지 번호 또는 크기가 1 미만인 경우</li>
+     *                             <li>{@code USER_NOT_FOUND} - 사용자가 존재하지 않는 경우</li>
+     *                         </ul>
      */
     @Transactional(readOnly = true)
     public UnexecutedOrderListResponseDto listUnexecutedOrders(Long userId, int page, int size) {
