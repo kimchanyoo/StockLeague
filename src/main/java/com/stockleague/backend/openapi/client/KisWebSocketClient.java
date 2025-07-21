@@ -2,7 +2,7 @@ package com.stockleague.backend.openapi.client;
 
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
 import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
-import com.stockleague.backend.kafka.producer.StockPriceProducer;
+import com.stockleague.backend.infra.redis.StockPriceRedisService;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
@@ -33,7 +33,7 @@ import java.util.concurrent.CompletionStage;
 @RequiredArgsConstructor
 public class KisWebSocketClient {
 
-    private final StockPriceProducer stockPriceProducer;
+    private final StockPriceRedisService stockPriceRedisService;
     private final OpenApiTokenRedisService openApiTokenRedisService;
     private final StockOrderBookRedisService stockOrderBookRedisService;
     private final KisWebSocketResponseParser parser;
@@ -249,7 +249,7 @@ public class KisWebSocketClient {
             if (trId.startsWith("H0STCNT0")) {
                 List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
                 for (StockPriceDto dto : dtos) {
-                    stockPriceProducer.send(dto);
+                    stockPriceRedisService.save(dto);
                     messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
                 }
             } else if (trId.startsWith("H0STASP0")) {
