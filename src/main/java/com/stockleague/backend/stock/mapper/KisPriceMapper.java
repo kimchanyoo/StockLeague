@@ -19,7 +19,8 @@ public class KisPriceMapper {
      * @param response KIS WebSocket 실시간 시세 응답 DTO
      * @return 변환된 {@link StockPriceDto} 객체
      */
-    public StockPriceDto toStockPriceDto(KisPriceWebSocketResponseDto response, LocalDateTime dateTime) {
+    public StockPriceDto toStockPriceDto(
+            KisPriceWebSocketResponseDto response, LocalDateTime dateTime, boolean isMarketOpen) {
         KisPriceWebSocketResponseDto.Header header = response.getHeader();
         KisPriceWebSocketResponseDto.Body body = response.getBody();
 
@@ -34,7 +35,8 @@ public class KisPriceMapper {
                 parseInt(body.getPrdy_vrss()),
                 parseDouble(body.getPrdy_ctrt()),
                 parseInt(body.getPrdy_vrss_sign()),
-                parseLong(body.getAcml_vol())
+                parseLong(body.getAcml_vol()),
+                isMarketOpen
         );
     }
 

@@ -37,5 +37,25 @@ public record StockPriceDto(
         int changeSign,
 
         @Schema(description = "누적 거래량", example = "14322098")
-        long accumulatedVolume
-) {}
+        long accumulatedVolume,
+
+        @Schema(description = "현재 장이 열려 있는지 여부", example = "true")
+        boolean isMarketOpen
+) {
+        public static StockPriceDto from(StockPriceDto dto, boolean isMarketOpen) {
+                return new StockPriceDto(
+                        dto.ticker,
+                        dto.datetime,
+                        dto.openPrice,
+                        dto.highPrice,
+                        dto.lowPrice,
+                        dto.closePrice,
+                        dto.currentPrice,
+                        dto.priceChange,
+                        dto.pricePercent,
+                        dto.changeSign,
+                        dto.accumulatedVolume,
+                        isMarketOpen
+                );
+        }
+}

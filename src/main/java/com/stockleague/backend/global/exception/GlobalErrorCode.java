@@ -47,6 +47,7 @@ public enum GlobalErrorCode {
     STOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 종목을 찾을 수 없습니다."),
     INVALID_MARKET_TYPE(HttpStatus.BAD_REQUEST, "잘못된 시장 유형이 입력되었습니다."),
     ORDERBOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "호가를 찾을 수 없습니다."),
+    STOCK_PRICE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 종목의 시세 정보를 찾을 수 없습니다."),
 
     // === 댓글/신고 ===
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
