@@ -16,6 +16,7 @@ export default function Trade() {
   const [activeTab, setActiveTab] = useState<"chart" | "community">("chart");
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
   
   // 대비 계산
   const diff = selectedStock && selectedStock.currentPrice != null && selectedStock.prevPrice != null
@@ -100,7 +101,7 @@ export default function Trade() {
             <h3>거래대금 얼마</h3>
           </div>
         </div>
-        {activeTab === "chart" ? (<StockChart activeTab={activeTab} setActiveTab={setActiveTab} ticker={selectedStock?.stockTicker ?? ""}/>) : (<Community ticker={selectedStock?.stockTicker ?? ""}/>)}
+        {activeTab === "chart" ? (<StockChart activeTab={activeTab} setActiveTab={setActiveTab} ticker={selectedStock?.stockTicker ?? ""} onCurrentPriceChange={setCurrentPrice}/>) : (<Community ticker={selectedStock?.stockTicker ?? ""}/>)}
       </div>
       
       <div className="stockOrder_section">
@@ -114,7 +115,7 @@ export default function Trade() {
         <div className={`${!isLoggedIn ? "blur" : ""}`}>
           <StockOrder
             stockName={selectedStock?.stockName ?? ""}
-            currentPrice={selectedStock?.currentPrice ?? 0}
+            currentPrice={currentPrice}
             ticker={selectedStock?.stockTicker ?? ""}
           />
         </div>

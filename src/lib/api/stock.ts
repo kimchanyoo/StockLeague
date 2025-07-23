@@ -58,6 +58,21 @@ export type Interval =
   | "1m" | "3m" | "5m" | "10m" | "15m" | "30m" | "60m"
   | "d" | "w" | "m" | "y";
 
+// 실시간 봉 데이터 타입
+export interface RealTimeCandleData {
+  ticker: string;
+  dateTime: string; // ISO string or yyyy-MM-dd
+  openPrice: number;
+  highPrice: number;
+  lowPrice: number;
+  closePrice: number;
+  currentPrice: number;
+  PriceChange: number;
+  pricePercent: number;
+  changeSign: number;
+  accumulatedVolume: number;
+}
+
 // 호가 데이터 타입
 export interface OrderbookData {
   ticker: string;

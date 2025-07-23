@@ -8,7 +8,7 @@ import MovingAverageSelector from "./MovingAverageSelector";
 import DeleteIcon from '@mui/icons-material/Delete';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { IconButton, Tooltip } from '@mui/material';
-import { getCandleData, CandleData, Interval } from '@/lib/api/stock';
+import { getCandleData, CandleData, Interval, RealTimeCandleData } from '@/lib/api/stock';
 import { useAuth } from "@/context/AuthContext";
 import { Client, IMessage } from "@stomp/stompjs";
 
@@ -39,12 +39,13 @@ type Props = {
   activeTab: 'chart' | 'community';
   setActiveTab: (tab: 'chart' | 'community') => void;
   ticker: string;
+  onCurrentPriceChange?: (price: number) => void;
 };
 
 type Point = { time: Time; price: number };
 
 
-const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
+const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurrentPriceChange }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -60,6 +61,9 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
   const lastRangeFrom = useRef<number | null>(null);
 
   const [candles, setCandles] = useState<CandleData[]>([]);
+  const [realTimeCandle, setRealTimeCandle] = useState<RealTimeCandleData | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+
   const [lines, setLines] = useState<Point[][]>([]);
   const [hoverPreviewLine, setHoverPreviewLine] = useState<Point[] | null>(null);
 
@@ -88,28 +92,21 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker }) => {
       reconnectDelay: 15_000,
       heartbeatIncoming: 10_000,
       heartbeatOutgoing: 10_000,
+      
 
       onConnect: () => {
         client.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
           try {
-            const data = JSON.parse(message.body) as CandleData;
-            const incomingTime = new Date(data.dateTime).getTime();
+            const data = JSON.parse(message.body) as RealTimeCandleData;
             
-            setCandles((prev) => {
-              if (prev.length === 0) return [data];
-              const last = prev[prev.length - 1];
-              const lastTime = new Date(last.dateTime).getTime();
+            if (typeof data.currentPrice === 'number') {
+              setCurrentPrice(data.currentPrice);
+              onCurrentPriceChange?.(data.currentPrice);
+            }
+            
+            
+            setRealTimeCandle(data);
 
-              if (incomingTime === lastTime) {
-                // 마지막 봉 갱신
-                return [...prev.slice(0, -1), data];
-              } else if (incomingTime > lastTime) {
-                // 새로운 봉 추가
-                return [...prev, data];
-              } else {
-                return prev;
-              }
-            });
           } catch (err) {
             console.error("실시간 데이터 처리 오류:", err);
           }
