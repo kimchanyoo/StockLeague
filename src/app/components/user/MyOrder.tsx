@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import styles from "@/app/styles/components/user/MyOrder.module.css";
-import { getMyOrder, cancelOrder } from "@/lib/api/user";
+import { getAllMyExecutions, getUnexecutedOrders, cancelOrder } from "@/lib/api/user";
 
 interface MyOrderProps {
   activeTab: string;
@@ -16,15 +16,33 @@ const MyOrder = ({ activeTab }: MyOrderProps) => {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await getMyOrder(page, 20); // 20개씩 불러오기
-      const newOrders = res.orders;
+      if (activeTab === "체결 내역") {
+        const res = await getAllMyExecutions(page, 20);
+        const newOrders = res?.executions;
 
-      setOrders((prev) => [...prev, ...newOrders]);
-      setHasMore(page < res.totalPages);
+        if (!Array.isArray(newOrders)) {
+          console.error("❌ 체결 내역 응답이 배열이 아닙니다:", res);
+          return;
+        }
+
+        setOrders((prev) => [...prev, ...newOrders]);
+        setHasMore(page < res.totalPage);
+      } else {
+        const res = await getUnexecutedOrders(page, 20);
+        const newOrders = res?.unexecutedOrders;
+
+        if (!Array.isArray(newOrders)) {
+          console.error("❌ 미체결 내역 응답이 배열이 아닙니다:", res);
+          return;
+        }
+
+        setOrders((prev) => [...prev, ...newOrders]);
+        setHasMore(page < res.totalPage);
+      }
     } catch (err) {
-      console.error("주문 내역 불러오기 실패", err);
+      console.error("❌ 주문 내역 불러오기 실패:", err);
     }
-  }, [page]);
+  }, [page, activeTab]);
 
   useEffect(() => {
     fetchOrders();

@@ -1,68 +1,50 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./account.css";
 import Portfolio from "@/app/components/user/Portfolio";
-import { getCashBalance } from "@/lib/api/user"
-// import { getPortfolio } from "@/lib/api/user"
+import { getUserAssetValuation } from "@/lib/api/user"
+
+interface FormattedStock {
+  ticker: string;
+  name: string;
+  quantity: number;
+  averagePurchasePrice: number;
+  currentPrice: number;
+  evaluationAmount: number;
+  profit: number;
+  returnRate: number;
+}
+
 export default function Account() {
   const [cash, setCash] = useState<number>(0);
-  const [stocks, setStocks] = useState<any[]>([]);
+  const [stocks, setStocks] = useState<FormattedStock[]>([]);
+  const [investingMoney, setInvestingMoney] = useState<number>(0);
+  const [totalAssets, setTotalAssets] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // API 데이터 불러오기
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [cashResult, ] = await Promise.all([
-          getCashBalance(),
-        ]);
+        const res = await getUserAssetValuation();
 
-        setCash(cashResult);
-      } catch (err: any) {
-        setError(err.message || "데이터를 불러오는 데 실패했습니다.");
-      } finally {
-        setLoading(false);
-      }
-      
-    };
+        setCash(Number(res.cashBalance));
+        setInvestingMoney(Number(res.stockValuation));
+        setTotalAssets(Number(res.totalAsset));
 
-    fetchData();
-  }, []);
+        const formattedStocks = res.stocks.map((stock) => ({
+          ticker: stock.ticker,
+          name: stock.stockName,
+          quantity: Number(stock.quantity),
+          averagePurchasePrice: Number(stock.avgBuyPrice),
+          currentPrice: Number(stock.currentPrice),
+          evaluationAmount: Number(stock.valuation),
+          profit: Number(stock.profit),
+          returnRate: Number(stock.profitRate),
+        }));
 
-  // 👇 API 데이터 불러오기 useEffect 안쪽
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [cashResult] = await Promise.all([getCashBalance()]);
-        setCash(cashResult);
-
-        // ✅ 더미 주식 데이터
-        const dummyStocks = [
-          {
-            ticker: "005930",
-            name: "삼성전자",
-            quantity: 10,
-            averagePurchasePrice: 70000,
-            currentPrice: 72000,
-            evaluationAmount: 720000,
-            returnRate: 2.85,
-          },
-          {
-            ticker: "000660",
-            name: "SK하이닉스",
-            quantity: 5,
-            averagePurchasePrice: 120000,
-            currentPrice: 110000,
-            evaluationAmount: 550000,
-            returnRate: -8.33,
-          },
-        ];
-
-        // 👇 실제로는 getPortfolio() 같은 API 결과를 사용
-        setStocks(dummyStocks);
-
+        setStocks(formattedStocks);
       } catch (err: any) {
         setError(err.message || "데이터를 불러오는 데 실패했습니다.");
       } finally {
@@ -72,16 +54,6 @@ export default function Account() {
 
     fetchData();
   }, []);
-
-  // 투자 중인 금액: 모든 종목의 평가금액 합
-  const investingMoney = useMemo(() => {
-    return stocks.reduce((acc, stock) => acc + stock.evaluationAmount, 0);
-  }, [stocks]);
-
-  // 총 보유 자산 = 투자 중 + 주문 가능
-  const totalAssets = useMemo(() => {
-    return cash + investingMoney;
-  }, [cash, investingMoney]);
 
   if (loading) return <p>불러오는 중입니다...</p>;
   if (error) return <p>❌ {error}</p>;
@@ -113,7 +85,7 @@ export default function Account() {
           <div className="portfolio">
             <h2>보유자산 포트폴리오</h2>
             <div className="graph">
-              {/* <Portfolio /> */}
+              <Portfolio /> 
             </div>
           </div>
         </div>
