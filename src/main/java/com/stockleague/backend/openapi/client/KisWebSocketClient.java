@@ -1,5 +1,7 @@
 package com.stockleague.backend.openapi.client;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
+
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
 import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
 import com.stockleague.backend.infra.redis.StockPriceRedisService;
@@ -7,9 +9,6 @@ import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +73,7 @@ public class KisWebSocketClient {
     public void onApplicationReady() {
         log.info("[WebSocket] 서버 초기화 - 실시간 연결 준비");
 
-        if (isMarketTime()) {
+        if (isMarketOpen()) {
             connect();
         } else {
             log.info("[WebSocket] 장시간 외 - 초기 연결 생략");
@@ -262,19 +261,5 @@ public class KisWebSocketClient {
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
         }
-    }
-
-    /**
-     * 현재 시간이 장중인지 여부 확인 (평일 9:00~15:30)
-     */
-    private boolean isMarketTime() {
-        LocalDateTime now = LocalDateTime.now();
-        DayOfWeek day = now.getDayOfWeek();
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-            return false;
-        }
-
-        LocalTime time = now.toLocalTime();
-        return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
     }
 }

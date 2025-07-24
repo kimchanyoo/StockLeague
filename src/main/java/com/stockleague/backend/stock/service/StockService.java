@@ -1,5 +1,7 @@
 package com.stockleague.backend.stock.service;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
+
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.StockPriceRedisService;
@@ -14,9 +16,6 @@ import com.stockleague.backend.stock.repository.StockMonthlyPriceRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.stock.repository.StockWeeklyPriceRepository;
 import com.stockleague.backend.stock.repository.StockYearlyPriceRepository;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -126,24 +125,6 @@ public class StockService {
             throw new GlobalException(GlobalErrorCode.STOCK_PRICE_NOT_FOUND);
         }
 
-        return StockPriceDto.from(dto, isMarketTime());
-    }
-
-    /**
-     * 현재 시간이 주식 시장의 개장 시간(평일 09:00~15:30)인지 여부를 반환합니다.
-     *
-     * <p>토요일, 일요일은 자동으로 장 외 시간으로 간주하며,
-     * 공휴일은 별도 로직이 없으므로 포함되지 않습니다.</p>
-     *
-     * @return {@code true} - 장이 열려 있는 시간대일 경우
-     *         {@code false} - 장이 닫힌 시간대일 경우
-     */
-    private boolean isMarketTime() {
-        LocalDateTime now = LocalDateTime.now();
-        DayOfWeek day = now.getDayOfWeek();
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) return false;
-
-        LocalTime time = now.toLocalTime();
-        return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
+        return StockPriceDto.from(dto, isMarketOpen());
     }
 }

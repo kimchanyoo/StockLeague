@@ -35,7 +35,7 @@ public class AssetSnapshotService {
 
         for (User user : allUsers) {
             try {
-                UserAssetValuationDto live = userAssetService.getLiveAssetValuation(user.getId());
+                UserAssetValuationDto live = userAssetService.getLiveAssetValuation(user.getId(), false);
                 UserAssetSnapshotDto snapshot = UserAssetSnapshotDto.from(live);
 
                 String redisKey = REDIS_KEY_PREFIX + today + ":" + user.getId();

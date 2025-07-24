@@ -1,5 +1,7 @@
 package com.stockleague.backend.stock.scheduler;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketClosed;
+
 import com.stockleague.backend.stock.service.StockDailyPriceService;
 import com.stockleague.backend.stock.service.StockMinutePriceService;
 import com.stockleague.backend.stock.service.StockMonthlyPriceService;
@@ -23,17 +25,11 @@ public class CandleScheduler {
     private final StockMonthlyPriceService stockMonthlyPriceService;
     private final StockYearlyPriceService stockYearlyPriceService;
 
-    private boolean isMarketOpen() {
-        LocalTime now = LocalTime.now();
-        LocalTime marketStart = LocalTime.of(9, 0);
-        LocalTime marketEnd = LocalTime.of(15, 30);
-        return !now.isBefore(marketStart) && !now.isAfter(marketEnd);
-    }
 
     /** 1분봉: 매 분 */
     @Scheduled(cron = "0 * * * * MON-FRI")
     public void generate1Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[1분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(1);
     }
@@ -41,7 +37,7 @@ public class CandleScheduler {
     /** 3분봉: 3분 간격 */
     @Scheduled(cron = "0 */3 * * * MON-FRI")
     public void generate3Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[3분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(3);
     }
@@ -49,7 +45,7 @@ public class CandleScheduler {
     /** 5분봉: 5분 간격 */
     @Scheduled(cron = "0 */5 * * * MON-FRI")
     public void generate5Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[5분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(5);
     }
@@ -57,7 +53,7 @@ public class CandleScheduler {
     /** 10분봉 */
     @Scheduled(cron = "0 */10 * * * MON-FRI")
     public void generate10Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[10분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(10);
     }
@@ -65,7 +61,7 @@ public class CandleScheduler {
     /** 15분봉 */
     @Scheduled(cron = "0 */15 * * * MON-FRI")
     public void generate15Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[15분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(15);
     }
@@ -73,7 +69,7 @@ public class CandleScheduler {
     /** 30분봉 */
     @Scheduled(cron = "0 */30 * * * MON-FRI")
     public void generate30Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[30분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(30);
     }
@@ -81,7 +77,7 @@ public class CandleScheduler {
     /** 60분봉: 매 정시 */
     @Scheduled(cron = "0 0 * * * MON-FRI")
     public void generate60Minute() {
-        if (!isMarketOpen()) return;
+        if (isMarketClosed()) return;
         log.info("[60분봉] 생성 시작");
         stockMinutePriceService.aggregateAndSave(60);
     }

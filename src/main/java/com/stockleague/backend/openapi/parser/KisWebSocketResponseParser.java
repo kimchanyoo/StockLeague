@@ -1,12 +1,12 @@
 package com.stockleague.backend.openapi.parser;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
+
 import com.stockleague.backend.openapi.dto.response.KisPriceWebSocketResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.mapper.KisPriceMapper;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -61,7 +61,7 @@ public class KisWebSocketResponseParser {
                 KisPriceWebSocketResponseDto dto = mapToDto(trId, block);
                 dto.getBody().setStck_bsop_date(dateStr);
 
-                boolean isMarketOpen = isMarketTime();
+                boolean isMarketOpen = isMarketOpen();
 
                 StockPriceDto stockPriceDto = kisPriceMapper.toStockPriceDto(dto, dateTime, isMarketOpen);
                 result.add(stockPriceDto);
@@ -202,14 +202,5 @@ public class KisWebSocketResponseParser {
         public int index() {
             return index;
         }
-    }
-
-    private boolean isMarketTime() {
-        LocalDateTime now = LocalDateTime.now();
-        DayOfWeek day = now.getDayOfWeek();
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) return false;
-
-        LocalTime time = now.toLocalTime();
-        return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
     }
 }

@@ -46,10 +46,11 @@ public class UserAssetController {
                                                 "totalProfit": "10000000.00",
                                                 "totalProfitRate": "6.67",
                                                 "stockValuation": "60000000.00",
+                                                "isMarketOpen": true,
                                                 "stocks": [
                                                     {
                                                         "ticker": "005930",
-                                                        "sockName": "삼성전자",
+                                                        "stockName": "삼성전자",
                                                         "quantity": "100.00",
                                                         "avgBuyPrice": "65000.00",
                                                         "currentPrice": "70000.00",

@@ -160,7 +160,7 @@ public class StockController {
             description = """
                     Redis에 저장된 특정 종목의 최신 시세 정보를 조회합니다.
                     
-                    반환된 응답에는 현재 장이 열려 있는지 여부(`isMarketOpen`)도 포함되며, 
+                    반환된 응답에는 현재 장이 열려 있는지 여부(`isMarketOpen`)도 포함되며,
                     프론트엔드는 이 값을 기준으로 실시간 WebSocket 구독 여부를 판단할 수 있습니다.
                     
                     - isMarketOpen = true → WebSocket 실시간 수신 가능

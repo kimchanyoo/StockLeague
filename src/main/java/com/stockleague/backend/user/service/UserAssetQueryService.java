@@ -1,12 +1,13 @@
 package com.stockleague.backend.user.service;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketClosed;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.user.dto.response.UserAssetSnapshotDto;
 import com.stockleague.backend.user.dto.response.UserAssetValuationDto;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -34,24 +35,18 @@ public class UserAssetQueryService {
      * @return 자산 평가 정보 DTO {@link UserAssetValuationDto}
      */
     public UserAssetValuationDto getUserAssetValuation(Long userId) {
-        if (isMarketClosed()) {
+        boolean marketClosed = isMarketClosed();
+
+        if (marketClosed) {
             UserAssetValuationDto snapshot = getSnapshotFromRedis(userId);
             if (snapshot != null) {
-                return snapshot;
+                return snapshot.toBuilder()
+                        .isMarketOpen(false)
+                        .build();
             }
         }
 
-        return userAssetService.getLiveAssetValuation(userId);
-    }
-
-    /**
-     * 현재 시각이 장 마감 이후인지 여부를 반환합니다.
-     *
-     * @return true: 15시 30분 이후인 경우 (장 마감 이후), false: 장중
-     */
-    private boolean isMarketClosed() {
-        LocalTime now = LocalTime.now();
-        return now.isAfter(LocalTime.of(15, 30));
+        return userAssetService.getLiveAssetValuation(userId, true);
     }
 
     /**

@@ -39,7 +39,7 @@ public class UserAssetService {
      *                         </ul>
      */
     @Transactional(readOnly = true)
-    public UserAssetValuationDto getLiveAssetValuation(Long userId) {
+    public UserAssetValuationDto getLiveAssetValuation(Long userId, boolean isMarketOpen) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 
@@ -72,6 +72,6 @@ public class UserAssetService {
             stockDtos.add(stockValuation);
         }
 
-        return UserAssetValuationDto.of(cash, stockDtos);
+        return UserAssetValuationDto.of(cash, stockDtos, isMarketOpen);
     }
 }

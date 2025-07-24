@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class UserAssetValuationDto {
 
     private BigDecimal cashBalance;
@@ -15,9 +15,10 @@ public class UserAssetValuationDto {
     private BigDecimal totalProfit;
     private BigDecimal totalProfitRate;
     private List<StockValuationDto> stocks;
+    private boolean isMarketOpen;
 
     public static UserAssetValuationDto of(BigDecimal cashBalance,
-                                           List<StockValuationDto> stocks) {
+                                           List<StockValuationDto> stocks, boolean isMarketOpen) {
         BigDecimal stockValuation = stocks.stream()
                 .map(StockValuationDto::getValuation)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -44,6 +45,7 @@ public class UserAssetValuationDto {
                 .totalProfit(totalProfit)
                 .totalProfitRate(totalProfitRate)
                 .stocks(stocks)
+                .isMarketOpen(isMarketOpen)
                 .build();
     }
 }
