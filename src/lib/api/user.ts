@@ -6,6 +6,7 @@ export interface UserAssetValuation {
   totalProfit: string;         // 총 손익
   totalProfitRate: string;     // 총 수익률 (퍼센트, 소수점)
   stockValuation: string;      // 주식 평가금액
+  isMarketOpen: boolean;       // 장 열림 여부
   stocks: StockValuationItem[]; // 보유 종목 리스트
 }
 

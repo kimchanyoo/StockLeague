@@ -133,13 +133,12 @@ export default function Home() {
         <div className={styles.categorie}>
           <h1>종목명</h1>
           <h1>종가</h1>
-          <h1>대비</h1>
-          <h1>등락률</h1>
+          <h1>전일 대비</h1>
+          <h1>금일 등락률</h1>
           <h1>시가</h1>
           <h1>고가</h1>
           <h1>저가</h1>
           <h1>거래량</h1>
-          <h1>시가총액</h1>
         </div>
         <div className={styles.list}>
           {visibleStocks.map((stock) => (
