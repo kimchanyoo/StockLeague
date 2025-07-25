@@ -14,7 +14,6 @@ type StockItemProps = {
   high: number;
   low: number;
   volume: number;
-  marketCap: number;
 };
 
 // 숫자를 'ko-KR' 형식으로 포맷
@@ -38,7 +37,6 @@ export default function StockItem({
   high,
   low,
   volume,
-  marketCap,
 }: StockItemProps) {
   const changeClass =
     change > 0
@@ -58,7 +56,6 @@ export default function StockItem({
         <div>{formatNumber(high)}</div>
         <div>{formatNumber(low)}</div>
         <div>{formatNumber(volume)}</div>
-        <div>{formatNumber(marketCap)}</div>
       </div>
     </Link>
   );

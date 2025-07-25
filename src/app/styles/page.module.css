@@ -179,7 +179,7 @@
 }
 .categorie {
     display: grid;
-    grid-template-columns: repeat(9, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     background-color: #F5F5F5;
     color: #999999;
     border-radius: 10px;

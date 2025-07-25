@@ -7,7 +7,7 @@ import TabMenu from "../utills/TabMenu";
 import RemoveIcon  from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 import { postBuyOrder, postSellOrder, OrderbookData } from "@/lib/api/stock";
-import { getCashBalance } from "@/lib/api/user";
+import { getUserAssetValuation } from "@/lib/api/user";
 import { Client } from "@stomp/stompjs";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-hot-toast";
@@ -38,8 +38,8 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const balance = await getCashBalance();
-        setMyMoney(balance);
+        const balance = await getUserAssetValuation();
+        setMyMoney(Number(balance.cashBalance));
       } catch (err) {
         console.error("보유 현금 조회 실패:", err);
         toast.error("보유 자산 정보를 불러오지 못했습니다.");
