@@ -1,4 +1,3 @@
-import SockJS from "sockjs-client";
 import { Client, IMessage, StompConfig } from "@stomp/stompjs";
 
 export let stompClient: Client | null = null;
@@ -15,7 +14,7 @@ export const connectStomp = (
       reject(new Error("Socket URL is not defined in environment variables."));
       return;
     }
-    console.log("Received accessToken:", accessToken);
+   // console.log("Received accessToken:", accessToken);
 
     const config: StompConfig = {
       webSocketFactory: () => new WebSocket(socketUrl) as any,
@@ -25,7 +24,7 @@ export const connectStomp = (
       reconnectDelay: 5000,
       debug: (str) => console.log("[STOMP DEBUG]", str),
       onConnect: (frame) => {
-        console.log("✅ STOMP 연결 성공:", frame);
+       // console.log("✅ STOMP 연결 성공:", frame);
 
         if (!stompClient) {
           reject(new Error("stompClient is null onConnect"));
@@ -33,10 +32,10 @@ export const connectStomp = (
         }
 
         stompClient.subscribe("/user/queue/notifications", (message: IMessage) => {
-          console.log("subscribe 콜백 진입");
+        //  console.log("subscribe 콜백 진입");
           try {
             const payload = JSON.parse(message.body);
-            console.log("🔔 받은 메시지:", payload);
+           // console.log("🔔 받은 메시지:", payload);
             onMessage(payload);
           } catch (e) {
             console.error("메시지 파싱 실패:", e);
@@ -47,14 +46,14 @@ export const connectStomp = (
         resolve();
       },
       onStompError: (frame) => {
-        console.error("❌ STOMP 에러:", frame);
+        //console.error("❌ STOMP 에러:", frame);
         reject(frame);
       },
       onWebSocketClose: (event) => {
-        console.log("WebSocket 연결 종료:", event);
+      //  console.log("WebSocket 연결 종료:", event);
       },
       onDisconnect: () => {
-        console.log("STOMP 연결 해제");
+       // console.log("STOMP 연결 해제");
       },
     };
 
@@ -77,7 +76,7 @@ export const sendMessage = (destination: string, body: any) => {
       body: JSON.stringify(body),
     });
   } else {
-    console.warn("STOMP 연결되지 않음 - 메시지를 큐에 저장합니다.");
+   // console.warn("STOMP 연결되지 않음 - 메시지를 큐에 저장합니다.");
     messageQueue.push({ destination, body });
   }
 };

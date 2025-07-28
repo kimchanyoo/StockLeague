@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { logout as logoutAPI, fetchUserProfile } from "@/lib/api/auth";
-import { connectStomp, disconnectStomp } from "@/lib/socket";
+import { connectStomp, disconnectStomp } from "@/lib/socket/socket";
 
 type Role = "USER" | "ADMIN";
 
