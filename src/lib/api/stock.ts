@@ -5,9 +5,6 @@ export interface Stock {
   stockTicker: string;
   stockName: string;
   marketType: string;
-  prevPrice?: number; // 임시
-  currentPrice?: number; // 임시 
-  priceChange?: number; // 임시 
 };
 
 export interface GetTopStocksResponse {
@@ -69,7 +66,7 @@ export interface RealTimeCandleData {
   currentPrice: number;
   PriceChange: number;
   pricePercent: number;
-  changeSign: number;
+  changeSign: 1 | 2 | 3;
   accumulatedVolume: number;
 }
 
@@ -105,6 +102,28 @@ export interface SellOrderResponse {
   success: boolean;
   message: string;
   errorCode?: string;
+}
+
+// 실시간 주식 데이터
+export interface StockPriceResponse {
+  ticker: string;
+  datetime: string;
+  openPrice: number;
+  highPrice: number;
+  lowPrice: number;
+  closePrice: number;
+  currentPrice: number;
+  priceChange: number;
+  pricePercent: number;
+  changeSign: 1 | 2 | 3;
+  accumulatedVolume: number;
+  isMarketOpen: boolean;
+}
+
+export interface StockPriceError {
+  success: false;
+  message: string;
+  errorCode: "STOCK_PRICE_NOT_FOUND";
 }
 
 // ─────────────────────────────
@@ -170,5 +189,11 @@ export const postBuyOrder = async ( data: BuyOrderRequest ): Promise<BuyOrderRes
 // 매도 주문
 export const postSellOrder = async ( data: SellOrderRequest ): Promise<SellOrderResponse> => {
   const res = await axiosInstance.post("/api/v1/order/sell", data);
+  return res.data;
+};
+
+// 실시간 주식 데이터
+export const getStockPrice = async ( ticker: string ): Promise<StockPriceResponse> => {
+  const res = await axiosInstance.get<StockPriceResponse>(`/api/v1/stocks/${ticker}/price`);
   return res.data;
 };

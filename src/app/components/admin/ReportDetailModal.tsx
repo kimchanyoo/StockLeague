@@ -6,7 +6,7 @@ import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { ReportDetail, forceDeleteComment, deleteCommentWithWarning, banUser, rejectReport } from "@/lib/api/comment";
 import { useAuth } from "@/context/AuthContext";
-import { sendMessage } from "@/lib/socket"
+import { sendMessage } from "@/lib/socket/socket"
 
 interface Props {
   open: boolean;

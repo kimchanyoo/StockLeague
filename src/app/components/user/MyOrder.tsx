@@ -147,14 +147,6 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
 
   return (
     <div className={styles.orderStatus}>
-      {/* 자산 정보 표시 */}
-      <div className={styles.assetInfo}>
-        <strong>총 자산: </strong>
-        {asset ? `${asset.totalAsset.toLocaleString()}원` : "로딩 중..."} /{" "}
-        <strong>현금: </strong>
-        {asset ? `${asset.cashBalance.toLocaleString()}원` : "로딩 중..."}
-      </div>
-
       {/* 주문 리스트 */}
       {filteredOrders.length > 0 ? (
         <ul className={styles.orderList}>

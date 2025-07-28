@@ -103,7 +103,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         block: "center",
       });
     }
-  }, [stockName, currentPrice]);
+  }, [stockName]); 
 
   useEffect(() => {
     if (useCurrentPrice) {
@@ -387,7 +387,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         tabTextSize="1rem"
       />
       <div className={styles.myOrderWrapper}>
-        <MyOrder activeTab={activeTab} />
+        <MyOrder activeTab={activeTab} accessToken={accessToken ?? ""} />
       </div>
     </div>
   );
