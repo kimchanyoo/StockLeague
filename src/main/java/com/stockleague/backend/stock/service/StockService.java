@@ -39,6 +39,18 @@ public class StockService {
 
     private final StockPriceRedisService stockPriceRedisService;
 
+    /**
+     * 전체 종목 목록을 페이지 단위로 조회합니다.
+     * <p>
+     * 종목명(stockName)을 기준으로 오름차순 정렬되며,
+     * 클라이언트에서 요청한 페이지 번호(page)와 페이지 크기(size)를 기반으로 페이징 처리됩니다.
+     * </p>
+     *
+     * @param page 조회할 페이지 번호 (1부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 페이징된 종목 리스트와 함께 성공 여부, 메시지, 전체 항목 수를 포함한 응답 DTO
+     * @throws GlobalException 페이지 번호 또는 크기가 1 미만인 경우 {@code INVALID_PAGINATION} 예외 발생
+     */
     public StockListResponseDto getStocks(int page, int size) {
         if (page < 1 || size < 1) {
             throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
@@ -55,6 +67,43 @@ public class StockService {
         return new StockListResponseDto(
                 true,
                 "종목 리스트 조회 성공",
+                stockDtos,
+                page,
+                size,
+                stockPage.getTotalElements()
+        );
+    }
+
+    /**
+     * 종목명을 기준으로 키워드 검색을 수행합니다.
+     * <p>
+     * 종목명(`stockName`)에 입력된 키워드가 포함된 종목들을 조회하며,
+     * 오름차순 정렬 및 페이징 처리된 결과를 반환합니다.
+     * </p>
+     *
+     * @param keyword 검색할 키워드 (종목명 일부 문자열)
+     * @param page 조회할 페이지 번호 (1부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 검색 결과로 페이징된 종목 리스트와 메타 정보가 포함된 응답 DTO
+     * @throws GlobalException 페이지 번호 또는 크기가 1 미만인 경우 {@code INVALID_PAGINATION} 예외 발생
+     */
+    public StockListResponseDto searchStocks(String keyword, int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        PageRequest pageable = PageRequest.of(
+                page - 1, size, Sort.by(Sort.Direction.ASC, "stockName"));
+
+        Page<Stock> stockPage = stockRepository.findByStockNameContaining(keyword, pageable);
+
+        List<StockSummaryDto> stockDtos = stockPage.getContent().stream()
+                .map(StockSummaryDto::from)
+                .toList();
+
+        return new StockListResponseDto(
+                true,
+                "종목 검색 결과",
                 stockDtos,
                 page,
                 size,
