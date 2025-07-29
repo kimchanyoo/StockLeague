@@ -45,7 +45,7 @@ public class UserRankingController {
                                     summary = "수익률 랭킹 응답 예시",
                                     value = """
                                             {
-                                              "rankings": [
+                                              "rankingList": [
                                                 {
                                                   "userId": 1,
                                                   "nickname": "stockMaster",
@@ -68,7 +68,8 @@ public class UserRankingController {
                                                 "totalAsset": "165000000",
                                                 "ranking": 2
                                               },
-                                              "totalCount": 2
+                                              "totalCount": 2,
+                                              "isMarketOpen": true
                                             }
                                             """
                             )

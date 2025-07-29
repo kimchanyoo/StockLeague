@@ -167,7 +167,7 @@ public class UserRankingService {
                 .findFirst()
                 .orElse(null);
 
-        return new UserProfitRateRankingListResponseDto(list, myRanking, list.size());
+        return new UserProfitRateRankingListResponseDto(list, myRanking, list.size(), MarketTimeUtil.isMarketClosed());
     }
 
     /**

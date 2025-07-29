@@ -5,6 +5,7 @@ import java.util.List;
 public record UserProfitRateRankingListResponseDto(
         List<UserProfitRateRankingDto> rankingList,
         UserProfitRateRankingDto myRanking,
-        long totalCount
+        long totalCount,
+        boolean isMarketOpen
 ) {
 }
