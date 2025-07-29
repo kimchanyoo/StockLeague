@@ -57,7 +57,10 @@ public class StockController {
                                                   "stockName": "SK하이닉스",
                                                   "marketType": "KOSPI"
                                                 }
-                                              ]
+                                              ],
+                                              "page": 1,
+                                              "size": 20,
+                                              "totalCount": 140
                                             }
                                             """
                                     )
@@ -65,8 +68,10 @@ public class StockController {
                     )
             }
     )
-    public ResponseEntity<StockListResponseDto> getAllStocks() {
-        return ResponseEntity.ok(stockService.getAllStocks());
+    public ResponseEntity<StockListResponseDto> getAllStocks(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(stockService.getStocks(page, size));
     }
 
     @GetMapping("/{ticker}/candles")

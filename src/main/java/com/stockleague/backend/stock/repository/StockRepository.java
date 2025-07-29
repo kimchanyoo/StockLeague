@@ -11,6 +11,4 @@ import org.springframework.stereotype.Repository;
 public interface StockRepository extends JpaRepository<Stock, Long> {
 
     Optional<Stock> findByStockTicker(String stockTicker);
-
-    List<Stock> findByStockTickerIn(List<String> tickers, Pageable pageable);
 }

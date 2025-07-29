@@ -5,6 +5,9 @@ import java.util.List;
 public record StockListResponseDto(
         boolean success,
         String message,
-        List<StockSummaryDto> stocks
+        List<StockSummaryDto> stocks,
+        int page,
+        int size,
+        long totalCount
 ) {
 }

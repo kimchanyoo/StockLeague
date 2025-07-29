@@ -19,8 +19,10 @@ import com.stockleague.backend.stock.repository.StockYearlyPriceRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -37,19 +39,27 @@ public class StockService {
 
     private final StockPriceRedisService stockPriceRedisService;
 
-    public StockListResponseDto getAllStocks() {
+    public StockListResponseDto getStocks(int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
 
-        Pageable topTen = PageRequest.of(0, 10);
+        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "stockName"));
 
-        List<String> tickers = List.of("005930", "000660");
+        Page<Stock> stockPage = stockRepository.findAll(pageable);
 
-        List<Stock> stocks = stockRepository.findByStockTickerIn(tickers, topTen);
-
-        List<StockSummaryDto> stockDtos = stocks.stream()
+        List<StockSummaryDto> stockDtos = stockPage.getContent().stream()
                 .map(StockSummaryDto::from)
                 .toList();
 
-        return new StockListResponseDto(true, "종목 리스트 조회 테스트", stockDtos);
+        return new StockListResponseDto(
+                true,
+                "종목 리스트 조회 성공",
+                stockDtos,
+                page,
+                size,
+                stockPage.getTotalElements()
+        );
     }
 
     /**
