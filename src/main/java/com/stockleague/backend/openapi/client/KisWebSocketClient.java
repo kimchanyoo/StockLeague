@@ -1,14 +1,14 @@
 package com.stockleague.backend.openapi.client;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
+
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
-import com.stockleague.backend.kafka.producer.StockPriceProducer;
+import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
+import com.stockleague.backend.infra.redis.StockPriceRedisService;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +32,9 @@ import java.util.concurrent.CompletionStage;
 @RequiredArgsConstructor
 public class KisWebSocketClient {
 
-    private final StockPriceProducer stockPriceProducer;
+    private final StockPriceRedisService stockPriceRedisService;
     private final OpenApiTokenRedisService openApiTokenRedisService;
+    private final StockOrderBookRedisService stockOrderBookRedisService;
     private final KisWebSocketResponseParser parser;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final SimpMessagingTemplate messagingTemplate;
@@ -52,6 +53,7 @@ public class KisWebSocketClient {
     @Scheduled(cron = "20 59 8 * * MON-FRI")
     public void scheduledConnect() {
         log.info("[스케줄러] 오전 8:59 WebSocket 연결 시작");
+        disconnect();
         connect();
     }
 
@@ -71,7 +73,7 @@ public class KisWebSocketClient {
     public void onApplicationReady() {
         log.info("[WebSocket] 서버 초기화 - 실시간 연결 준비");
 
-        if (isMarketTime()) {
+        if (isMarketOpen()) {
             connect();
         } else {
             log.info("[WebSocket] 장시간 외 - 초기 연결 생략");
@@ -119,12 +121,19 @@ public class KisWebSocketClient {
      * WebSocket 연결 종료
      */
     public void disconnect() {
-        if (webSocket != null && isConnected) {
-            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Market closed");
-            log.info("WebSocket 정상 종료 요청 전송");
-            isConnected = false;
-            webSocket = null;
+        if (webSocket != null) {
+            try {
+                webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Market closed");
+                log.info("WebSocket 정상 종료 요청 전송");
+            } catch (Exception e) {
+                log.warn("WebSocket 종료 중 예외", e);
+            }
+        } else {
+            log.info("WebSocket 객체가 null이므로 종료 요청 생략");
         }
+
+        isConnected = false;
+        webSocket = null;
     }
 
     /**
@@ -239,29 +248,18 @@ public class KisWebSocketClient {
             if (trId.startsWith("H0STCNT0")) {
                 List<StockPriceDto> dtos = parser.parsePlainText(trId, body);
                 for (StockPriceDto dto : dtos) {
-                    stockPriceProducer.send(dto);
+                    stockPriceRedisService.save(dto);
                     messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
                 }
             } else if (trId.startsWith("H0STASP0")) {
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
+                if(orderBookDto != null) {
+                    stockOrderBookRedisService.save(orderBookDto);
+                }
                 messagingTemplate.convertAndSend("/topic/orderbook/" + orderBookDto.ticker(), orderBookDto);
             }
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
         }
-    }
-
-    /**
-     * 현재 시간이 장중인지 여부 확인 (평일 9:00~15:30)
-     */
-    private boolean isMarketTime() {
-        LocalDateTime now = LocalDateTime.now();
-        DayOfWeek day = now.getDayOfWeek();
-        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
-            return false;
-        }
-
-        LocalTime time = now.toLocalTime();
-        return !time.isBefore(LocalTime.of(9, 0)) && !time.isAfter(LocalTime.of(15, 30));
     }
 }

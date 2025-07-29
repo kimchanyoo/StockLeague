@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.response.stock.CandleDto;
 import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.service.StockService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -151,5 +152,71 @@ public class StockController {
     ) {
         List<CandleDto> candles = stockService.getCandles(ticker, interval, offset, limit);
         return ResponseEntity.ok(candles);
+    }
+
+    @GetMapping("/{ticker}/price")
+    @Operation(
+            summary = "종목의 최신 시세 조회",
+            description = """
+                    Redis에 저장된 특정 종목의 최신 시세 정보를 조회합니다.
+                    
+                    반환된 응답에는 현재 장이 열려 있는지 여부(`isMarketOpen`)도 포함되며,
+                    프론트엔드는 이 값을 기준으로 실시간 WebSocket 구독 여부를 판단할 수 있습니다.
+                    
+                    - isMarketOpen = true → WebSocket 실시간 수신 가능
+                    - isMarketOpen = false → 장 종료 상태. 초기 응답 값만 유지하면 됩니다.
+                    """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "시세 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = StockPriceDto.class),
+                                    examples = @ExampleObject(value = """
+                                            {
+                                              "ticker": "005930",
+                                              "datetime": "2025-07-22T14:33:00",
+                                              "openPrice": 72000,
+                                              "highPrice": 73500,
+                                              "lowPrice": 71500,
+                                              "closePrice": 72800,
+                                              "currentPrice": 72800,
+                                              "priceChange": 300,
+                                              "pricePercent": 0.42,
+                                              "changeSign": 1,
+                                              "accumulatedVolume": 12345678,
+                                              "isMarketOpen": true
+                                            }
+                                            """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "해당 종목의 시세 정보가 존재하지 않음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "StockPriceNotFound",
+                                            summary = "해당 종목의 Redis 시세가 없을 경우",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "message": "해당 종목의 시세 정보를 찾을 수 없습니다.",
+                                                      "errorCode": "STOCK_PRICE_NOT_FOUND"
+                                                    }
+                                                    """
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<StockPriceDto> getLatestPrice(
+            @PathVariable String ticker
+    ) {
+        StockPriceDto dto = stockService.getEffectivePrice(ticker);
+
+        return ResponseEntity.ok(dto);
     }
 }

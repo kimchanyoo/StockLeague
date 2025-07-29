@@ -52,7 +52,7 @@ public class StockPriceRedisService {
             String value = objectMapper.writeValueAsString(dto);
             double score = dto.datetime().toEpochSecond(ZoneOffset.ofHours(9));
             redisTemplate.opsForZSet().add(key, value, score);
-            log.debug("Redis 저장: [{}] score={}, value={}", key, score, value);
+            log.info("Redis 저장: [{}] score={}, value={}", key, score, value);
 
         } catch (JsonProcessingException e) {
             log.error("[Redis] 시세 저장 실패 (직렬화 오류): {}", e.getMessage());
@@ -98,7 +98,7 @@ public class StockPriceRedisService {
     public void removeOldPrices(String ticker) {
         String key = getKey(ticker);
 
-        LocalDateTime threshold = LocalDate.now().minusDays(1).atStartOfDay();
+        LocalDateTime threshold = LocalDate.now().minusDays(2).atStartOfDay();
         double thresholdScore = threshold.toEpochSecond(ZoneOffset.ofHours(9));
 
         Long removed = redisTemplate.opsForZSet().removeRangeByScore(key, 0, thresholdScore);
@@ -127,6 +127,40 @@ public class StockPriceRedisService {
     private boolean isDuplicate(StockPriceDto a, StockPriceDto b) {
         return a.datetime().equals(b.datetime()) &&
                 a.currentPrice() == b.currentPrice();
+    }
+
+    /**
+     * Redis에 저장된 특정 종목의 최신 실시간 시세 데이터를 조회합니다.
+     * <p>
+     * Redis ZSET에서 가장 높은 score(=최신 시각)를 가진 1개의 데이터를 가져와
+     * JSON을 파싱한 {@link StockPriceDto} 객체로 반환합니다.
+     * </p>
+     *
+     * <ul>
+     *     <li>Key 형식: {@code stock:price:{ticker}}</li>
+     *     <li>ZSET의 score는 시세 수신 시각(LocalDateTime → epochSecond)</li>
+     * </ul>
+     *
+     * @param ticker 종목 코드 (예: "005930")
+     * @return {@link StockPriceDto} 객체, 시세가 없거나 오류 발생 시 {@code null} 반환
+     */
+    public StockPriceDto getLatest(String ticker) {
+        try {
+            String key = getKey(ticker);
+
+            Set<String> latestSet = redisTemplate.opsForZSet().reverseRange(key, 0, 0);
+
+            if (latestSet == null || latestSet.isEmpty()) {
+                return null;
+            }
+
+            String latestJson = latestSet.iterator().next();
+            return objectMapper.readValue(latestJson, StockPriceDto.class);
+
+        } catch (Exception e) {
+            log.error("[Redis] 최신 시세 조회 실패: {}", e.getMessage());
+            return null;
+        }
     }
 }
 

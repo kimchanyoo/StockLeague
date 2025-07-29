@@ -1,10 +1,14 @@
 package com.stockleague.backend.stock.service;
 
+import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
+
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.infra.redis.StockPriceRedisService;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.response.stock.CandleDto;
 import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.dto.response.stock.StockSummaryDto;
 import com.stockleague.backend.stock.repository.StockDailyPriceRepository;
 import com.stockleague.backend.stock.repository.StockMinutePriceRepository;
@@ -30,6 +34,8 @@ public class StockService {
     private final StockWeeklyPriceRepository weeklyRepo;
     private final StockDailyPriceRepository dailyRepo;
     private final StockMinutePriceRepository minuteRepo;
+
+    private final StockPriceRedisService stockPriceRedisService;
 
     public StockListResponseDto getAllStocks() {
 
@@ -99,5 +105,26 @@ public class StockService {
                 }
             }
         };
+    }
+
+    /**
+     * Redis에 저장된 특정 종목의 최신 시세 정보를 조회하고,
+     * 현재 장이 열려 있는지 여부를 함께 포함한 DTO를 반환합니다.
+     *
+     * <p>이 메서드는 프론트엔드가 첫 접속 시 사용할 수 있는
+     * "최신 시세 + 장 상태" 정보를 제공합니다.</p>
+     *
+     * @param ticker 종목 코드 (예: "005930")
+     * @return 최신 {@link StockPriceDto} 객체 (isMarketOpen 필드 포함)
+     * @throws GlobalException {@code STOCK_PRICE_NOT_FOUND} - 종목의 시세 정보가 존재하지 않는 경우
+     */
+    public StockPriceDto getEffectivePrice(String ticker) {
+        StockPriceDto dto = stockPriceRedisService.getLatest(ticker);
+
+        if (dto == null) {
+            throw new GlobalException(GlobalErrorCode.STOCK_PRICE_NOT_FOUND);
+        }
+
+        return StockPriceDto.from(dto, isMarketOpen());
     }
 }

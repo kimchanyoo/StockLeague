@@ -16,13 +16,17 @@ import com.stockleague.backend.global.validator.RedirectUriValidator;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.user.domain.OauthServerType;
 import com.stockleague.backend.user.domain.User;
+import com.stockleague.backend.user.domain.UserAsset;
 import com.stockleague.backend.user.domain.UserRole;
 import com.stockleague.backend.user.dto.response.NicknameCheckResponseDto;
+import com.stockleague.backend.user.repository.UserAssetRepository;
 import com.stockleague.backend.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -39,6 +43,7 @@ public class AuthService {
     private final List<OAuthClient> oauthClients;
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
+    private final UserAssetRepository userAssetRepository;
     private final TokenRedisService redisService;
     private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
     private final TokenCookieHandler tokenCookieHandler;
@@ -105,6 +110,17 @@ public class AuthService {
                     .build()
             );
 
+            UserAsset userAsset = UserAsset.builder()
+                    .user(user)
+                    .userId(user.getId())
+                    .cashBalance(BigDecimal.valueOf(10_000_000L))
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            UserAsset savedUserAsset = userAssetRepository.save(userAsset);
+
+            user.setUserAsset(savedUserAsset);
+
             String accessToken = issueTokens(user, response);
 
             String role = user.getRole().toString();
@@ -114,7 +130,7 @@ public class AuthService {
                     false, accessToken, nickname, role);
 
         } catch (DataIntegrityViolationException e) {
-            throw new GlobalException(GlobalErrorCode.ALREADY_REGISTERED);
+            throw new GlobalException(GlobalErrorCode.DATABASE_CONSTRAINT_VIOLATION);
         }
     }
 
