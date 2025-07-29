@@ -9,10 +9,10 @@ import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -29,7 +29,6 @@ import java.util.concurrent.CompletionStage;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class KisWebSocketClient {
 
     private final StockPriceRedisService stockPriceRedisService;
@@ -40,12 +39,28 @@ public class KisWebSocketClient {
     private final SimpMessagingTemplate messagingTemplate;
 
     private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
-    private static final List<String> TICKERS = List.of("005930");
+    private final List<String> tickers;
 
     private WebSocket webSocket;
     private boolean isConnected = false;
 
     private int reconnectAttempts = 0;
+
+    public KisWebSocketClient(
+            StockPriceRedisService stockPriceRedisService,
+            OpenApiTokenRedisService openApiTokenRedisService,
+            StockOrderBookRedisService stockOrderBookRedisService,
+            KisWebSocketResponseParser parser,
+            SimpMessagingTemplate messagingTemplate,
+            List<String> tickers
+    ) {
+        this.stockPriceRedisService = stockPriceRedisService;
+        this.openApiTokenRedisService = openApiTokenRedisService;
+        this.stockOrderBookRedisService = stockOrderBookRedisService;
+        this.parser = parser;
+        this.messagingTemplate = messagingTemplate;
+        this.tickers = tickers;
+    }
 
     /**
      * 평일 오전 8시 59분 20초에 WebSocket 연결 시도
@@ -153,8 +168,16 @@ public class KisWebSocketClient {
             @Override
             public void onOpen(WebSocket webSocket) {
                 log.info("WebSocket 연결 성공");
-                TICKERS.forEach(ticker -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker));
-                TICKERS.forEach(ticker -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker));
+                List<List<String>> partitioned = partitionTickers(tickers, 10);
+                for (int i = 0; i < partitioned.size(); i++) {
+                    List<String> batch = partitioned.get(i);
+                    scheduler.schedule(() -> {
+                        for (String ticker : batch) {
+                            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker);
+                            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
+                        }
+                    }, i * 2L, TimeUnit.SECONDS);
+                }
                 WebSocket.Listener.super.onOpen(webSocket);
             }
 
@@ -261,5 +284,13 @@ public class KisWebSocketClient {
         } catch (Exception e) {
             log.error("평문 메시지 처리 중 예외 발생", e);
         }
+    }
+
+    private List<List<String>> partitionTickers(List<String> tickers, int size) {
+        List<List<String>> partitioned = new ArrayList<>();
+        for (int i = 0; i < tickers.size(); i += size) {
+            partitioned.add(tickers.subList(i, Math.min(i + size, tickers.size())));
+        }
+        return partitioned;
     }
 }

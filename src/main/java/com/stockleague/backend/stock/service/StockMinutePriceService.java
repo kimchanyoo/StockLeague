@@ -26,7 +26,6 @@ public class StockMinutePriceService {
 
     /**
      * Redis에서 종목별 시세 데이터를 조회하여 주어진 간격의 분봉(OHLCV) 데이터를 생성하고 저장
-     * <p>테스트용으로 삼성전자(005930) 종목만 처리</p>
      *
      * @param interval 분봉 간격 (단위: 분)
      */
@@ -34,10 +33,6 @@ public class StockMinutePriceService {
         List<Stock> stocks = stockRepository.findAll();
 
         for (Stock stock : stocks) {
-            if (!stock.getStockTicker().equals("005930")) {
-                continue;
-            }
-
             generateMinuteCandle(stock, interval);
         }
     }
