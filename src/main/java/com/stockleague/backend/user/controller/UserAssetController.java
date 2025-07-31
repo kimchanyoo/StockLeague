@@ -46,7 +46,7 @@ public class UserAssetController {
                                                 "totalProfit": "10000000.00",
                                                 "totalProfitRate": "6.67",
                                                 "stockValuation": "60000000.00",
-                                                "isMarketOpen": true,
+                                                "marketOpen": true,
                                                 "stocks": [
                                                     {
                                                         "ticker": "005930",

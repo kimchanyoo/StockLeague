@@ -15,7 +15,7 @@ public class UserAssetValuationDto {
     private BigDecimal totalProfit;
     private BigDecimal totalProfitRate;
     private List<StockValuationDto> stocks;
-    private boolean isMarketOpen;
+    private boolean marketOpen;
 
     public static UserAssetValuationDto of(BigDecimal cashBalance,
                                            List<StockValuationDto> stocks, boolean isMarketOpen) {
@@ -45,7 +45,7 @@ public class UserAssetValuationDto {
                 .totalProfit(totalProfit)
                 .totalProfitRate(totalProfitRate)
                 .stocks(stocks)
-                .isMarketOpen(isMarketOpen)
+                .marketOpen(isMarketOpen)
                 .build();
     }
 }
