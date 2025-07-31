@@ -64,9 +64,14 @@ public class UserRankingService {
         List<Long> userIds = userRepository.findAllUserIds();
         String snapshotPrefix = REDIS_SNAPSHOT_PREFIX + LocalDate.now() + ":";
 
-        Map<Long, String> nicknameMap = userRepository.findIdAndNicknameByIds().stream()
-                .collect(
-                        Collectors.toMap(UserIdAndNicknameProjection::getId, UserIdAndNicknameProjection::getNickname));
+        if (userIds.isEmpty()) {
+            return new UserProfitRateRankingListResponseDto(
+                    List.of(), null, 0, true);
+        }
+
+        List<UserIdAndNicknameProjection> projections = userRepository.findIdAndNicknameByIds(userIds);
+        Map<Long, String> nicknameMap = projections.stream()
+                .collect(Collectors.toMap(UserIdAndNicknameProjection::getId, UserIdAndNicknameProjection::getNickname));
 
         List<UserProfitRateRankingDto> rankings = new ArrayList<>();
 
@@ -111,7 +116,13 @@ public class UserRankingService {
      * @return 전체 유저 수익률 랭킹 및 나의 랭킹 포함 DTO
      */
     private UserProfitRateRankingListResponseDto getLiveRanking(Long myUserId) {
-        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds();
+        List<Long> userIds = userRepository.findAllUserIds();
+        if (userIds.isEmpty()) {
+            return new UserProfitRateRankingListResponseDto(
+                    List.of(), null, 0, false);
+        }
+
+        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds(userIds);
         List<UserProfitRateRankingDto> rankings = new ArrayList<>();
 
         for (UserIdAndNicknameProjection user : users) {

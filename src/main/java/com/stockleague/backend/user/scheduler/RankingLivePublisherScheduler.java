@@ -55,7 +55,10 @@ public class RankingLivePublisherScheduler {
     public void pushLiveInvestedRanking() {
         if (MarketTimeUtil.isMarketClosed()) return;
 
-        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds();
+        List<Long> userIds = userRepository.findAllUserIds();
+        if (userIds.isEmpty()) return;
+
+        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds(userIds);
 
         List<UserProfitRateRankingDto> rankingList = new ArrayList<>();
 
