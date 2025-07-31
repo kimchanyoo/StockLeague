@@ -10,6 +10,7 @@ import com.stockleague.backend.stock.dto.response.stock.CandleDto;
 import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.dto.response.stock.StockSummaryDto;
+import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockDailyPriceRepository;
 import com.stockleague.backend.stock.repository.StockMinutePriceRepository;
 import com.stockleague.backend.stock.repository.StockMonthlyPriceRepository;
@@ -17,6 +18,11 @@ import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.stock.repository.StockWeeklyPriceRepository;
 import com.stockleague.backend.stock.repository.StockYearlyPriceRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +36,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StockService {
 
+    private final CommentRepository commentRepository;
     private final StockRepository stockRepository;
     private final StockYearlyPriceRepository yearlyRepo;
     private final StockMonthlyPriceRepository monthlyRepo;
@@ -71,6 +78,46 @@ public class StockService {
                 page,
                 size,
                 stockPage.getTotalElements()
+        );
+    }
+
+    public StockListResponseDto getPopularStocks(int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        List<Long> popularIds = commentRepository.findPopularStockIds(pageable).stream()
+                .map(r -> (Long) r[0])
+                .toList();
+
+        int remainingSize = size - popularIds.size();
+        List<Long> fallbackIds = remainingSize > 0
+                ? stockRepository.findStockIdsWithoutComments(PageRequest.of(0, remainingSize))
+                : List.of();
+
+        List<Long> combinedIds = Stream.concat(popularIds.stream(), fallbackIds.stream())
+                .limit(size)
+                .toList();
+
+        List<Stock> stocks = stockRepository.findAllById(combinedIds);
+        Map<Long, Stock> stockMap = stocks.stream()
+                .collect(Collectors.toMap(Stock::getId, Function.identity()));
+
+        List<StockSummaryDto> stockDtos = combinedIds.stream()
+                .map(stockMap::get)
+                .filter(Objects::nonNull)
+                .map(StockSummaryDto::from)
+                .toList();
+
+        return new StockListResponseDto(
+                true,
+                "인기 종목 조회 성공",
+                stockDtos,
+                page,
+                size,
+                stockDtos.size()
         );
     }
 

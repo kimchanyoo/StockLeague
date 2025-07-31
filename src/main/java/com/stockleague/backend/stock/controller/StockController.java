@@ -165,6 +165,78 @@ public class StockController {
         return ResponseEntity.ok(stockService.searchStocks(query, page, size));
     }
 
+    @GetMapping("/popular")
+    @Operation(
+            summary = "인기 종목 조회",
+            description = """
+            댓글 수를 기준으로 인기 종목을 조회합니다.
+            <p>댓글 수가 많은 종목이 상위에 노출되며, 댓글이 없는 종목은 종목명 오름차순으로 보충됩니다.</p>
+            페이징 처리를 위해 page, size 파라미터를 사용할 수 있습니다.
+            """,
+            parameters = {
+                    @Parameter(name = "page", description = "조회할 페이지 번호 (1부터 시작)", example = "1"),
+                    @Parameter(name = "size", description = "페이지당 항목 수", example = "20")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "인기 종목 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = StockListResponseDto.class),
+                                    examples = @ExampleObject(value = """
+                                    {
+                                      "success": true,
+                                      "message": "인기 종목 조회 성공",
+                                      "stocks": [
+                                        {
+                                          "stockId": 1,
+                                          "stockTicker": "005930",
+                                          "stockName": "삼성전자",
+                                          "marketType": "KOSPI"
+                                        },
+                                        {
+                                          "stockId": 2,
+                                          "stockTicker": "000660",
+                                          "stockName": "SK하이닉스",
+                                          "marketType": "KOSPI"
+                                        }
+                                      ],
+                                      "page": 1,
+                                      "size": 20,
+                                      "totalCount": 20
+                                    }
+                                    """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "페이지네이션 파라미터 오류",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "InvalidPagination",
+                                            summary = "잘못된 페이지네이션 파라미터",
+                                            value = """
+                                        {
+                                          "success": false,
+                                          "message": "페이지 번호 또는 크기가 유효하지 않습니다.",
+                                          "errorCode": "INVALID_PAGINATION"
+                                        }
+                                        """
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<StockListResponseDto> getPopularStocks(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(stockService.getPopularStocks(page, size));
+    }
+
     @GetMapping("/{ticker}/candles")
     @Operation(
             summary = "봉 데이터 조회",

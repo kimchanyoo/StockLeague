@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -13,4 +14,13 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByParentIdAndDeletedAtIsNull(Long parentId);
 
     Page<Comment> findByStockIdAndParentIsNullAndDeletedAtIsNull(Long stockId, Pageable pageable);
+
+    @Query("""
+            SELECT c.stock.id AS stockId, COUNT(c.id) AS commentCount
+            FROM Comment c
+            WHERE c.deletedAt IS NULL
+            GROUP BY c.stock.id
+            ORDER BY COUNT(c.id) DESC
+            """)
+    List<Object[]> findPopularStockIds(Pageable pageable);
 }
