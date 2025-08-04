@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import styles from "@/app/styles/components/stock/StockSelector.module.css";
 import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
 import MiniStockList from "./MiniStockList";
-import { getTopStocks, Stock, getWatchlist, StockPriceResponse } from "@/lib/api/stock"; 
+import { getTopStocks, Stock, getWatchlist, StockPriceResponse, getPopularStocks } from "@/lib/api/stock"; 
 import { useStockPriceMultiSocket } from "@/hooks/useStockPriceMultiSocket";
 import { useAuth } from "@/context/AuthContext";
 
@@ -23,6 +23,9 @@ const StockSelector = ({ onSelect }: Props) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [visibleCount, setVisibleCount] = useState(20);
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const availableFilters = isLoggedIn
     ? ['전체종목', '인기종목', '관심종목']
@@ -68,14 +71,26 @@ const StockSelector = ({ onSelect }: Props) => {
             stockTicker: item.StockTicker,
             stockName: item.StockName,
             marketType: "UNKNOWN",
-            // 가격 관련 필드 제거, stocks는 가격 정보를 가지지 않음
           }));
           setStocks(converted);
-        } else {
-          const res = await getTopStocks();
+        } else if (selectedFilter === "인기종목") {
+          const res = await getPopularStocks(1, 200); // page 1, size 100 (필요시 조절 가능)
           if (res.success) {
-            // 가격 관련 필드 제거 또는 무시하고 종목 정보만 유지
-            const converted = res.stocks.map(s => ({
+            const converted = res.stocks.map((s) => ({
+              stockId: s.stockId,
+              stockTicker: s.stockTicker,
+              stockName: s.stockName,
+              marketType: s.marketType,
+            }));
+            setStocks(converted);
+          } else {
+            setError("인기 종목을 불러오는 데 실패했습니다.");
+            setStocks([]);
+          }
+        } else {
+          const res = await getTopStocks(1, 200);
+          if (res.success) {
+            const converted = res.stocks.map((s) => ({
               stockId: s.stockId,
               stockTicker: s.stockTicker,
               stockName: s.stockName,
@@ -107,6 +122,27 @@ const StockSelector = ({ onSelect }: Props) => {
     );
   }, [stocks, searchTerm]);
 
+  // 보여줄 종목 (스크롤 갯수 제한 반영)
+  const visibleStocks = useMemo(() => {
+    return filteredStocks.slice(0, visibleCount);
+  }, [filteredStocks, visibleCount]);
+
+  const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setVisibleCount(prev => {
+          // 조건 추가: 더 이상 보여줄 게 없으면 증가시키지 않음
+          if (prev >= filteredStocks.length) return prev;
+          return prev + 20;
+        });
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [filteredStocks.length]);
+
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
@@ -133,9 +169,10 @@ const StockSelector = ({ onSelect }: Props) => {
       </div>
       <div className={styles.miniStockList}>
         <MiniStockList
-          stocks={filteredStocks}
+          stocks={visibleStocks}
           stockPricesMap={stockPriceMap}  // Map 형태로 전달
           onSelect={onSelect}
+          lastElementRef={loadMoreRef}
         />
       </div>
     </div>
