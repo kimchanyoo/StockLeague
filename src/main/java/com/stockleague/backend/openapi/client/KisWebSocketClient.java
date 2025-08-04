@@ -10,6 +10,8 @@ import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,9 @@ public class KisWebSocketClient {
     private final KisWebSocketResponseParser parser;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final SimpMessagingTemplate messagingTemplate;
+
+    private final Queue<Runnable> subscriptionQueue = new LinkedList<>();
+    private final ScheduledExecutorService slowSender = Executors.newSingleThreadScheduledExecutor();
 
     private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
     private final List<String> tickers;
@@ -147,6 +152,8 @@ public class KisWebSocketClient {
             log.info("WebSocket 객체가 null이므로 종료 요청 생략");
         }
 
+        subscriptionQueue.clear();
+        slowSender.shutdownNow();
         isConnected = false;
         webSocket = null;
     }
@@ -168,16 +175,23 @@ public class KisWebSocketClient {
             @Override
             public void onOpen(WebSocket webSocket) {
                 log.info("WebSocket 연결 성공");
-                List<List<String>> partitioned = partitionTickers(tickers, 10);
-                for (int i = 0; i < partitioned.size(); i++) {
-                    List<String> batch = partitioned.get(i);
-                    scheduler.schedule(() -> {
-                        for (String ticker : batch) {
-                            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker);
-                            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
-                        }
-                    }, i * 2L, TimeUnit.SECONDS);
+
+                for (String ticker : tickers) {
+                    subscriptionQueue.add(() -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker));
+                    subscriptionQueue.add(() -> sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker));
                 }
+
+                slowSender.scheduleAtFixedRate(() -> {
+                    Runnable task = subscriptionQueue.poll();
+                    if (task != null) {
+                        try {
+                            task.run();
+                        } catch (Exception e) {
+                            log.warn("구독 전송 중 오류", e);
+                        }
+                    }
+                }, 0, 300, TimeUnit.MILLISECONDS);
+
                 WebSocket.Listener.super.onOpen(webSocket);
             }
 
