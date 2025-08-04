@@ -11,6 +11,9 @@ export interface GetTopStocksResponse {
   success: boolean;
   message: string;
   stocks: Stock[];
+  page: number;
+  size: number;
+  totalCount: number;
 };
 
 // 관심 종목 등록 성공 응답 타입
@@ -34,6 +37,22 @@ export interface WatchlistItem {
   stockId: number;
   StockTicker: string;
   StockName: string;
+}
+
+// 인기 종목 목록 조회
+export interface GetPopularStocksResponse {
+  success: boolean;
+  stocks: PopularStocksItem[];
+  page: number;
+  size: number;
+  totalCount: number;
+}
+
+export interface PopularStocksItem {
+  stockId: number;
+  stockTicker: string;
+  stockName: string;
+  marketType: string;
 }
 
 export interface DeleteWatchlistResponse {
@@ -131,8 +150,9 @@ export interface StockPriceError {
 // ─────────────────────────────
 
 // 종목
-export const getTopStocks = async (): Promise<GetTopStocksResponse> => {
+export const getTopStocks = async ( page = 1, size = 20 ): Promise<GetTopStocksResponse> => {
   const res = await axiosInstance.get('/api/v1/stocks', {
+    params: { page, size },
   });
   return res.data;
 };
@@ -147,7 +167,7 @@ export const addWatchlist = async ( ticker: string ): Promise<AddWatchlistSucces
 
 // 관심 조회
 export const getWatchlist = async ( page = 1, size = 10 ): Promise<GetWatchlistResponse> => {
-  const res = await axiosInstance.get("/api/v1/stock/watchlist", {
+  const res = await axiosInstance.get(`/api/v1/stock/watchlist`, {
     params: { page, size },
   });
   return res.data;
@@ -158,6 +178,15 @@ export const deleteWatchlist = async (watchlistId: number): Promise<DeleteWatchl
   const res = await axiosInstance.delete(`/api/v1/stock/watchlist/${watchlistId}`);
   return res.data;
 };
+
+// 인기 조회
+export const getPopularStocks = async ( page = 1, size = 10 ): Promise<GetPopularStocksResponse> => {
+  const res = await axiosInstance.get(`/api/v1/stocks/popular`, {
+    params: { page, size },
+  });
+  return res.data;
+};
+
 
 // utils
 const toApiInterval = (interval: Interval): string => {

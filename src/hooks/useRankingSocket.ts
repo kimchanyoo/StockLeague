@@ -17,6 +17,7 @@ export const useRankingSocket = ({ accessToken, onUpdate }: UseProfitRankingPara
     // API 한번 호출해서 장중 여부 확인 + 초기 데이터 받기
     getProfitRanking()
       .then((data) => {
+        console.log("📦 초기 자산 데이터:", data);
         setIsMarketOpen(data.isMarketOpen);
         onUpdate(data);
       })
@@ -36,6 +37,7 @@ export const useRankingSocket = ({ accessToken, onUpdate }: UseProfitRankingPara
       onConnect: () => {
         client.subscribe("/topic/ranking", (message: IMessage) => {
           const data: GetProfitRankingResponse = JSON.parse(message.body);
+          console.log("📡 실시간 자산 데이터 수신:", data);
           onUpdate(data);
         });
       },

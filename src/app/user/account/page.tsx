@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./account.css";
 import Portfolio from "@/app/components/user/Portfolio";
-import { getUserAssetValuation } from "@/lib/api/user"
+import { getUserAssetValuation, UserAssetValuation } from "@/lib/api/user"
+import { useAssetValuationSocket } from "@/hooks/useAssetValuationSocket";
+import { useAuth } from "@/context/AuthContext";
+import { useCallback } from "react";
 
 interface FormattedStock {
   ticker: string;
@@ -17,6 +20,8 @@ interface FormattedStock {
 }
 
 export default function Account() {
+  const { accessToken } = useAuth()
+
   const [cash, setCash] = useState<number>(0);
   const [stocks, setStocks] = useState<FormattedStock[]>([]);
   const [investingMoney, setInvestingMoney] = useState<number>(0);
@@ -54,6 +59,33 @@ export default function Account() {
 
     fetchData();
   }, []);
+
+  const handleUpdate = useCallback((res: UserAssetValuation) => {
+    console.log("📡 실시간 자산 데이터 수신:", res);
+
+    setCash(Number(res.cashBalance));
+    setInvestingMoney(Number(res.stockValuation));
+    setTotalAssets(Number(res.totalAsset));
+
+    const formattedStocks = res.stocks.map((stock) => ({
+      ticker: stock.ticker,
+      name: stock.stockName,
+      quantity: Number(stock.quantity),
+      averagePurchasePrice: Number(stock.avgBuyPrice),
+      currentPrice: Number(stock.currentPrice),
+      evaluationAmount: Number(stock.valuation),
+      profit: Number(stock.profit),
+      returnRate: Number(stock.profitRate),
+    }));
+
+    setStocks(formattedStocks);
+  }, []);
+
+  // WebSocket 실시간 구독 훅 사용
+  useAssetValuationSocket({
+    accessToken,
+    onUpdate: handleUpdate,
+  });
 
   if (loading) return <p>불러오는 중입니다...</p>;
   if (error) return <p>❌ {error}</p>;
