@@ -270,7 +270,7 @@ public class KisWebSocketClient {
                 log.debug("구독 성공 응답 수신 ({}/{})", subscribeSuccessCount, expectedSubscribeCount);
 
                 if (subscribeSuccessCount == expectedSubscribeCount) {
-                    log.info("✅ 모든 종목 구독 성공 완료!");
+                    log.info("모든 종목 구독 성공 완료!");
                 }
 
                 return;
