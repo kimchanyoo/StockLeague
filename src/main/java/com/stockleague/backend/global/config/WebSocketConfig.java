@@ -1,7 +1,5 @@
 package com.stockleague.backend.global.config;
 
-
-import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.interceptor.WebSocketSecurityInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

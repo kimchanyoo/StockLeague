@@ -22,6 +22,6 @@ public class WebSocketEventLogger {
     @EventListener
     public void handleSessionDisconnect(SessionDisconnectEvent event) {
         Principal user = event.getUser();
-        log.warn("⛔ [WebSocket 연결 종료됨] user={}", user != null ? user.getName() : "익명");
+        log.warn("[WebSocket 연결 종료됨] user={}", user != null ? user.getName() : "익명");
     }
 }
