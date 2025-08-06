@@ -43,9 +43,9 @@ public class UserRankingService {
      */
     public UserProfitRateRankingListResponseDto getProfitRateRanking(Long myUserId) {
         if (MarketTimeUtil.isMarketOpen()) {
-            return getRankingFromSnapshot(myUserId);
-        } else {
             return getLiveRanking(myUserId);
+        } else {
+            return getRankingFromSnapshot(myUserId);
         }
     }
 
