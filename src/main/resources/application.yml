@@ -21,11 +21,6 @@ spring:
             idle-timeout: 600000
             max-lifetime: 1800000
 
-    security:
-      messaging:
-          csrf:
-              enabled: false
-
     jpa:
         hibernate:
             ddl-auto: validate

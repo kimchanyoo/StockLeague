@@ -18,6 +18,7 @@ public class WebSocketSecurityConfig {
 
         builder
                 .simpSubscribeDestMatchers("/user/queue/**").permitAll()
+                .simpSubscribeDestMatchers("/topic/**").permitAll()
                 .simpDestMatchers("/pub/**").authenticated()
                 .anyMessage().denyAll();
 
