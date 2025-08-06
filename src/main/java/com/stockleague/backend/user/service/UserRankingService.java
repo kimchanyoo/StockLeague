@@ -66,7 +66,7 @@ public class UserRankingService {
 
         if (userIds.isEmpty()) {
             return new UserProfitRateRankingListResponseDto(
-                    List.of(), null, 0, true);
+                    List.of(), null, 0, false);
         }
 
         List<UserIdAndNicknameProjection> projections = userRepository.findIdAndNicknameByIds(userIds);
@@ -119,7 +119,7 @@ public class UserRankingService {
         List<Long> userIds = userRepository.findAllUserIds();
         if (userIds.isEmpty()) {
             return new UserProfitRateRankingListResponseDto(
-                    List.of(), null, 0, false);
+                    List.of(), null, 0, true);
         }
 
         List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds(userIds);
