@@ -42,7 +42,7 @@ public class UserRankingService {
      * @return 전체 랭킹 리스트 및 나의 순위가 포함된 응답 DTO
      */
     public UserProfitRateRankingListResponseDto getProfitRateRanking(Long myUserId) {
-        if (MarketTimeUtil.isMarketClosed()) {
+        if (MarketTimeUtil.isMarketOpen()) {
             return getRankingFromSnapshot(myUserId);
         } else {
             return getLiveRanking(myUserId);
