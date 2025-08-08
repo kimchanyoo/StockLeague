@@ -30,8 +30,6 @@ public class AssetLivePublisherScheduler {
     public void pushLiveAssetForConnectedUsers() {
         if (isMarketClosed()) return;
 
-        log.info("[자산 PUSH] 현재 연결된 유저 수: {}", simpUserRegistry.getUserCount());
-
         for (SimpUser simpUser : simpUserRegistry.getUsers()) {
             String userName = simpUser.getName();
 
