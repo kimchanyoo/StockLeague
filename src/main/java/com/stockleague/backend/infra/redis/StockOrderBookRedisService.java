@@ -29,7 +29,6 @@ public class StockOrderBookRedisService {
             String key = getKey(dto.ticker());
             String value = mapper.writeValueAsString(dto);
             redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(3));
-            log.info("[Redis] 호가 저장 완료");
         } catch (JsonProcessingException e) {
             log.error("[Redis] 호가 저장 실패 - {}", e.getMessage(), e);
         }
