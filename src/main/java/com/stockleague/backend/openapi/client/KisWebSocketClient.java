@@ -182,12 +182,26 @@ public class KisWebSocketClient {
                 WebSocket.Listener.super.onOpen(webSocket);
             }
 
+            private final StringBuilder partialMessage = new StringBuilder();
+
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-                String message = data.toString();
-                handlePlainMessage(message);
+                partialMessage.append(data);
+
+                if (last) {
+                    String fullMessage = partialMessage.toString();
+                    partialMessage.setLength(0);
+
+                    try {
+                        handlePlainMessage(fullMessage);
+                    } catch (Exception e) {
+                        log.error("[WebSocket] 평문 메시지 처리 중 예외 발생", e);
+                    }
+                }
+
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
+
 
             @Override
             public void onError(WebSocket webSocket, Throwable error) {
