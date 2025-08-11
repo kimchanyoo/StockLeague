@@ -9,7 +9,6 @@ import com.stockleague.backend.user.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,15 +29,26 @@ public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
 
-    // JWT 서명용 키 생성
+    // 서명 키 캐시
+    private volatile Key cachedKey;
+
     private Key getSigningKey() {
-        try{
-            byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
-            return Keys.hmacShaKeyFor(keyBytes);
-        }catch(Exception e){
-            log.error("JWT key decode error: {}", e.getMessage());
-            throw new IllegalStateException("JWT 비밀키 설정이 잘못되었습니다.");
+        Key k = cachedKey;
+        if (k == null) {
+            synchronized (this) {
+                k = cachedKey;
+                if (k == null) {
+                    try {
+                        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
+                        cachedKey = k = Keys.hmacShaKeyFor(keyBytes);
+                    } catch (Exception e) {
+                        log.error("JWT key decode error: {}", e.getMessage());
+                        throw new IllegalStateException("JWT 비밀키 설정이 잘못되었습니다.");
+                    }
+                }
+            }
         }
+        return k;
     }
 
     // accessToken 생성 (userId 기반)
@@ -70,12 +80,12 @@ public class JwtProvider {
                 .claim("type", "temp")
                 .claim("provider", provider.name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15분 유효
+                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15분
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 토큰 유효성 검사
+    // 토큰 유효성 검사 (true/false만)
     public boolean validateToken(String token) {
         try {
             parseClaims(token);
@@ -86,7 +96,7 @@ public class JwtProvider {
         }
     }
 
-    // 만료 시간 구하는 메서드
+    // 만료 시간(ms)
     public long getTokenRemainingTime(String token) {
         Date expiration = parseClaims(token).getExpiration();
         return expiration.getTime() - System.currentTimeMillis();
@@ -97,60 +107,59 @@ public class JwtProvider {
         return Long.valueOf(parseClaims(token).getSubject());
     }
 
-    // 인증 객체 생성
+    // 인증 객체 생성 (access 전용)
     public Authentication getAuthentication(String token) {
-        Long userId = getUserId(token);
+        Claims claims = parseClaims(token);
 
+        String type = claims.get("type", String.class);
+        if (!"access".equals(type)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
+        }
+
+        Long userId = Long.valueOf(claims.getSubject());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다."));
 
-        String role = user.getRole().name(); // USER or ADMIN
+        String role = "ROLE_" + user.getRole().name(); // USER/ADMIN
 
         return new UsernamePasswordAuthenticationToken(
                 userId,
                 null,
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role))
+                Collections.singleton(new SimpleGrantedAuthority(role))
         );
     }
 
-    // HTTP 요청에서 JWT 추출
+    // 헤더에서 JWT 추출
     public String resolveToken(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
         }
-
         return null;
     }
 
-    // JWT 파싱
+    // JWT 파싱 (예외 래핑 금지, 시계 오차 허용)
     protected Claims parseClaims(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (JwtException e) {
-            log.error("JWT 파싱 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage());
-            throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
-        }
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .setAllowedClockSkewSeconds(30) // 옵션
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    // 추가 정보 입력용 토큰 분석기
+    // 추가 정보 입력용 temp 토큰 파싱
     public OauthTokenPayload parseTempToken(String token) {
         try {
             Claims claims = parseClaims(token);
 
-            // type 필드 확인
-            Object typeObj = claims.get("type");
-            if (!(typeObj instanceof String type) || !"temp".equals(type)) {
+            String type = claims.get("type", String.class);
+            if (!"temp".equals(type)) {
                 throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
             }
 
-            // provider 필드 확인
-            Object providerObj = claims.get("provider");
-            if (!(providerObj instanceof String providerStr)) {
+            String providerStr = claims.get("provider", String.class);
+            if (providerStr == null) {
                 throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
             }
 
@@ -159,11 +168,11 @@ public class JwtProvider {
 
             return new OauthTokenPayload(oauthId, provider);
 
-        } catch (IllegalArgumentException | NullPointerException e) {
-            log.error("Claim 파싱 오류: {}", e.getMessage());
+        } catch (IllegalArgumentException | NullPointerException | JwtException e) {
+            log.error("Temp 토큰 파싱 실패: {}", e.getMessage());
             throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
         } catch (Exception e) {
-            log.error("기타 예외 발생: {}", e.getMessage());
+            log.error("Temp 토큰 처리 중 예외: {}", e.getMessage());
             throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
         }
     }
