@@ -86,9 +86,13 @@ kakao:
 logging:
     level:
         root: info
-        org.springframework.web: debug
-        com.stockleague.backend: debug
+        org.springframework.web: warn
 
+        com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: info
+        com.stockleague.backend.infra.redis.StockPriceRedisService: info
+        com.stockleague.backend.infra.redis.StockOrderBookRedisService: info
+
+        com.stockleague.backend.global.exception: debug
 openapi:
     auth-url: https://openapivts.koreainvestment.com:29443
     appKey: ${OPENAPI_API_KEY}

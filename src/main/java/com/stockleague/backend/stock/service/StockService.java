@@ -10,6 +10,7 @@ import com.stockleague.backend.stock.dto.response.stock.CandleDto;
 import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.dto.response.stock.StockSummaryDto;
+import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.stock.repository.StockDailyPriceRepository;
 import com.stockleague.backend.stock.repository.StockMinutePriceRepository;
 import com.stockleague.backend.stock.repository.StockMonthlyPriceRepository;
@@ -17,10 +18,17 @@ import com.stockleague.backend.stock.repository.StockRepository;
 import com.stockleague.backend.stock.repository.StockWeeklyPriceRepository;
 import com.stockleague.backend.stock.repository.StockYearlyPriceRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -28,6 +36,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StockService {
 
+    private final CommentRepository commentRepository;
     private final StockRepository stockRepository;
     private final StockYearlyPriceRepository yearlyRepo;
     private final StockMonthlyPriceRepository monthlyRepo;
@@ -37,19 +46,116 @@ public class StockService {
 
     private final StockPriceRedisService stockPriceRedisService;
 
-    public StockListResponseDto getAllStocks() {
+    /**
+     * 전체 종목 목록을 페이지 단위로 조회합니다.
+     * <p>
+     * 종목명(stockName)을 기준으로 오름차순 정렬되며,
+     * 클라이언트에서 요청한 페이지 번호(page)와 페이지 크기(size)를 기반으로 페이징 처리됩니다.
+     * </p>
+     *
+     * @param page 조회할 페이지 번호 (1부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 페이징된 종목 리스트와 함께 성공 여부, 메시지, 전체 항목 수를 포함한 응답 DTO
+     * @throws GlobalException 페이지 번호 또는 크기가 1 미만인 경우 {@code INVALID_PAGINATION} 예외 발생
+     */
+    public StockListResponseDto getStocks(int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
 
-        Pageable topTen = PageRequest.of(0, 10);
+        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "stockName"));
 
-        List<String> tickers = List.of("005930", "000660");
+        Page<Stock> stockPage = stockRepository.findAll(pageable);
 
-        List<Stock> stocks = stockRepository.findByStockTickerIn(tickers, topTen);
-
-        List<StockSummaryDto> stockDtos = stocks.stream()
+        List<StockSummaryDto> stockDtos = stockPage.getContent().stream()
                 .map(StockSummaryDto::from)
                 .toList();
 
-        return new StockListResponseDto(true, "종목 리스트 조회 테스트", stockDtos);
+        return new StockListResponseDto(
+                true,
+                "종목 리스트 조회 성공",
+                stockDtos,
+                page,
+                size,
+                stockPage.getTotalElements()
+        );
+    }
+
+    public StockListResponseDto getPopularStocks(int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        List<Long> popularIds = commentRepository.findPopularStockIds(pageable).stream()
+                .map(r -> (Long) r[0])
+                .toList();
+
+        int remainingSize = size - popularIds.size();
+        List<Long> fallbackIds = remainingSize > 0
+                ? stockRepository.findStockIdsWithoutComments(PageRequest.of(0, remainingSize))
+                : List.of();
+
+        List<Long> combinedIds = Stream.concat(popularIds.stream(), fallbackIds.stream())
+                .limit(size)
+                .toList();
+
+        List<Stock> stocks = stockRepository.findAllById(combinedIds);
+        Map<Long, Stock> stockMap = stocks.stream()
+                .collect(Collectors.toMap(Stock::getId, Function.identity()));
+
+        List<StockSummaryDto> stockDtos = combinedIds.stream()
+                .map(stockMap::get)
+                .filter(Objects::nonNull)
+                .map(StockSummaryDto::from)
+                .toList();
+
+        return new StockListResponseDto(
+                true,
+                "인기 종목 조회 성공",
+                stockDtos,
+                page,
+                size,
+                stockDtos.size()
+        );
+    }
+
+    /**
+     * 종목명을 기준으로 키워드 검색을 수행합니다.
+     * <p>
+     * 종목명(`stockName`)에 입력된 키워드가 포함된 종목들을 조회하며,
+     * 오름차순 정렬 및 페이징 처리된 결과를 반환합니다.
+     * </p>
+     *
+     * @param keyword 검색할 키워드 (종목명 일부 문자열)
+     * @param page 조회할 페이지 번호 (1부터 시작)
+     * @param size 페이지당 항목 수
+     * @return 검색 결과로 페이징된 종목 리스트와 메타 정보가 포함된 응답 DTO
+     * @throws GlobalException 페이지 번호 또는 크기가 1 미만인 경우 {@code INVALID_PAGINATION} 예외 발생
+     */
+    public StockListResponseDto searchStocks(String keyword, int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        PageRequest pageable = PageRequest.of(
+                page - 1, size, Sort.by(Sort.Direction.ASC, "stockName"));
+
+        Page<Stock> stockPage = stockRepository.findByStockNameContaining(keyword, pageable);
+
+        List<StockSummaryDto> stockDtos = stockPage.getContent().stream()
+                .map(StockSummaryDto::from)
+                .toList();
+
+        return new StockListResponseDto(
+                true,
+                "종목 검색 결과",
+                stockDtos,
+                page,
+                size,
+                stockPage.getTotalElements()
+        );
     }
 
     /**

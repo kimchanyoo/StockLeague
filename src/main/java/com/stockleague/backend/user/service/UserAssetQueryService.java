@@ -41,7 +41,7 @@ public class UserAssetQueryService {
             UserAssetValuationDto snapshot = getSnapshotFromRedis(userId);
             if (snapshot != null) {
                 return snapshot.toBuilder()
-                        .isMarketOpen(false)
+                        .marketOpen(false)
                         .build();
             }
         }

@@ -52,7 +52,6 @@ public class StockPriceRedisService {
             String value = objectMapper.writeValueAsString(dto);
             double score = dto.datetime().toEpochSecond(ZoneOffset.ofHours(9));
             redisTemplate.opsForZSet().add(key, value, score);
-            log.info("Redis 저장: [{}] score={}, value={}", key, score, value);
 
         } catch (JsonProcessingException e) {
             log.error("[Redis] 시세 저장 실패 (직렬화 오류): {}", e.getMessage());
