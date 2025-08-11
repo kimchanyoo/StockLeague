@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "/api/v1/stocks/search",
                                 "/api/v1/stocks/*/candles",
                                 "/api/v1/stocks/*/price",
+                                "/api/v1/stocks/*/orderbook",
                                 "/api/v1/openapi/**",
                                 "/ws/**",
                                 "/ws-debug/active-users"

@@ -1,13 +1,14 @@
 package com.stockleague.backend.stock.service;
 
-import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
-
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.global.util.MarketTimeUtil;
+import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
 import com.stockleague.backend.infra.redis.StockPriceRedisService;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.response.stock.CandleDto;
 import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.dto.response.stock.StockSummaryDto;
 import com.stockleague.backend.stock.repository.CommentRepository;
@@ -45,6 +46,7 @@ public class StockService {
     private final StockMinutePriceRepository minuteRepo;
 
     private final StockPriceRedisService stockPriceRedisService;
+    private final StockOrderBookRedisService stockOrderBookRedisService;
 
     /**
      * 전체 종목 목록을 페이지 단위로 조회합니다.
@@ -231,6 +233,32 @@ public class StockService {
             throw new GlobalException(GlobalErrorCode.STOCK_PRICE_NOT_FOUND);
         }
 
-        return StockPriceDto.from(dto, isMarketOpen());
+        return StockPriceDto.from(dto, MarketTimeUtil.isMarketOpen());
+    }
+
+    /**
+     * Redis에 저장된 특정 종목의 최신 호가 정보를 조회하고,
+     * 현재 장이 열려 있는지 여부를 함께 포함한 DTO를 반환합니다.
+     * <p>
+     * - 장중: LIVE(3초 TTL)에서 조회
+     * - 마감: LAST 스냅샷에서 조회
+     * </p>
+     *
+     * @param ticker 종목 코드 (예: "005930")
+     * @return 최신 {@link StockOrderBookDto} 객체 (isMarketOpen 필드 포함)
+     * @throws GlobalException {@code ORDER_BOOK_NOT_FOUND} - 호가 정보가 없는 경우
+     */
+    public StockOrderBookDto getEffectiveOrderBook(String ticker) {
+        boolean open = MarketTimeUtil.isMarketOpen();
+
+        StockOrderBookDto dto = open
+                ? stockOrderBookRedisService.getLive(ticker)
+                : stockOrderBookRedisService.getLastSnapshot(ticker);
+
+        if (dto == null) {
+            throw new GlobalException(GlobalErrorCode.ORDER_BOOK_NOT_FOUND);
+        }
+
+        return StockOrderBookDto.from(dto, open);
     }
 }

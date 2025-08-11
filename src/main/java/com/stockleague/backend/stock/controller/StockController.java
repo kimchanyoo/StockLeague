@@ -3,6 +3,7 @@ package com.stockleague.backend.stock.controller;
 import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.stock.dto.response.stock.CandleDto;
 import com.stockleague.backend.stock.dto.response.stock.StockListResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import com.stockleague.backend.stock.service.StockService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -387,4 +388,68 @@ public class StockController {
 
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/{ticker}/orderbook")
+    @Operation(
+            summary = "종목의 최신 호가 조회",
+            description = """
+                Redis에 저장된 특정 종목의 최신 호가 정보를 조회합니다.
+
+                반환된 응답에는 현재 장이 열려 있는지 여부(`isMarketOpen`)도 포함되며,
+                프론트엔드는 이 값을 기준으로 실시간 WebSocket 구독 여부를 판단할 수 있습니다.
+
+                - isMarketOpen = true → WebSocket 실시간 수신(호가 갱신) 가능
+                - isMarketOpen = false → 장 종료 상태. 마지막 스냅샷(LAST)만 유지하면 됩니다.
+                
+                장중에는 LIVE(3초 TTL) 데이터가 우선 사용되며, 없을 경우 LAST(영구 스냅샷)로 폴백합니다.
+                장 마감 이후에는 LAST를 반환합니다.
+                """,
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "호가 조회 성공",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = StockOrderBookDto.class),
+                                    examples = @ExampleObject(value = """
+                                        {
+                                          "ticker": "005930",
+                                          "askPrices": [72800, 72900, 73000, 73100, 73200, 73300, 73400, 73500, 73600, 73700],
+                                          "askVolumes": [1020, 845, 760, 540, 420, 380, 310, 290, 260, 230],
+                                          "bidPrices": [72700, 72600, 72500, 72400, 72300, 72200, 72100, 72000, 71900, 71800],
+                                          "bidVolumes": [990, 1085, 940, 880, 760, 650, 520, 480, 360, 315],
+                                          "timestamp": "2025-07-22T14:33:02",
+                                          "isMarketOpen": true
+                                        }
+                                        """)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "해당 종목의 호가 정보가 존재하지 않음",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ErrorResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "OrderBookNotFound",
+                                            summary = "해당 종목의 Redis 호가가 없을 경우",
+                                            value = """
+                                                {
+                                                  "success": false,
+                                                  "message": "해당 종목의 호가 정보를 찾을 수 없습니다.",
+                                                  "errorCode": "ORDER_BOOK_NOT_FOUND"
+                                                }
+                                                """
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<StockOrderBookDto> getLatestOrderBook(
+            @PathVariable String ticker
+    ) {
+        StockOrderBookDto dto = stockService.getEffectiveOrderBook(ticker);
+        return ResponseEntity.ok(dto);
+    }
+
 }
