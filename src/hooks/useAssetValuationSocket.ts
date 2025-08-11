@@ -77,9 +77,6 @@ export const useAssetValuationSocket = ({
       onDisconnect: () => {
         console.log("⛔ WebSocket 연결 끊김");
       },
-      onStompError: (frame) => {
-        console.error("STOMP 에러:", frame);
-      },
     });
 
     client.activate();

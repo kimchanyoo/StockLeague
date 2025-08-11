@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosInstance";
+import axios from "axios";
 
 // 사용자용 목록
 export interface Notice {
@@ -90,7 +91,7 @@ export const getNotices = async (
   size: number = 10,
   keyword?: string
 ): Promise<NoticeListResponse> => {
-  const res = await axiosInstance.get('/api/v1/notices', {
+  const res = await axios.get('/api/v1/notices', {
     params: { page, size, keyword },
     headers: {
       "Content-Type": "application/json",
@@ -101,7 +102,7 @@ export const getNotices = async (
 
 // 공지 상세
 export const getNoticeDetail = async (noticeId: number): Promise<NoticeDetail> => {
-  const res = await axiosInstance.get(`/api/v1/notices/${noticeId}`);
+  const res = await axios.get(`/api/v1/notices/${noticeId}`);
 
   if (res.data.success) {
     return res.data;
@@ -116,7 +117,7 @@ export const getSearchedNotices = async (
   page: number = 1,
   size: number = 10
 ) => {
-  const res = await axiosInstance.get("/api/v1/notices/search", {
+  const res = await axios.get("/api/v1/notices/search", {
     params: { keyword, page, size },
     headers: {
       "Content-Type": "application/json",

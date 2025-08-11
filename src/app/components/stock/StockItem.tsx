@@ -1,61 +1,82 @@
 "use client";
 
-import React from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "@/app/styles/components/stock/StockItem.module.css";
+import { useMainStockPriceSocket } from "@/hooks/useMainStockPriceSocket";
+import { StockPriceResponse, getStockPrice } from "@/lib/api/stock";
 
 type StockItemProps = {
-  code: string;
   name: string;
-  close: number;
-  change: number;
-  rate: number;
-  open: number;
-  high: number;
-  low: number;
-  volume: number;
+  ticker: string;
 };
 
-// 숫자를 'ko-KR' 형식으로 포맷
 const formatNumber = (num: number) => num.toLocaleString("ko-KR");
-
-// 상승/하락에 따라 + 또는 그대로 표시
 const formatChange = (num: number) =>
   num > 0 ? `+${num.toLocaleString("ko-KR")}` : num.toLocaleString("ko-KR");
-
-// 비율 % 형식 처리
 const formatRate = (rate: number) =>
   rate > 0 ? `+${rate.toFixed(2)}%` : `${rate.toFixed(2)}%`;
 
-export default function StockItem({
-  code,
-  name,
-  close,
-  change,
-  rate,
-  open,
-  high,
-  low,
-  volume,
-}: StockItemProps) {
+export default function StockItem({ ticker, name }: StockItemProps) {
+  const [stock, setStock] = useState<StockPriceResponse | null>(null);
+
+  // 초기 데이터 로딩 + 실시간 구독 훅을 사용
+  useEffect(() => {
+    let isMounted = true;
+
+    // 초기 시세 API 호출 (선택)
+    const fetchInitialPrice = async () => {
+      try {
+        const data = await getStockPrice(ticker);
+        if (isMounted) setStock(data);
+      } catch (e) {
+        console.error("초기 시세 조회 실패", e);
+      }
+    };
+
+    fetchInitialPrice();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [ticker]);
+
+  useMainStockPriceSocket(ticker, (data) => {
+    setStock(data);
+  });
+
+  if (!stock) {
+    return <div>로딩중...</div>;
+  }
+
+  const {
+    closePrice,
+    priceChange,
+    pricePercent,
+    openPrice,
+    highPrice,
+    lowPrice,
+    accumulatedVolume,
+  } = stock;
+
   const changeClass =
-    change > 0
+    priceChange > 0
       ? styles.stock_up
-      : change < 0
+      : priceChange < 0
       ? styles.stock_down
       : styles.stock_same;
 
   return (
-    <Link href={{pathname: "/trade", query: { code, name },}}>
+    <Link href={{ pathname: "/trade", query: { code: ticker, name } }}>
       <div className={styles.stock_item}>
         <div>{name}</div>
-        <div>{formatNumber(close)}</div>
-        <div className={changeClass}>{formatChange(change)}</div>
-        <div className={changeClass}>{formatRate(rate)}</div>
-        <div>{formatNumber(open)}</div>
-        <div>{formatNumber(high)}</div>
-        <div>{formatNumber(low)}</div>
-        <div>{formatNumber(volume)}</div>
+        <div>{formatNumber(closePrice)}</div>
+        <div className={changeClass}>{formatChange(priceChange)}</div>
+        <div className={changeClass}>{formatRate(pricePercent)}</div>
+        <div>{formatNumber(openPrice)}</div>
+        <div>{formatNumber(highPrice)}</div>
+        <div>{formatNumber(lowPrice)}</div>
+        <div>{formatNumber(accumulatedVolume)}</div>
       </div>
     </Link>
   );

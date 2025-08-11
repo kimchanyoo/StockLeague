@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem("accessToken");
+
       if (storedToken) {
         setAccessTokenState(storedToken);
         try {
@@ -53,20 +54,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // STOMP 연결
           await connectStomp(storedToken, (message) => {
             console.log("STOMP 메시지 수신:", message);
-            // 메시지 처리 로직 추가
           });
           setStompConnected(true);
-        } catch (error) {
-          setAccessToken(null);
-          setUser(undefined);
-          setStompConnected(false);
+        } catch (error: any) {
+          const status = error?.response?.status;
+          console.error("프로필 요청 실패:", status, error);
+          if (status === 401) {
+            // 인증 실패: 로그아웃 처리
+            setAccessToken(null);
+            setUser(undefined);
+            setStompConnected(false);
+          } else {
+            // 일시적인 오류: 로그아웃 처리 X
+            console.warn("임시 오류로 인한 로그인 유지");
+          }
         }
       } else {
         setStompConnected(false);
       }
       setLoading(false);
     };
-
     initAuth();
   }, []);
 

@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosInstance";
+import axios from "axios";
 
 export interface Stock {
   stockId: number;
@@ -150,8 +151,8 @@ export interface StockPriceError {
 // ─────────────────────────────
 
 // 종목
-export const getTopStocks = async ( page = 1, size = 20 ): Promise<GetTopStocksResponse> => {
-  const res = await axiosInstance.get('/api/v1/stocks', {
+export const getTopStocks = async ( page = 1, size = 100 ): Promise<GetTopStocksResponse> => {
+  const res = await axios.get('/api/v1/stocks', {
     params: { page, size },
   });
   return res.data;
@@ -166,7 +167,7 @@ export const addWatchlist = async ( ticker: string ): Promise<AddWatchlistSucces
 };
 
 // 관심 조회
-export const getWatchlist = async ( page = 1, size = 10 ): Promise<GetWatchlistResponse> => {
+export const getWatchlist = async ( page = 1, size = 200 ): Promise<GetWatchlistResponse> => {
   const res = await axiosInstance.get(`/api/v1/stock/watchlist`, {
     params: { page, size },
   });
@@ -180,8 +181,8 @@ export const deleteWatchlist = async (watchlistId: number): Promise<DeleteWatchl
 };
 
 // 인기 조회
-export const getPopularStocks = async ( page = 1, size = 10 ): Promise<GetPopularStocksResponse> => {
-  const res = await axiosInstance.get(`/api/v1/stocks/popular`, {
+export const getPopularStocks = async ( page = 1, size = 200 ): Promise<GetPopularStocksResponse> => {
+  const res = await axios.get(`/api/v1/stocks/popular`, {
     params: { page, size },
   });
   return res.data;
@@ -203,7 +204,7 @@ export const getCandleData = async (
   limit: number
 ): Promise<CandleData[]> => {
   const apiInterval = toApiInterval(interval); // 🔹 여기에 적용해야 함
-  const res = await axiosInstance.get(`/api/v1/stocks/${ticker}/candles`, {
+  const res = await axios.get(`/api/v1/stocks/${ticker}/candles`, {
     params: { interval: apiInterval, offset, limit },
   });
   return res.data;

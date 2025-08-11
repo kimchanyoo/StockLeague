@@ -20,7 +20,7 @@ const Community = ({ ticker }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [newComment, setNewComment] = useState("");
-  const [stockName, setStockName] = useState<string>(ticker); // 기본값은 ticker
+  const [stockName, setStockName] = useState<string | null>(null); // 기본값은 ticker
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const { user } = useAuth(); // 로그인 정보 가져오기
@@ -84,7 +84,7 @@ const Community = ({ ticker }: Props) => {
   return (
     <div className={styles.container}>
       <h1>
-        {stockName} 커뮤니티
+        {stockName ? `${stockName} 커뮤니티` : "종목명 불러오는 중..."}
       </h1>
             
       <div className={styles.searchSection}>

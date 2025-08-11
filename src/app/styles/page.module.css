@@ -22,25 +22,22 @@
     max-width: 100%;
     height: 400px;
     max-height: auto;
-    padding: 20px;
-    background-color: #FFFFFF;
-    border: 1px solid rgba(118, 118, 128, 0.12);
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    padding: 20px 43px;
+    background:linear-gradient(224.92deg, #F7C04C 62.6%, #d0c2a0 62.71%,#FFFFFF 62.72%);
+
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25), inset 0 1px 0 0 rgba(118, 118, 128, 0.12);
     border-radius: 10px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 80px;
-    padding-left: 2.7rem;
-    padding-right: 2.7rem;
 }
-.chart {
-    width: 500px;
+.mainImg {
+    width: 337px;
     max-width: 100%;
     height: 337px;
     max-height: 100%;
-    background-color: #E3EEFA;
     border-radius: 10px;
 }
 .chartTitle {
@@ -53,20 +50,21 @@
     font-weight: bold;
 }
 .highlight {
-    color: #006ADD;
+    color: #ffffff;
 }
 .gotoBtn {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #006ADD;
-    color: #FFFFFF;
+    background-color: #FFFFFF;
+    color: #000000;
     font-weight: bold;
     border-radius: 10px;
     margin-top: 2rem;
-    padding: 1.5625rem 1.125rem;
+    padding: 1.5rem 1.125rem;
     width: 180px;
     cursor: pointer;
+    font-size: 1.125rem;
 }
 /* 로그인 영역 스타일 */
 .loginContainer {
