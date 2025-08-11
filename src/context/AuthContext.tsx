@@ -56,17 +56,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log("STOMP 메시지 수신:", message);
           });
           setStompConnected(true);
-        } catch (error: any) {
+        }
+        catch (error: any) {
           const status = error?.response?.status;
-          console.error("프로필 요청 실패:", status, error);
+          console.error("프로필 요청 실패 상태 코드:", status);
+          console.error("에러 전체 객체:", error);
+          console.error("에러 응답 데이터:", error?.response?.data);
+          // 기존 처리 로직 유지
           if (status === 401) {
-            // 인증 실패: 로그아웃 처리
-            setAccessToken(null);
-            setUser(undefined);
-            setStompConnected(false);
+              setAccessToken(null);
+              setUser(undefined);
+              setStompConnected(false);
           } else {
             // 일시적인 오류: 로그아웃 처리 X
-            console.warn("임시 오류로 인한 로그인 유지");
+            //console.warn("임시 오류로 인한 로그인 유지");
           }
         }
       } else {

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosInstance from "./axiosInstance";
 
 export interface ProfitRankingItem {
   userId: number;
@@ -16,6 +16,6 @@ export interface GetProfitRankingResponse {
 }
 
 export const getProfitRanking = async (): Promise<GetProfitRankingResponse> => {
-  const res = await axios.get<GetProfitRankingResponse>("/api/v1/ranking/profit-rate");
+  const res = await axiosInstance.get<GetProfitRankingResponse>("/api/v1/ranking/profit-rate");
   return res.data;
 };

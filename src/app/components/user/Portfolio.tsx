@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { getUserAssetValuation, UserAssetValuation, StockValuationItem } from "@/lib/api/user";
 
-const COLORS = ["#FF5733", "#4CAF50", "#FF9800", "#3F51B5", "#9E9E9E"];
+const COLORS = ["#3F51B5", "#4CAF50", "#FF9800", "#ff5733", "#9E9E9E"];
 
 const Portfolio: React.FC = () => {
   const [cash, setCash] = useState(0);
@@ -66,8 +66,8 @@ const Portfolio: React.FC = () => {
             nameKey="name"
             cx="50%"
             cy="50%"
-            outerRadius={120}
-            innerRadius={60}
+            outerRadius={100}
+            innerRadius={40}
             label={({ value }) => `${value.toFixed(2)}%`}
           >
             {chartData.map((entry, index) => (

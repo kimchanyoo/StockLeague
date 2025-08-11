@@ -35,7 +35,6 @@ export default function Home() {
   const visibleStocks = filteredStocks.slice(0, visibleCount);
 
   useEffect(() => {
-    console.log("✅ useEffect 시작됨");
     // 공지사항 가져오기
     const loadNotices = async () => {
       try {
@@ -47,21 +46,7 @@ export default function Home() {
         console.error("❌ 공지사항 불러오기 실패:", err);
       }
     };
-
-    // 상위 종목 데이터 가져오기
-    const loadStocks = async () => {
-      try {
-        const res = await getTopStocks(1, 100); // 100개 정도 불러오기
-        if (res.success) {
-          setStockData(res.stocks);
-        }
-      } catch (err) {
-        console.error("❌ 종목 데이터 불러오기 실패:", err);
-      }
-    };
-
     loadNotices();
-    loadStocks();
   }, []);
 
   useEffect(() => {

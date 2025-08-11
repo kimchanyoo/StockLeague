@@ -40,8 +40,8 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
               setNotifications((prev) => [msg, ...prev]);
             }
           });
-        } catch (error) {
-          console.error("STOMP 연결 중 오류 발생:", error);
+        } catch (error: any) {
+          console.error("STOMP 연결 중 오류 발생:", error?.message || error, error);
         }
       })();
 
