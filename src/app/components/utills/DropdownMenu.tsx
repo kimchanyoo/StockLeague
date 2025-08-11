@@ -10,7 +10,6 @@ const menuItems = [
     title: "종목/거래",
     submenu: [
       { label: "거래소", href: "/stocks/trade" },
-      { label: "주식목록", href: "/stocks/stockList" },
     ],
   },
   {

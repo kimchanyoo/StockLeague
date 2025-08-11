@@ -1,41 +1,80 @@
 import { useEffect, useRef } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
-import { StockPriceResponse } from "@/lib/api/stock";
+import { StockPriceResponse, getStockPrice } from "@/lib/api/stock";
 
 export const useStockPriceMultiSocket = (
   tickers: string[],
   onUpdate: (data: StockPriceResponse) => void,
-  accessToken: string
+  accessToken?: string
 ) => {
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
     if (tickers.length === 0) return;
 
-    const client = new Client({
+    const connectHeaders: Record<string, string> = accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : {};
+
+    const socketClient = new Client({
       webSocketFactory: () =>
         new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
-      connectHeaders: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      connectHeaders,
       reconnectDelay: 10000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        tickers.forEach((ticker) => {
-          client.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
-            const data: StockPriceResponse = JSON.parse(message.body);
-            onUpdate(data);
+        console.log("✅ WebSocket 연결 성공");
+        subscribedTickers.forEach((ticker) => {
+          console.log(`🔔 구독 시작: /topic/stocks/${ticker}`);
+          socketClient.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
+            try {
+              const data: StockPriceResponse = JSON.parse(message.body);
+              console.log(`📈 실시간 수신 - ${ticker}:`, data);
+              onUpdate(data);
+            } catch (err) {
+              console.error(`❌ JSON 파싱 오류 (${ticker})`, err, message.body);
+            }
           });
         });
       },
+      onStompError: (frame) => {
+        console.error("🛑 STOMP 에러", frame.headers["message"], frame.body);
+      },
     });
 
-    client.activate();
-    clientRef.current = client;
+    let subscribedTickers: string[] = [];
+
+    const init = async () => {
+      const promises = tickers.map(async (ticker) => {
+        try {
+          const initialData = await getStockPrice(ticker);
+          console.log(`🌅 초기 가격 수신 (${ticker}):`, initialData);
+          onUpdate(initialData);
+
+          if (initialData.isMarketOpen) {
+            subscribedTickers.push(ticker);
+          } else {
+            console.log(`🛑 장 종료 (${ticker}) - WebSocket 연결 안함`);
+          }
+        } catch (err) {
+          console.error(`❌ 초기 가격 조회 실패 (${ticker})`, err);
+        }
+      });
+
+      await Promise.all(promises);
+
+      if (subscribedTickers.length > 0) {
+        socketClient.activate();
+        clientRef.current = socketClient;
+      }
+    };
+
+    init();
 
     return () => {
-      client.deactivate();
+      console.log("🔌 WebSocket 연결 해제");
+      clientRef.current?.deactivate();
     };
   }, [tickers.join(","), accessToken]);
 };

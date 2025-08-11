@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "@/app/styles/page.module.css";
 import DownIcon from '@mui/icons-material/ArrowDropDown';
 import RightIcon from '@mui/icons-material/ChevronRight';
@@ -9,31 +9,14 @@ import SignInIcon from '@mui/icons-material/Login';
 import TabMenu from "@/app/components/utills/TabMenu";
 import StockItem from "@/app/components/stock/StockItem";
 import { useRouter } from "next/navigation";
-import MainStockChart from "./components/stock/MainStockChart";
 import Portfolio from "./components/user/Portfolio";
 import { useAuth } from "@/context/AuthContext";
 import { getNotices, Notice } from "@/lib/api/notice";
-
-// 랜덤 주식 데이터 생성 함수
-const generateDummyStockData = () => {
-  return Array.from({ length: 100 }, (_, i) => ({
-    code: `STK${i + 1}`,
-    name: `종목 ${i + 1}`,
-    close: 10000 + i * 10,
-    change: parseFloat((Math.random() * 20 - 10).toFixed(2)),
-    rate: parseFloat((Math.random() * 4 - 2).toFixed(2)),
-    open: 10000 + i * 8,
-    high: 10000 + i * 12,
-    low: 10000 + i * 6,
-    volume: 1000000 + i * 1000,
-    marketCap: 500000000 + i * 500000,
-  }));
-};
+import { getTopStocks, StockPriceResponse, getPopularStocks, getWatchlist } from "@/lib/api/stock";
 
 export default function Home() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [activeTab, setActiveTab] = useState("전체");
-  const tabList = ["전체", "인기", "관심"];
   const router = useRouter();
 
   const [visibleCount, setVisibleCount] = useState(20);
@@ -41,11 +24,18 @@ export default function Home() {
   const { user } = useAuth();
   const isLoggedIn = !!user;
 
+  const tabList = isLoggedIn ? ["전체", "인기", "관심"] : ["전체", "인기"];
+  const filteredStocks = stockData.filter(stock => {
+    if (activeTab === "전체") return true;
+    if (activeTab === "인기") return stock.isPopular;
+    if (activeTab === "관심") return stock.isFavorite;
+    return true;
+  });
+
+  const visibleStocks = filteredStocks.slice(0, visibleCount);
 
   useEffect(() => {
-    const data = generateDummyStockData();
-    setStockData(data);
-
+    console.log("✅ useEffect 시작됨");
     // 공지사항 가져오기
     const loadNotices = async () => {
       try {
@@ -58,7 +48,49 @@ export default function Home() {
       }
     };
 
+    // 상위 종목 데이터 가져오기
+    const loadStocks = async () => {
+      try {
+        const res = await getTopStocks(1, 100); // 100개 정도 불러오기
+        if (res.success) {
+          setStockData(res.stocks);
+        }
+      } catch (err) {
+        console.error("❌ 종목 데이터 불러오기 실패:", err);
+      }
+    };
+
     loadNotices();
+    loadStocks();
+  }, []);
+
+  useEffect(() => {
+    async function fetchStocks() {
+      const topRes = await getTopStocks(1, 200);
+      let data = topRes.stocks.map(stock => ({ ...stock, isPopular: false, isFavorite: false }));
+
+      // 인기 종목
+      const popRes = await getPopularStocks();
+      const popIds = new Set(popRes.stocks.map(s => s.stockId));
+      data = data.map(stock => ({
+        ...stock,
+        isPopular: popIds.has(stock.stockId)
+      }));
+
+      // 관심 종목 (로그인 시에만)
+      if (isLoggedIn) {
+        const favRes = await getWatchlist();
+        const favIds = new Set(favRes.watchlists.map(w => w.stockId));
+        data = data.map(stock => ({
+          ...stock,
+          isFavorite: favIds.has(stock.stockId)
+        }));
+      }
+
+      setStockData(data);
+    }
+
+    fetchStocks();
   }, []);
 
   const handleGotoStockList = () => {
@@ -71,20 +103,16 @@ export default function Home() {
     setVisibleCount((prev) => prev + 20);
   };
 
-  const visibleStocks = stockData.slice(0, visibleCount);
-
   return (
     <div className={styles.container}>
       <div className={styles.topSection}>
-        <div className={styles.chartContainer}>
-          <div className={styles.chart}>
-            <MainStockChart/>
-          </div>
+        <div className={styles.chartContainer}>   
+          <img src="/images/main.avif" className={styles.mainImg}></img>
           <div className={styles.chartTitle}>
             <h1 className={styles.content}>
               <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
             </h1>
-            <button className={styles.gotoBtn} onClick={handleGotoStockList}>종목시세 보러가기</button>
+            <button className={styles.gotoBtn} onClick={handleGotoStockList}>거래 하러가기</button>
           </div>
         </div>
 
@@ -142,7 +170,11 @@ export default function Home() {
         </div>
         <div className={styles.list}>
           {visibleStocks.map((stock) => (
-            <StockItem key={stock.code} {...stock} />
+            <StockItem
+              key={stock.stockTicker}
+              ticker={stock.stockTicker}
+              name={stock.stockName}
+            />
           ))}
         </div>
       </div>

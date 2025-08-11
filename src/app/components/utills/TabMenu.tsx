@@ -1,6 +1,4 @@
 "use client";
-
-import React, {useState} from "react";
 import styles from "@/app/styles/components/utills/TabMenu.module.css";
 
 interface TabMenuProps {

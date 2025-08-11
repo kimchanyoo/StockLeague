@@ -22,7 +22,7 @@ export const connectStomp = (
         Authorization: `Bearer ${accessToken}`,
       },
       reconnectDelay: 5000,
-      debug: (str) => console.log("[STOMP DEBUG]", str),
+      //debug: (str) => console.log("[STOMP DEBUG]", str),
       onConnect: (frame) => {
        // console.log("✅ STOMP 연결 성공:", frame);
 
@@ -38,7 +38,7 @@ export const connectStomp = (
            // console.log("🔔 받은 메시지:", payload);
             onMessage(payload);
           } catch (e) {
-            console.error("메시지 파싱 실패:", e);
+           // console.error("메시지 파싱 실패:", e);
           }
         });
 

@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosInstance";
-
+import axios from "axios";
 // 로그인
 export const postOAuthLogin = async ({
   provider,
@@ -10,7 +10,7 @@ export const postOAuthLogin = async ({
   authCode: string;
   redirectUri: string;
 }) => {
-  const res = await axiosInstance.post("/api/v1/auth/oauth/login", {
+  const res = await axios.post("/api/v1/auth/oauth/login", {
     provider,
     authCode,
     redirectUri,
