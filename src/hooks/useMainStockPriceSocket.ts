@@ -24,7 +24,7 @@ export function useMainStockPriceSocket(
         onUpdate(initialData);
 
         if (!initialData.isMarketOpen) {
-          console.log(`🛑 장 종료(${ticker}) - WebSocket 연결하지 않음`);
+          //console.log(`🛑 장 종료(${ticker}) - WebSocket 연결하지 않음`);
           return; // 장 닫혀있으면 WebSocket 연결 안함
         }
 
@@ -61,7 +61,7 @@ export function useMainStockPriceSocket(
 
     return () => {
       if (clientRef.current) {
-        console.log(`🔌 WebSocket 연결 해제 (${ticker})`);
+        //console.log(`🔌 WebSocket 연결 해제 (${ticker})`);
         clientRef.current.deactivate();
         clientRef.current = null;
       }

@@ -49,16 +49,16 @@ export const useStockPriceMultiSocket = (
       const promises = tickers.map(async (ticker) => {
         try {
           const initialData = await getStockPrice(ticker);
-          console.log(`🌅 초기 가격 수신 (${ticker}):`, initialData);
+          //console.log(`🌅 초기 가격 수신 (${ticker}):`, initialData);
           onUpdate(initialData);
 
           if (initialData.isMarketOpen) {
             subscribedTickers.push(ticker);
           } else {
-            console.log(`🛑 장 종료 (${ticker}) - WebSocket 연결 안함`);
+            //console.log(`🛑 장 종료 (${ticker}) - WebSocket 연결 안함`);
           }
         } catch (err) {
-          console.error(`❌ 초기 가격 조회 실패 (${ticker})`, err);
+         // console.error(`❌ 초기 가격 조회 실패 (${ticker})`, err);
         }
       });
 

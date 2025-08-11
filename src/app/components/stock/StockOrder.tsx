@@ -33,9 +33,13 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const totalPrice = quantity * price;
 
   const [orderbook, setOrderbook] = useState<OrderbookData | null>(null);
-  const { accessToken } = useAuth();
+  const { accessToken, loading } = useAuth();
 
   useEffect(() => {
+    if (!accessToken) {
+      // 로그인 안 된 상태라면 API 호출 안 함
+      return;
+    }
     const fetchBalance = async () => {
       try {
         const balance = await getUserAssetValuation();
@@ -51,6 +55,11 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
 
   useEffect(() => {
     if (!ticker) return;
+    if (loading) return; // 로딩 끝날 때까지 기다리기
+    if (!accessToken) {
+      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(호가)");
+      return;
+    }
 
     const client = new Client({
       webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
@@ -87,8 +96,9 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    if (loading) return;
     if (!accessToken) {
-      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀");
+      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(주문)");
       return;
     }
 

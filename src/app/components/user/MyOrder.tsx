@@ -14,7 +14,7 @@ interface MyOrderProps {
 interface AssetData {
   totalAsset: string; // API 응답에선 string 타입으로 옵니다
   cashBalance: string;
-  isMarketOpen: boolean;
+  marketOpen: boolean;
 }
 
 const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
@@ -27,6 +27,11 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
   const isMarketOpenRef = useRef(false); // 유지용
 
   const fetchOrders = useCallback(async () => {
+    if (!accessToken) {
+      // 로그인 안 된 상태라면 API 호출 안 함
+      return;
+    }
+
     try {
       if (activeTab === "체결 내역") {
         const res = await getAllMyExecutions(page, 20);
@@ -48,15 +53,20 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
     } catch (err) {
       console.error("❌ 주문 내역 불러오기 실패:", err);
     }
-  }, [page, activeTab]);
+  }, [page, activeTab, accessToken]);
 
   const fetchAsset = useCallback(async () => {
+    if (!accessToken) {
+      // 로그인 안 된 상태라면 API 호출 안 함
+      return;
+    }
+
     try {
       const res = await getUserAssetValuation();
       setAsset(res); // 전체 객체 저장
-      isMarketOpenRef.current = res.isMarketOpen;
+      isMarketOpenRef.current = res.marketOpen;
 
-      if (res.isMarketOpen && accessToken) {
+      if (res.marketOpen && accessToken) {
         if (clientRef.current) {
           clientRef.current.deactivate();
           clientRef.current = null;

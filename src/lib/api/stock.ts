@@ -224,6 +224,6 @@ export const postSellOrder = async ( data: SellOrderRequest ): Promise<SellOrder
 
 // 실시간 주식 데이터
 export const getStockPrice = async ( ticker: string ): Promise<StockPriceResponse> => {
-  const res = await axiosInstance.get<StockPriceResponse>(`/api/v1/stocks/${ticker}/price`);
+  const res = await axios.get<StockPriceResponse>(`/api/v1/stocks/${ticker}/price`);
   return res.data;
 };
