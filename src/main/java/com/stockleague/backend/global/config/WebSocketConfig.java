@@ -19,14 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
 
-    @Bean
-    public TaskScheduler messageBrokerTaskScheduler() {
-        var ts = new ThreadPoolTaskScheduler();
-        ts.setPoolSize(1);
-        ts.setThreadNamePrefix("ws-heartbeat-");
-        ts.initialize();
-        return ts;
-    }
+    private final TaskScheduler messageBrokerTaskScheduler;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -37,8 +30,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/user/queue")
-                .setHeartbeatValue(new long[]{15000, 15000})
-                .setTaskScheduler(messageBrokerTaskScheduler());
+                .setTaskScheduler(messageBrokerTaskScheduler)
+                .setHeartbeatValue(new long[]{15000, 15000});
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/pub");
     }
