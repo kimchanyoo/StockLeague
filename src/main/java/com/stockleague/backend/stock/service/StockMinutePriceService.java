@@ -89,7 +89,6 @@ public class StockMinutePriceService {
 
         try {
             minuteRepo.save(candle);
-            log.info("[분봉 생성] 저장 성공: {} {}분 {} (vol={})", ticker, interval, from, volume);
         } catch (Exception e) {
             log.error("[분봉 생성] 저장 실패: {} {}분 {}, 이유: {}", ticker, interval, from, e.getMessage(), e);
         }
