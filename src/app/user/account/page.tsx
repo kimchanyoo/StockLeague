@@ -30,6 +30,11 @@ export default function Account() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!accessToken) {
+      setLoading(false);  // 로그인 안 되어 있으면 로딩 상태 해제
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const res = await getUserAssetValuation();

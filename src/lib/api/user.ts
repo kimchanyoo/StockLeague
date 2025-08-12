@@ -69,7 +69,7 @@ export interface OrderExecution {
 }
 export interface GetDetailMyOrderResponse {
   success: boolean;
-  executions: OrderExecution[];
+  contents: OrderExecution[];
 }
 
 // 체결 데이터
@@ -83,7 +83,7 @@ export interface OrderExecution {
 }
 export interface GetAllMyExecutionsResponse {
   success: boolean;
-  executions: OrderExecution[];
+  contents: OrderExecution[];
   page: number;
   size: number;
   totalCount: number;
@@ -104,7 +104,7 @@ export interface UnexecutedOrder {
 }
 export interface GetUnexecutedOrdersResponse {
   success: boolean;
-  unexecutedOrders: UnexecutedOrder[];
+  contents: UnexecutedOrder[];
   page: number;
   size: number;
   totalCount: number;
@@ -123,7 +123,7 @@ export const getUserAssetValuation = async (): Promise<UserAssetValuation> => {
 };
 
 // 주문 내역 조회
-export const getMyOrder = async ( page: number = 1, size: number = 10 ): Promise<OrderListResponse> => {
+export const getMyOrder = async ( page = 1, size = 10 ): Promise<OrderListResponse> => {
   const res = await axiosInstance.get<OrderListResponse>(`/api/v1/order/`, {
     params: { page, size },
   });
@@ -137,7 +137,7 @@ export const getDetailMyOrder = async (orderId: number): Promise<GetDetailMyOrde
 };
 
 // 체결 내역 조회
-export async function getAllMyExecutions( page: number = 1, size: number = 10 ): Promise<GetAllMyExecutionsResponse> {
+export async function getAllMyExecutions( page = 1, size = 10 ): Promise<GetAllMyExecutionsResponse> {
   const response = await axiosInstance.get<GetAllMyExecutionsResponse>(`/api/v1/executions`, { 
     params: { page, size },
   });
@@ -145,7 +145,7 @@ export async function getAllMyExecutions( page: number = 1, size: number = 10 ):
 }
 
 // 미체결 내역 조회
-export async function getUnexecutedOrders( page: number = 1, size: number = 10 ): Promise<GetUnexecutedOrdersResponse> {
+export async function getUnexecutedOrders( page = 1, size = 10 ): Promise<GetUnexecutedOrdersResponse> {
   const response = await axiosInstance.get<GetUnexecutedOrdersResponse>(`/api/v1/executions/unexecuted`, {
     params: { page, size },
   });

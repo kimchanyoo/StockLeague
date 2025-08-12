@@ -27,27 +27,20 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
   const isMarketOpenRef = useRef(false); // 유지용
 
   const fetchOrders = useCallback(async () => {
-    if (!accessToken) {
-      // 로그인 안 된 상태라면 API 호출 안 함
-      return;
-    }
+    if (!accessToken) return;
 
     try {
       if (activeTab === "체결 내역") {
         const res = await getAllMyExecutions(page, 20);
-        const newOrders = res?.executions;
-
+        const newOrders = res?.contents;
         if (!Array.isArray(newOrders)) return;
-
-        setOrders((prev) => [...prev, ...newOrders]);
+        setOrders((prev) => (page === 1 ? newOrders : [...prev, ...newOrders]));
         setHasMore(page < res.totalPage);
       } else {
         const res = await getUnexecutedOrders(page, 20);
-        const newOrders = res?.unexecutedOrders;
-
+        const newOrders = res?.contents;
         if (!Array.isArray(newOrders)) return;
-
-        setOrders((prev) => [...prev, ...newOrders]);
+        setOrders((prev) => (page === 1 ? newOrders : [...prev, ...newOrders]));
         setHasMore(page < res.totalPage);
       }
     } catch (err) {
@@ -142,43 +135,59 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
     }
   };
 
-  const filteredOrders = orders.filter((o) =>
-    activeTab === "체결 내역"
-      ? o.orderStatus === "EXECUTED" || o.orderStatus === "CANCELED_AFTER_PARTIAL"
-      : o.orderStatus === "WAITING" || o.orderStatus === "PARTIALLY_EXECUTED"
-  );
-
+  const filteredOrders = (activeTab === "체결 내역")
+  ? orders
+  : activeTab === "미체결 내역"
+  ? orders.filter(o => 
+      o.orderStatus === "WAITING" || 
+      o.orderStatus === "PARTIALLY_EXECUTED" || 
+      o.orderStatus === "EXECUTED" ||
+      o.orderStatus === "CANCELED_AFTER_PARTIAL"
+    )
+  : [];
+      
   useEffect(() => {
     return () => {
       // 언마운트 시 WebSocket 정리
       clientRef.current?.deactivate();
     };
   }, []);
+  
 
   return (
     <div className={styles.orderStatus}>
-      {/* 주문 리스트 */}
       {filteredOrders.length > 0 ? (
         <ul className={styles.orderList}>
           {filteredOrders.map((order) => (
-            <li key={order.orderId} className={styles.orderItem}>
+            <li
+              key={
+                activeTab === "체결 내역"
+                  ? order.orderExecutionId
+                  : order.orderId
+              }
+              className={styles.orderItem}
+            >
               <div>
                 <strong>{order.stockName} </strong>|
-                <strong
-                  className={
-                    order.orderType === "BUY" ? styles.buy : styles.sell
-                  }
-                >
-                  {" "}
-                  {order.orderType === "BUY" ? "매수" : "매도"}
+                <strong className={order.orderType === "BUY" ? styles.buy : styles.sell}>
+                  {order.orderType === "BUY" ? " 매수" : " 매도"}
                 </strong>
               </div>
               <div>
-                수량: {order.orderAmount}주 / 주문가격:{" "}
-                {order.orderPrice.toLocaleString()}원
+                수량:{" "}
+                {activeTab === "체결 내역"
+                  ? order.executedAmount
+                  : order.orderAmount}
+                주 / 주문가격:{" "}
+                {activeTab === "체결 내역"
+                  ? order.executedPrice.toLocaleString()
+                  : order.orderPrice.toLocaleString()}
+                원
               </div>
               <div className={styles.orderDate}>
-                {order.createdAt.replace("T", " ").slice(0, 19)}
+                {activeTab === "체결 내역"
+                  ? order.executedAt.replace("T", " ").slice(0, 19)
+                  : order.createdAt.replace("T", " ").slice(0, 19)}
               </div>
               {activeTab === "미체결 내역" && (
                 <button
@@ -195,7 +204,6 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
         <p>거래 내역이 없습니다.</p>
       )}
 
-      {/* 스크롤 하단 감지용 div */}
       {hasMore && <div ref={observerRef} style={{ height: 1 }} />}
     </div>
   );

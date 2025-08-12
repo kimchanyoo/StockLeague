@@ -11,6 +11,7 @@ import { getUserAssetValuation } from "@/lib/api/user";
 import { Client } from "@stomp/stompjs";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-hot-toast";
+import { useOrderbook } from "@/hooks/useOrderbook"; 
 
 interface StockOrderProps {
   stockName: string;
@@ -32,8 +33,8 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const totalPrice = quantity * price;
 
-  const [orderbook, setOrderbook] = useState<OrderbookData | null>(null);
   const { accessToken, loading } = useAuth();
+  const { orderbook, isMarketOpen } = useOrderbook({ ticker, accessToken, loading });
 
   useEffect(() => {
     if (!accessToken) {
@@ -53,45 +54,6 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     fetchBalance();
   }, []);
 
-  useEffect(() => {
-    if (!ticker) return;
-    if (loading) return; // 로딩 끝날 때까지 기다리기
-    if (!accessToken) {
-      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(호가)");
-      return;
-    }
-
-    const client = new Client({
-      webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
-      connectHeaders: {
-        Authorization: `Bearer ${accessToken}`, 
-      },
-      reconnectDelay: 15_000,
-      heartbeatIncoming: 10_000,
-      heartbeatOutgoing: 10_000,
-
-      onConnect: () => {
-        client.subscribe(`/topic/orderbook/${ticker}`, (message) => {
-          try {
-            const data = JSON.parse(message.body) as OrderbookData;
-            setOrderbook(data);
-          } catch (err) {
-            console.error("호가 데이터 처리 오류:", err);
-          }
-        });
-      },
-
-      onStompError: (frame) => {
-        console.error("WebSocket STOMP 오류:", frame.headers["message"]);
-      },
-    });
-
-    client.activate();
-
-    return () => {
-      client.deactivate();
-    };
-  }, [ticker]);
 
   useEffect(() => {
     const el = scrollRef.current;
