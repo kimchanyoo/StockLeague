@@ -8,11 +8,21 @@ export function useMainStockPriceSocket(
   accessToken?: string
 ) {
   const clientRef = useRef<Client | null>(null);
+  const activatedRef = useRef(false);
+  const unmountingRef = useRef(false);
 
   useEffect(() => {
     if (!ticker) return;
+    // 토큰 필수 정책이면 가드 켜기
+    // if (!accessToken) return;
 
-    let socketClient: Client | null = null;
+    unmountingRef.current = false;
+
+    const url = process.env.NEXT_PUBLIC_SOCKET_URL;
+    if (!url) {
+      console.error("NEXT_PUBLIC_SOCKET_URL is not set");
+      return;
+    }
 
     const connectHeaders: Record<string, string> = accessToken
       ? { Authorization: `Bearer ${accessToken}` }
@@ -23,48 +33,57 @@ export function useMainStockPriceSocket(
         const initialData = await getStockPrice(ticker);
         onUpdate(initialData);
 
-        if (!initialData.isMarketOpen) {
-          //console.log(`🛑 장 종료(${ticker}) - WebSocket 연결하지 않음`);
-          return; // 장 닫혀있으면 WebSocket 연결 안함
-        }
+        if (!initialData.isMarketOpen) return;
+        if (activatedRef.current) return;
 
-        socketClient = new Client({
-          webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
+        const client = new Client({
+          webSocketFactory: () => new WebSocket(url),
           connectHeaders,
           reconnectDelay: 10000,
           heartbeatIncoming: 10000,
           heartbeatOutgoing: 10000,
           onConnect: () => {
-            console.log(`✅ WebSocket 연결 성공 (${ticker})`);
-            socketClient?.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
+            activatedRef.current = true;
+            client.subscribe(`/topic/stocks/${ticker}`, (msg: IMessage) => {
               try {
-                const data: StockPriceResponse = JSON.parse(message.body);
-                onUpdate(data);
-              } catch (err) {
-                console.error(`❌ JSON 파싱 오류 (${ticker}):`, err);
+                onUpdate(JSON.parse(msg.body) as StockPriceResponse);
+              } catch (e) {
+                console.error("JSON 파싱 오류:", e);
               }
             });
           },
+          onDisconnect: () => { activatedRef.current = false; },
+          onWebSocketClose: (evt) => {
+            activatedRef.current = false;
+            console.log("WS closed", evt?.code, evt?.reason);
+          },
+          onWebSocketError: (evt) => {
+            console.error("WS error", evt);
+          },
           onStompError: (frame) => {
-            console.error("🛑 STOMP 에러", frame.headers["message"], frame.body);
+            console.error("STOMP 에러", frame.headers["message"], frame.body);
           },
         });
 
-        socketClient.activate();
-        clientRef.current = socketClient;
-      } catch (err) {
-        console.error(`❌ 초기 가격 조회 실패 (${ticker}):`, err);
+        client.activate();
+        clientRef.current = client;
+      } catch (e) {
+        console.error("초기 가격 조회 실패:", e);
       }
     };
 
     init();
 
     return () => {
-      if (clientRef.current) {
-        //console.log(`🔌 WebSocket 연결 해제 (${ticker})`);
-        clientRef.current.deactivate();
-        clientRef.current = null;
-      }
+      unmountingRef.current = true;
+      setTimeout(() => {
+        if (unmountingRef.current && clientRef.current?.active) {
+          clientRef.current.deactivate();
+          clientRef.current = null;
+          activatedRef.current = false;
+        }
+      }, 0);
     };
-  }, [ticker, accessToken]);
+  }, [ticker /*, accessToken*/]); // 토큰 변화로 재연결 원치 않으면 deps에서 제외
 }
+

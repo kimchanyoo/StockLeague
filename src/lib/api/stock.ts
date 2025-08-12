@@ -98,6 +98,7 @@ export interface OrderbookData {
   bidPrices: number[];
   bidVolumes: number[];
   timestamp: string;
+  isMarketOpen: boolean;
 }
 
 // 매수 주문 데이터 타입
@@ -227,3 +228,11 @@ export const getStockPrice = async ( ticker: string ): Promise<StockPriceRespons
   const res = await axios.get<StockPriceResponse>(`/api/v1/stocks/${ticker}/price`);
   return res.data;
 };
+
+// 실시간 호가 데이터
+export async function getOrderbook(ticker: string): Promise<OrderbookData> {
+  if (!ticker) throw new Error("ticker 값이 필요합니다.");
+
+  const res = await axiosInstance.get<OrderbookData>(`/api/v1/stocks/${ticker}/orderbook`);
+  return res.data;
+}

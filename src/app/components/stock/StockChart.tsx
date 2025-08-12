@@ -81,10 +81,6 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
   // 봉 데이터 불러오기 (분봉)
   useEffect(() => {
     if (!ticker) return;
-    if (!accessToken) {
-      console.warn("❌ accessToken 없음, WebSocket 연결 생략");
-      return;
-    }
     
     const client = new Client({
       webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
