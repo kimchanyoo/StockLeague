@@ -29,71 +29,77 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        accessor.setLeaveMutable(true);
+        try {
+            StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+            accessor.setLeaveMutable(true);
 
-        StompCommand command = accessor.getCommand();
-        if (command == null) {
+            StompCommand command = accessor.getCommand();
+            if (command == null) {
+                return message;
+            }
+
+            if (StompCommand.CONNECT.equals(command)) {
+                log.debug("[WS] CONNECT 수신");
+
+                String authHeader = firstNonNull(
+                        accessor.getFirstNativeHeader("Authorization"),
+                        accessor.getFirstNativeHeader("authorization"),
+                        accessor.getFirstNativeHeader("accessToken")
+                );
+
+                if (authHeader == null || authHeader.isBlank()) {
+                    log.debug("[WS] CONNECT: Authorization 헤더 없음 → 익명으로 진행");
+                } else {
+                    String raw = authHeader.trim();
+                    String token = raw.regionMatches(true, 0, "Bearer ", 0, 7)
+                            ? raw.substring(7).trim()
+                            : raw;
+
+                    try {
+                        boolean valid = jwtProvider.validateToken(token);
+                        boolean blacklisted = redisService.isBlacklisted(token);
+
+                        if (valid && !blacklisted) {
+                            Authentication auth = jwtProvider.getAuthentication(token);
+
+                            accessor.setUser(auth);
+
+                            Map<String, Object> attrs = accessor.getSessionAttributes();
+                            if (attrs != null) {
+                                attrs.put("user", auth);
+                            }
+
+                            SecurityContextHolder.getContext().setAuthentication(auth);
+
+                            log.info("[WS] CONNECT 인증 성공 - principal={}", auth.getName());
+                        } else {
+                            log.warn("[WS] CONNECT: 토큰 검증 실패 또는 블랙리스트 → 익명으로 진행");
+                        }
+                    } catch (Exception e) {
+                        log.warn("[WS] CONNECT: 토큰 처리 중 예외 → 익명으로 진행. msg={}", e.getMessage());
+                    }
+                }
+            } else if (StompCommand.DISCONNECT.equals(command)) {
+                SecurityContextHolder.clearContext();
+                log.debug("[WS] DISCONNECT 처리 - SecurityContext cleared");
+            } else {
+                // 다른 프레임에서 user가 비어있으면 세션에 저장된 사용자 복구
+                Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+                if (accessor.getUser() == null && sessionAttributes != null) {
+                    Object user = sessionAttributes.get("user");
+                    if (user instanceof Principal principal) {
+                        accessor.setUser(principal);
+                    }
+                }
+            }
+
+            return message;
+
+        } catch (Exception e) {
+            log.warn("[WS] preSend 처리 중 예외 발생 → 익명 진행, msg={}", e.toString());
+            SecurityContextHolder.clearContext();
             return message;
         }
-
-        if (StompCommand.CONNECT.equals(command)) {
-            log.debug("[WS] CONNECT 수신");
-
-            String authHeader = firstNonNull(
-                    accessor.getFirstNativeHeader("Authorization"),
-                    accessor.getFirstNativeHeader("authorization"),
-                    accessor.getFirstNativeHeader("accessToken")
-            );
-
-            if (authHeader == null || authHeader.isBlank()) {
-                log.debug("[WS] CONNECT: Authorization 헤더 없음 → 익명으로 진행");
-            } else {
-                // 대소문자/공백 안전한 Bearer 파싱
-                String raw = authHeader.trim();
-                String token = raw.regionMatches(true, 0, "Bearer ", 0, 7)
-                        ? raw.substring(7).trim()
-                        : raw;
-
-                try {
-                    if (jwtProvider.validateToken(token) && !redisService.isBlacklisted(token)) {
-                        Authentication auth = jwtProvider.getAuthentication(token);
-
-                        // STOMP 세션의 사용자로 인증 객체 지정
-                        accessor.setUser(auth);
-                        // 세션 속성에 보관(프레임 복구용)
-                        Map<String, Object> attrs = accessor.getSessionAttributes();
-                        if (attrs != null) {
-                            attrs.put("user", auth);
-                        }
-
-                        // 3) SecurityContext 세팅 (선택)
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-
-                        log.info("[WS] CONNECT 인증 성공 - userId={}, principal={}", auth.getName(), auth.getName());
-                    } else {
-                        log.warn("[WS] CONNECT: 토큰 검증 실패 또는 블랙리스트 → 익명으로 진행");
-                    }
-                } catch (Exception e) {
-                    log.warn("[WS] CONNECT: 토큰 처리 중 예외 → 익명으로 진행. msg={}", e.getMessage());
-                }
-            }
-        } else if (StompCommand.DISCONNECT.equals(command)) {
-            // 세션 종료 시 보안 컨텍스트 정리
-            SecurityContextHolder.clearContext();
-            log.debug("[WS] DISCONNECT 처리 - SecurityContext cleared");
-        } else {
-            // 다른 프레임에서 user가 비어있으면 세션에 저장된 사용자 복구
-            Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
-            if (accessor.getUser() == null && sessionAttributes != null) {
-                Object user = sessionAttributes.get("user");
-                if (user instanceof Principal principal) {
-                    accessor.setUser(principal);
-                }
-            }
-        }
-
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
 
 

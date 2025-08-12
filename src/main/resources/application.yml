@@ -87,6 +87,8 @@ logging:
     level:
         root: info
         org.springframework.web: warn
+        org.springframework.security.messaging: DEBUG
+        org.springframework.messaging: DEBUG
 
         com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: info
         com.stockleague.backend.infra.redis.StockPriceRedisService: info
