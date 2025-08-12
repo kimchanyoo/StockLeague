@@ -373,7 +373,7 @@ public class OrderExecutionService {
     /**
      * 사용자의 전체 미체결 주문 내역을 페이지 단위로 조회합니다.
      * <p>
-     * 미체결 주문은 상태가 {@code WAITING} 또는 {@code PARTIALLY_EXECUTED}인 주문으로 정의됩니다. 결과는 주문 생성 시각({@code createdAt}) 기준 내림차순으로
+     * 미체결 주문은 상태가 {@code WAITING} 또는 {@code PARTIALLY_EXECUTED}인 주문으로 정의됩니다. 결과는 주문 생성 시각({@code orderDate}) 기준 내림차순으로
      * 정렬되어 반환됩니다. 매수(BUY), 매도(SELL) 구분 없이 모든 미체결 주문이 포함됩니다.
      * </p>
      *
@@ -401,7 +401,7 @@ public class OrderExecutionService {
                 OrderStatus.PARTIALLY_EXECUTED
         );
 
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("createdAt")));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Order.desc("orderDate")));
         Page<Order> orderPage = orderRepository.findByUserAndStatusIn(user, unexecutedStatuses, pageable);
 
         List<UnexecutedOrderSummaryDto> contents = orderPage.getContent().stream()
