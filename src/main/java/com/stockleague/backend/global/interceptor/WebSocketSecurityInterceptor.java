@@ -62,9 +62,12 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                         // STOMP 세션의 사용자로 인증 객체 지정
                         accessor.setUser(auth);
                         // 세션 속성에 보관(프레임 복구용)
-                        accessor.getSessionAttributes().put("user", auth);
+                        Map<String, Object> attrs = accessor.getSessionAttributes();
+                        if (attrs != null) {
+                            attrs.put("user", auth);
+                        }
 
-                        // 스레드 로컬 SecurityContext에도 반영
+                        // 3) SecurityContext 세팅 (선택)
                         SecurityContextHolder.getContext().setAuthentication(auth);
 
                         log.info("[WS] CONNECT 인증 성공 - userId={}, principal={}", auth.getName(), auth.getName());
