@@ -103,7 +103,7 @@ logging:
         org.springframework.messaging.converter: DEBUG
 
         # 브로커 내부 처리(전달/라우팅/하트비트 등)
-        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: DEBUG
+        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: INFO
         org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: DEBUG
         org.springframework.messaging.simp.user.DefaultSimpUserRegistry: DEBUG
 
