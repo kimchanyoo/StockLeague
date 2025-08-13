@@ -1,41 +1,31 @@
 package com.stockleague.backend.global.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageType;
-import org.springframework.security.authorization.AuthorizationManager;
-import org.springframework.security.config.annotation.web.socket.EnableWebSocketSecurity;
-import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
-
-import static org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager.*;
+import org.springframework.security.config.annotation.web.socket.AbstractSecurityWebSocketMessageBrokerConfigurer;
+import org.springframework.security.config.annotation.web.messaging.MessageSecurityMetadataSourceRegistry;
 
 @Configuration
-@EnableWebSocketSecurity
-public class WebSocketSecurityConfig {
+public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBrokerConfigurer {
 
-    @Bean
-    public AuthorizationManager<Message<?>> messageAuthorizationManager() {
-        Builder builder = MessageMatcherDelegatingAuthorizationManager.builder();
 
-        return builder
-                .nullDestMatcher().permitAll()
-
+    @Override
+    protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
+        messages
                 .simpTypeMatchers(
                         SimpMessageType.CONNECT,
-                        SimpMessageType.CONNECT_ACK,
                         SimpMessageType.HEARTBEAT,
                         SimpMessageType.UNSUBSCRIBE,
                         SimpMessageType.DISCONNECT
                 ).permitAll()
 
-                .simpMessageDestMatchers("/pub/**").authenticated()
-
+                .simpSubscribeDestMatchers("/user/queue/**").authenticated()
                 .simpSubscribeDestMatchers("/topic/**").permitAll()
+                .anyMessage().permitAll();
+    }
 
-                .simpSubscribeDestMatchers("/user/**").authenticated()
-
-                .anyMessage().denyAll()
-                .build();
+    @Override
+    protected boolean sameOriginDisabled() {
+        return true;
     }
 }
