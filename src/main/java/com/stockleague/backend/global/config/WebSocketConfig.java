@@ -6,9 +6,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @Configuration
 @RequiredArgsConstructor
@@ -18,12 +21,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
 
     @Bean
-    public org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler wsHeartbeatScheduler() {
-        var ts = new org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler();
-        ts.setPoolSize(1);
-        ts.setThreadNamePrefix("ws-heartbeat-");
-        ts.initialize();
-        return ts;
+    public TaskScheduler wsTaskScheduler() {
+        return new ConcurrentTaskScheduler();
     }
 
 
@@ -36,16 +35,38 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/user/queue")
-                .setTaskScheduler(wsHeartbeatScheduler())
-                .setHeartbeatValue(new long[]{15000, 15000});
+                .setTaskScheduler(wsTaskScheduler())
+                .setHeartbeatValue(new long[]{10000, 10000});
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/pub");
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(
-                webSocketSecurityInterceptor
-        );
+        registration
+                .interceptors(webSocketSecurityInterceptor)
+                .taskExecutor()                // ← 빌더 반환
+                .corePoolSize(8)
+                .maxPoolSize(32)
+                .queueCapacity(1000)
+                .keepAliveSeconds(60);
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration
+                .taskExecutor()
+                .corePoolSize(8)
+                .maxPoolSize(32)
+                .queueCapacity(1000)
+                .keepAliveSeconds(60);
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
+        registry
+                .setMessageSizeLimit(512 * 1024)
+                .setSendBufferSizeLimit(3 * 1024 * 1024)
+                .setSendTimeLimit(20_000);
     }
 }
