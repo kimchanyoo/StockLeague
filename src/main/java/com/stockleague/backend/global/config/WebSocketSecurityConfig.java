@@ -29,7 +29,7 @@ public class WebSocketSecurityConfig {
                         SimpMessageType.DISCONNECT
                 ).permitAll()
 
-                .simpDestMatchers("/pub/**").authenticated()
+                .simpMessageDestMatchers("/pub/**").authenticated()
 
                 .simpSubscribeDestMatchers("/topic/**").permitAll()
 
