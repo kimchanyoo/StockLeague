@@ -87,8 +87,25 @@ logging:
     level:
         root: info
         org.springframework.web: warn
-        org.springframework.security.messaging: DEBUG
-        org.springframework.messaging: DEBUG
+
+        org.springframework.web.socket: DEBUG
+        org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: DEBUG
+        org.springframework.web.socket.handler: DEBUG
+        org.springframework.web.socket.config: DEBUG
+        org.springframework.web.socket.sockjs: DEBUG
+
+        # STOMP 서브프로토콜 처리
+        org.springframework.web.socket.messaging: DEBUG
+        org.springframework.messaging.simp: DEBUG
+        org.springframework.messaging.simp.stomp: DEBUG
+        org.springframework.messaging.simp.user: DEBUG
+        org.springframework.messaging.support: DEBUG
+        org.springframework.messaging.converter: DEBUG
+
+        # 브로커 내부 처리(전달/라우팅/하트비트 등)
+        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: DEBUG
+        org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: DEBUG
+        org.springframework.messaging.simp.user.DefaultSimpUserRegistry: DEBUG
 
         com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: info
         com.stockleague.backend.infra.redis.StockPriceRedisService: info
