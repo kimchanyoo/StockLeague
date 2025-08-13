@@ -1,19 +1,20 @@
 package com.stockleague.backend.global.interceptor;
 
 import com.stockleague.backend.auth.jwt.JwtProvider;
+import com.stockleague.backend.global.security.StompPrincipal;
 import com.stockleague.backend.infra.redis.TokenRedisService;
+import java.util.Arrays;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-
-import java.security.Principal;
 
 @Slf4j
 @Component
@@ -28,14 +29,13 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         accessor.setLeaveMutable(true);
 
-        StompCommand command = accessor.getCommand();
-        if (command == null) {
-            return message;
-        }
+        StompCommand cmd = accessor.getCommand();
+        if (cmd == null) return message;
 
         try {
-            if (StompCommand.CONNECT.equals(command)) {
-                log.debug("[WS] CONNECT 수신");
+            if (StompCommand.CONNECT.equals(cmd)) {
+                Map<String, ?> headers = accessor.toNativeHeaderMap();
+                log.info("[WS] CONNECT headers={}", headers);
 
                 String authHeader = firstNonNull(
                         accessor.getFirstNativeHeader("Authorization"),
@@ -44,61 +44,62 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                 );
 
                 if (authHeader == null || authHeader.isBlank()) {
-                    log.debug("[WS] CONNECT: Authorization 헤더 없음 → 익명 허용(정책에 따라 막아도 됨)");
+                    // 정책에 따라 익명 허용/거부를 선택
+                    log.warn("[WS] CONNECT: Authorization 없음 → 익명 허용(임시)");
                 } else {
-                    final String raw = authHeader.trim();
-                    final String token = raw.regionMatches(true, 0, "Bearer ", 0, 7)
+                    String raw = authHeader.trim().replace("\"", "");
+                    String token = raw.regionMatches(true, 0, "Bearer ", 0, 7)
                             ? raw.substring(7).trim()
                             : raw;
 
                     if (!jwtProvider.validateToken(token)) {
-                        log.warn("[WS] CONNECT 거절: JWT 검증 실패");
-                        throw new org.springframework.messaging.MessagingException("UNAUTHORIZED: invalid token");
+                        String prefix = safePrefix(token);
+                        log.warn("[WS] CONNECT 거절: JWT 검증 실패 tokenPrefix={}", prefix);
+                        throw new MessagingException("UNAUTHORIZED: invalid token");
                     }
                     if (redisService.isBlacklisted(token)) {
                         log.warn("[WS] CONNECT 거절: 블랙리스트 토큰");
-                        throw new org.springframework.messaging.MessagingException("UNAUTHORIZED: blacklisted token");
+                        throw new MessagingException("UNAUTHORIZED: blacklisted token");
                     }
 
-                    Authentication auth = jwtProvider.getAuthentication(token);
-                    accessor.setUser(auth);
-                    var attrs = accessor.getSessionAttributes();
-                    if (attrs != null) {
-                        attrs.put("user", auth);
-                    }
-                    log.info("[WS] CONNECT 인증 성공 - principal={}, heartbeat={}",
-                            auth.getName(), accessor.getHeartbeat());
+                    String userId = String.valueOf(jwtProvider.getUserId(token));
+                    accessor.setUser(new StompPrincipal(userId));
+
+                    long[] hb = accessor.getHeartbeat();
+                    log.info("[WS] CONNECT OK userId={} heartbeat={}",
+                            userId, (hb == null ? "null" : Arrays.toString(hb)));
                 }
-            }
-            else if (StompCommand.DISCONNECT.equals(command)) {
-                log.debug("[WS] DISCONNECT 처리");
-            }
-            else {
-                if (accessor.getUser() == null) {
-                    var attrs = accessor.getSessionAttributes();
-                    if (attrs != null) {
-                        Object user = attrs.get("user");
-                        if (user instanceof Principal principal) {
-                            accessor.setUser(principal);
-                        }
-                    }
+            } else if (StompCommand.SUBSCRIBE.equals(cmd) || StompCommand.SEND.equals(cmd)) {
+                String dest = accessor.getDestination();
+                log.info("[WS] {} dest={}", cmd, dest);
+
+                if (StompCommand.SEND.equals(cmd) && dest != null &&
+                        (dest.startsWith("/topic") || dest.startsWith("/user"))) {
+                    throw new MessagingException("FORBIDDEN: cannot SEND to broker destinations");
                 }
             }
 
             return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
 
-        } catch (org.springframework.messaging.MessagingException e) {
+        } catch (MessagingException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("[WS] preSend 예외: {}", e.toString());
+            log.error("[WS] preSend 예외", e);
+            if (StompCommand.CONNECT.equals(cmd)) {
+                throw new MessagingException("UNAUTHORIZED: interceptor failure");
+            }
             return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
         }
     }
 
     private static String firstNonNull(String... values) {
-        return java.util.stream.Stream.of(values)
-                .filter(java.util.Objects::nonNull)
-                .findFirst()
-                .orElse(null);
+        for (String v : values) if (v != null) return v;
+        return null;
+    }
+
+    private static String safePrefix(String token) {
+        if (token == null) return "null";
+        int len = Math.min(12, token.length());
+        return token.substring(0, len);
     }
 }

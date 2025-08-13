@@ -7,6 +7,7 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.web.socket.EnableWebSocketSecurity;
 import org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager;
+
 import static org.springframework.security.messaging.access.intercept.MessageMatcherDelegatingAuthorizationManager.*;
 
 @Configuration
@@ -31,12 +32,10 @@ public class WebSocketSecurityConfig {
                 .simpDestMatchers("/pub/**").authenticated()
 
                 .simpSubscribeDestMatchers("/topic/**").permitAll()
+
                 .simpSubscribeDestMatchers("/user/**").authenticated()
 
                 .anyMessage().denyAll()
                 .build();
     }
 }
-
-
-

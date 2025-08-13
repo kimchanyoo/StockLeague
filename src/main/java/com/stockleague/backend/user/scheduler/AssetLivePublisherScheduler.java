@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AssetLivePublisherScheduler {
 
-    private final UserRepository userRepository;
     private final UserAssetService userAssetService;
     private final AssetWebSocketPublisher publisher;
 
@@ -31,24 +30,23 @@ public class AssetLivePublisherScheduler {
         if (isMarketClosed()) return;
 
         for (SimpUser simpUser : simpUserRegistry.getUsers()) {
-            String userName = simpUser.getName();
-
-            log.info("[대상 유저] userName: {}, 세션 수: {}", userName, simpUser.getSessions().size());
+            String principalName = simpUser.getName();
+            log.info("[대상 유저] principalName: {}, 세션 수: {}", principalName, simpUser.getSessions().size());
 
             try {
-                Long userId = extractUserId(userName);
+                Long userId = parseUserIdStrict(principalName);
                 UserAssetValuationDto dto = userAssetService.getLiveAssetValuation(userId, true);
-                publisher.sendToUser(userName, dto);
+                publisher.sendToUser(principalName, dto);
 
-                log.info("[전송 성공] userName={}, userId={}, 평가금액={}, 수익률={}",
-                        userName, userId, dto.getTotalAsset(), dto.getTotalProfitRate());
+                log.info("[전송 성공] principalName={}, userId={}, 평가금액={}, 수익률={}",
+                        principalName, userId, dto.getTotalAsset(), dto.getTotalProfitRate());
             } catch (Exception e) {
-                log.warn("[실시간 자산] 푸시 실패 - userId={}, err={}", userName, e.getMessage());
+                log.warn("[실시간 자산] 푸시 실패 - principalName={}, err={}", principalName, e.getMessage());
             }
         }
     }
 
-    private Long extractUserId(String userName) {
-        return Long.parseLong(userName.replace("user", ""));
+    private Long parseUserIdStrict(String principalName) {
+        return Long.parseLong(principalName);
     }
 }

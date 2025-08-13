@@ -25,7 +25,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return new ConcurrentTaskScheduler();
     }
 
-
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
@@ -36,7 +35,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/user/queue")
                 .setTaskScheduler(wsTaskScheduler())
-                .setHeartbeatValue(new long[]{10000, 10000});
+                .setHeartbeatValue(new long[]{10_000, 10_000});
         registry.setUserDestinationPrefix("/user");
         registry.setApplicationDestinationPrefixes("/pub");
     }
@@ -45,7 +44,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration
                 .interceptors(webSocketSecurityInterceptor)
-                .taskExecutor()                // ← 빌더 반환
+                .taskExecutor()
                 .corePoolSize(8)
                 .maxPoolSize(32)
                 .queueCapacity(1000)
