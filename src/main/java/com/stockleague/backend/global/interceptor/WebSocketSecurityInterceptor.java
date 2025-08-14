@@ -5,6 +5,7 @@ import com.stockleague.backend.global.security.StompPrincipal;
 import com.stockleague.backend.infra.redis.TokenRedisService;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
-    private static final String ATTR_USER_ID = "ws.userId";
+    private static final String ATTR_USER_ID   = "ws.userId";
     private static final String ATTR_PRINCIPAL = "ws.principal";
 
     private final JwtProvider jwtProvider;
@@ -37,12 +38,12 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
         try {
             switch (cmd) {
-                case CONNECT -> handleConnect(accessor);
-                case SUBSCRIBE -> handleSubscribe(accessor);
-                case SEND -> handleSend(accessor);
+                case CONNECT    -> handleConnect(accessor);
+                case SUBSCRIBE  -> handleSubscribe(accessor);
+                case SEND       -> handleSend(accessor);
+                case DISCONNECT -> handleDisconnect(accessor);
                 default -> { /* NOP */ }
             }
-
             return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
 
         } catch (MessagingException e) {
@@ -55,13 +56,15 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
 
     private void handleConnect(StompHeaderAccessor accessor) {
         Map<String, ?> headers = accessor.toNativeHeaderMap();
-        log.info("[WS] CONNECT headers={}", headers);
+        log.info("[WS] CONNECT sessionId={} headers={}", accessor.getSessionId(), headers);
 
         String authHeader = firstNonNull(
                 accessor.getFirstNativeHeader("Authorization"),
                 accessor.getFirstNativeHeader("authorization"),
                 accessor.getFirstNativeHeader("accessToken")
         );
+
+        ensureSessionAttributes(accessor);
 
         if (authHeader == null || authHeader.isBlank()) {
             log.warn("[WS] CONNECT: Authorization 없음 → 익명 허용(임시)");
@@ -92,48 +95,65 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         accessor.getSessionAttributes().put(ATTR_PRINCIPAL, principal);
 
         long[] hb = accessor.getHeartbeat();
-        log.info("[WS] CONNECT OK userId={} heartbeat={}",
-                userId, (hb == null ? "null" : Arrays.toString(hb)));
+        log.info("[WS] CONNECT OK sessionId={} userId={} heartbeat={}",
+                accessor.getSessionId(), userId, (hb == null ? "null" : Arrays.toString(hb)));
     }
 
     private void handleSubscribe(StompHeaderAccessor accessor) {
-        String dest = accessor.getDestination();
+        ensureSessionAttributes(accessor);
         restorePrincipalIfMissing(accessor);
 
-        log.info("[WS] SUBSCRIBE dest={} user={}",
-                dest, accessor.getUser() == null ? "익명" : accessor.getUser().getName());
+        String dest = accessor.getDestination();
+        String user = accessor.getUser() == null ? "익명" : accessor.getUser().getName();
+        log.info("[WS] SUBSCRIBE sessionId={} dest={} user={}",
+                accessor.getSessionId(), dest, user);
 
-        if (dest != null && dest.startsWith("/user/")) {
-            if (accessor.getUser() == null) {
-                throw new MessagingException("FORBIDDEN: subscription to /user/** requires authentication");
-            }
+        if (dest != null && dest.startsWith("/user/") && accessor.getUser() == null) {
+            throw new MessagingException("FORBIDDEN: subscription to /user/** requires authentication");
         }
     }
 
     private void handleSend(StompHeaderAccessor accessor) {
-        String dest = accessor.getDestination();
+        ensureSessionAttributes(accessor);
         restorePrincipalIfMissing(accessor);
 
-        log.info("[WS] SEND dest={} user={}",
-                dest, accessor.getUser() == null ? "익명" : accessor.getUser().getName());
+        String dest = accessor.getDestination();
+        String user = accessor.getUser() == null ? "익명" : accessor.getUser().getName();
+        log.info("[WS] SEND sessionId={} dest={} user={}",
+                accessor.getSessionId(), dest, user);
 
         if (dest != null && (dest.startsWith("/topic") || dest.startsWith("/user"))) {
             throw new MessagingException("FORBIDDEN: cannot SEND to broker destinations");
         }
     }
 
+    private void handleDisconnect(StompHeaderAccessor accessor) {
+        String user = accessor.getUser() == null ? "익명" : accessor.getUser().getName();
+        log.info("[WS] DISCONNECT sessionId={} user={}", accessor.getSessionId(), user);
+    }
+
     /** CONNECT 때 저장한 Principal을 SUBSCRIBE/SEND에서 복원 */
     private void restorePrincipalIfMissing(StompHeaderAccessor accessor) {
         if (accessor.getUser() != null) return;
+        var attrs = accessor.getSessionAttributes();
+        if (attrs == null) return;
 
-        Object p = accessor.getSessionAttributes() == null ? null : accessor.getSessionAttributes().get(ATTR_PRINCIPAL);
+        Object p = attrs.get(ATTR_PRINCIPAL);
         if (p instanceof StompPrincipal sp) {
             accessor.setUser(sp);
             return;
         }
-        Object uid = accessor.getSessionAttributes() == null ? null : accessor.getSessionAttributes().get(ATTR_USER_ID);
+        Object uid = attrs.get(ATTR_USER_ID);
         if (uid instanceof String s && !s.isBlank()) {
             accessor.setUser(new StompPrincipal(s));
+        }
+    }
+
+    /** 세션 속성 맵이 null인 경우를 방지 */
+    @SuppressWarnings("unchecked")
+    private void ensureSessionAttributes(StompHeaderAccessor accessor) {
+        if (accessor.getSessionAttributes() == null) {
+            accessor.setSessionAttributes(new ConcurrentHashMap<>());
         }
     }
 
