@@ -58,13 +58,13 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         Map<String, ?> headers = accessor.toNativeHeaderMap();
         log.info("[WS] CONNECT sessionId={} headers={}", accessor.getSessionId(), headers);
 
+        ensureSessionAttributesOnConnect(accessor);
+
         String authHeader = firstNonNull(
                 accessor.getFirstNativeHeader("Authorization"),
                 accessor.getFirstNativeHeader("authorization"),
                 accessor.getFirstNativeHeader("accessToken")
         );
-
-        ensureSessionAttributes(accessor);
 
         if (authHeader == null || authHeader.isBlank()) {
             log.warn("[WS] CONNECT: Authorization 없음 → 익명 허용(임시)");
@@ -100,7 +100,6 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     }
 
     private void handleSubscribe(StompHeaderAccessor accessor) {
-        ensureSessionAttributes(accessor);
         restorePrincipalIfMissing(accessor);
 
         String dest = accessor.getDestination();
@@ -114,7 +113,6 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     }
 
     private void handleSend(StompHeaderAccessor accessor) {
-        ensureSessionAttributes(accessor);
         restorePrincipalIfMissing(accessor);
 
         String dest = accessor.getDestination();
@@ -135,8 +133,9 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     /** CONNECT 때 저장한 Principal을 SUBSCRIBE/SEND에서 복원 */
     private void restorePrincipalIfMissing(StompHeaderAccessor accessor) {
         if (accessor.getUser() != null) return;
-        var attrs = accessor.getSessionAttributes();
-        if (attrs == null) return;
+
+        Map<String, Object> attrs = accessor.getSessionAttributes();
+        if (attrs == null) return; // ★ 새 맵 생성 금지
 
         Object p = attrs.get(ATTR_PRINCIPAL);
         if (p instanceof StompPrincipal sp) {
@@ -149,9 +148,9 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         }
     }
 
-    /** 세션 속성 맵이 null인 경우를 방지 */
+    /** 세션 속성 맵: CONNECT에서만 보장 */
     @SuppressWarnings("unchecked")
-    private void ensureSessionAttributes(StompHeaderAccessor accessor) {
+    private void ensureSessionAttributesOnConnect(StompHeaderAccessor accessor) {
         if (accessor.getSessionAttributes() == null) {
             accessor.setSessionAttributes(new ConcurrentHashMap<>());
         }
