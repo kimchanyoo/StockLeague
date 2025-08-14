@@ -1,5 +1,7 @@
 package com.stockleague.backend.global.config;
 
+import com.stockleague.backend.global.handler.JwtHandshakeHandler;
+import com.stockleague.backend.global.interceptor.JwtHandshakeInterceptor;
 import com.stockleague.backend.global.interceptor.WebSocketSecurityInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,8 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
+    private final JwtHandshakeHandler jwtHandshakeHandler;
+    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
 
     @Bean
     public TaskScheduler wsTaskScheduler() {
@@ -28,6 +32,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
+                .addInterceptors(jwtHandshakeInterceptor)
+                .setHandshakeHandler(jwtHandshakeHandler)
                 .setAllowedOriginPatterns("*");
     }
 
