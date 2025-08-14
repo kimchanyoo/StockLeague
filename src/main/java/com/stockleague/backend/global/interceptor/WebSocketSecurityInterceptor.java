@@ -3,6 +3,7 @@ package com.stockleague.backend.global.interceptor;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.security.StompPrincipal;
 import com.stockleague.backend.infra.redis.TokenRedisService;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -94,6 +96,8 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         accessor.getSessionAttributes().put(ATTR_USER_ID, userId);
         accessor.getSessionAttributes().put(ATTR_PRINCIPAL, principal);
 
+        accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, principal);
+
         long[] hb = accessor.getHeartbeat();
         log.info("[WS] CONNECT OK sessionId={} userId={} heartbeat={}",
                 accessor.getSessionId(), userId, (hb == null ? "null" : Arrays.toString(hb)));
@@ -102,12 +106,17 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     private void handleSubscribe(StompHeaderAccessor accessor) {
         restorePrincipalIfMissing(accessor);
 
+        Principal p = accessor.getUser();
+        if (p != null) {
+            accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p);
+        }
+
         String dest = accessor.getDestination();
-        String user = accessor.getUser() == null ? "익명" : accessor.getUser().getName();
+        String user = (p == null) ? "익명" : p.getName();
         log.info("[WS] SUBSCRIBE sessionId={} dest={} user={}",
                 accessor.getSessionId(), dest, user);
 
-        if (dest != null && dest.startsWith("/user/") && accessor.getUser() == null) {
+        if (dest != null && dest.startsWith("/user/") && p == null) {
             throw new MessagingException("FORBIDDEN: subscription to /user/** requires authentication");
         }
     }
@@ -115,8 +124,13 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     private void handleSend(StompHeaderAccessor accessor) {
         restorePrincipalIfMissing(accessor);
 
+        Principal p = accessor.getUser();
+        if (p != null) {
+            accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p);
+        }
+
         String dest = accessor.getDestination();
-        String user = accessor.getUser() == null ? "익명" : accessor.getUser().getName();
+        String user = (p == null) ? "익명" : p.getName();
         log.info("[WS] SEND sessionId={} dest={} user={}",
                 accessor.getSessionId(), dest, user);
 
@@ -126,6 +140,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     }
 
     private void handleDisconnect(StompHeaderAccessor accessor) {
+        restorePrincipalIfMissing(accessor);
         String user = accessor.getUser() == null ? "익명" : accessor.getUser().getName();
         log.info("[WS] DISCONNECT sessionId={} user={}", accessor.getSessionId(), user);
     }
@@ -135,7 +150,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         if (accessor.getUser() != null) return;
 
         Map<String, Object> attrs = accessor.getSessionAttributes();
-        if (attrs == null) return; // ★ 새 맵 생성 금지
+        if (attrs == null) return; // 새 맵 생성 금지
 
         Object p = attrs.get(ATTR_PRINCIPAL);
         if (p instanceof StompPrincipal sp) {
