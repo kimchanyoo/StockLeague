@@ -42,7 +42,14 @@ public class StockOrderBookRedisService {
 
             if (MarketTimeUtil.isMarketOpen()) {
                 redisTemplate.opsForValue().set(liveKey, json, LIVE_TTL);
-                redisTemplate.opsForValue().set(lastKey, json);
+
+                String prev = redisTemplate.opsForValue().get(liveKey);
+                if (prev == null || shouldIgnore(mapper.readValue(prev, StockOrderBookDto.class))){
+                    log.debug("[Redis] LAST 스냅샷 교체: {}", dto.ticker());
+                    redisTemplate.opsForValue().set(lastKey, json);
+                }else {
+                    redisTemplate.opsForValue().set(lastKey, json);
+                }
             } else {
                 log.debug("[Redis] 시장 마감 상태 - LAST 스냅샷은 덮어쓰지 않음: {}", dto.ticker());
             }
@@ -70,19 +77,39 @@ public class StockOrderBookRedisService {
      */
     private boolean shouldIgnore(StockOrderBookDto ob) {
         if (ob == null) return true;
+
         long[] ap = ob.askPrices();
         long[] bp = ob.bidPrices();
         long[] av = ob.askVolumes();
         long[] bv = ob.bidVolumes();
 
-        boolean topBothZero = ap != null && bp != null
-                && ap.length > 0 && bp.length > 0
-                && ap[0] == 0 && bp[0] == 0;
+        if (!valid(ap) || !valid(bp) || !valid(av) || !valid(bv)) return true;
 
-        boolean allPricesZero = isAllZero(ap) && isAllZero(bp);
-        boolean allVolumesZero = isAllZero(av) && isAllZero(bv);
+        boolean validTopAsk = ap[0] > 0 && av[0] > 0;
+        boolean validTopBid = bp[0] > 0 && bv[0] > 0;
+        if (!validTopAsk || !validTopBid) return true;
 
-        return topBothZero || allPricesZero || allVolumesZero;
+        if (isAllZero(ap) || isAllZero(bp) || isAllZero(av) || isAllZero(bv)) return true;
+
+        if (!isSortedAscPositive(ap) || !isSortedDescPositive(bp)) return true;
+
+        return false;
+    }
+
+    /**
+     * 배열이 유효한지 검사합니다.
+     *
+     * <p>유효 조건:</p>
+     * <ul>
+     *   <li>배열이 null이 아님</li>
+     *   <li>배열 길이가 1 이상임</li>
+     * </ul>
+     *
+     * @param arr 검사할 long 배열
+     * @return true - 배열이 존재하고 길이가 1 이상일 때, false - null 또는 비어 있음
+     */
+    private boolean valid(long[] arr) {
+        return arr != null && arr.length > 0;
     }
 
     /**
@@ -94,6 +121,52 @@ public class StockOrderBookRedisService {
     private boolean isAllZero(long[] arr) {
         if (arr == null || arr.length == 0) return true;
         for (long v : arr) if (v != 0) return false;
+        return true;
+    }
+
+    /**
+     * 매도 호가(askPrices)가 오름차순으로 정렬되어 있는지 확인합니다.
+     *
+     * <p>검사 규칙:</p>
+     * <ul>
+     *   <li>0보다 큰 값만 검사 대상</li>
+     *   <li>앞선 값보다 뒤 값이 작으면 잘못된 정렬로 간주</li>
+     *   <li>중간에 0이 나오면 이후 값은 비어있다고 간주하고 검사 종료</li>
+     * </ul>
+     *
+     * @param arr 매도 호가 배열
+     * @return true - 정상 오름차순, false - 비정상 정렬
+     */
+    private boolean isSortedAscPositive(long[] arr) {
+        long prev = 0;
+        for (long v : arr) {
+            if (v == 0) break;
+            if (v < prev) return false;
+            prev = v;
+        }
+        return true;
+    }
+
+    /**
+     * 매수 호가(bidPrices)가 내림차순으로 정렬되어 있는지 확인합니다.
+     *
+     * <p>검사 규칙:</p>
+     * <ul>
+     *   <li>0보다 큰 값만 검사 대상</li>
+     *   <li>앞선 값보다 뒤 값이 크면 잘못된 정렬로 간주</li>
+     *   <li>중간에 0이 나오면 이후 값은 비어있다고 간주하고 검사 종료</li>
+     * </ul>
+     *
+     * @param arr 매수 호가 배열
+     * @return true - 정상 내림차순, false - 비정상 정렬
+     */
+    private boolean isSortedDescPositive(long[] arr) {
+        long prev = Long.MAX_VALUE;
+        for (long v : arr) {
+            if (v == 0) break;
+            if (v > prev) return false;
+            prev = v;
+        }
         return true;
     }
 
