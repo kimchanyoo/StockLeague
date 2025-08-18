@@ -1,12 +1,14 @@
 import axiosInstance from "./axiosInstance";
 
 export interface UserAssetValuation {
-  cashBalance: string;         // 현금 잔고
-  totalAsset: string;          // 총 자산 (주식 평가 + 현금)
-  totalProfit: string;         // 총 손익
-  totalProfitRate: string;     // 총 수익률 (퍼센트, 소수점)
-  stockValuation: string;      // 주식 평가금액
-  marketOpen: boolean;       // 장 열림 여부
+  availableCash: number;       // 사용 가능 현금
+  reservedCash: number;        // 주문 예약 현금
+  totalCash: number;           // 총 현금 (available + reserved)
+  totalAsset: number;          // 총 자산 (현금 + 주식 평가)
+  totalProfit: number;         // 총 손익
+  totalProfitRate: number;     // 총 수익률 (%)
+  stockValuation: number;      // 주식 평가 금액
+  isMarketOpen: boolean;       // 장 열림 여부
   stocks: StockValuationItem[]; // 보유 종목 리스트
 }
 

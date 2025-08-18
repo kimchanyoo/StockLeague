@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
 import { getProfitRanking, GetProfitRankingResponse } from "@/lib/api/rank";
+import { useAuth } from "@/context/AuthContext";
 
 interface UseProfitRankingParams {
-  accessToken: string | null;
   onUpdate: (data: GetProfitRankingResponse) => void;
 }
 
-export const useRankingSocket = ({ accessToken, onUpdate }: UseProfitRankingParams) => {
+export const useRankingSocket = ({ onUpdate }: UseProfitRankingParams) => {
+  const { accessToken } = useAuth();
   const [isMarketOpen, setIsMarketOpen] = useState<boolean | null>(null);
   const clientRef = useRef<Client | null>(null);
 

@@ -42,10 +42,14 @@ export function useMainStockPriceSocket(
           reconnectDelay: 10000,
           heartbeatIncoming: 10000,
           heartbeatOutgoing: 10000,
+          //debug: (msg) => console.log("[STOMP DEBUG 메인]", msg),
           onConnect: () => {
+            console.log("STOMP connected 메인");
             activatedRef.current = true;
             client.subscribe(`/topic/stocks/${ticker}`, (msg: IMessage) => {
               try {
+                const data = JSON.parse(msg.body) as StockPriceResponse;
+                //console.log("[STOCK MESSAGE 수신]", data)
                 onUpdate(JSON.parse(msg.body) as StockPriceResponse);
               } catch (e) {
                 console.error("JSON 파싱 오류:", e);
@@ -55,13 +59,13 @@ export function useMainStockPriceSocket(
           onDisconnect: () => { activatedRef.current = false; },
           onWebSocketClose: (evt) => {
             activatedRef.current = false;
-            console.log("WS closed", evt?.code, evt?.reason);
+            console.log("WS closed 메인", evt?.code, evt?.reason);
           },
           onWebSocketError: (evt) => {
-            console.error("WS error", evt);
+           console.error("WS error 메인", evt);
           },
           onStompError: (frame) => {
-            console.error("STOMP 에러", frame.headers["message"], frame.body);
+            console.error("STOMP 에러 메인", frame.headers["message"], frame.body);
           },
         });
 

@@ -17,7 +17,7 @@ const Portfolio: React.FC = () => {
       try {
         const res: UserAssetValuation = await getUserAssetValuation();
 
-        setCash(Number(res.cashBalance));
+        setCash(Number(res.availableCash));
         setStocks(res.stocks);
       } catch (err: unknown) {
         if (err instanceof Error) setError(err.message);

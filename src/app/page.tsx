@@ -12,7 +12,12 @@ import { useRouter } from "next/navigation";
 import Portfolio from "./components/user/Portfolio";
 import { useAuth } from "@/context/AuthContext";
 import { getNotices, Notice } from "@/lib/api/notice";
-import { getTopStocks, StockPriceResponse, getPopularStocks, getWatchlist } from "@/lib/api/stock";
+import { getTopStocks, getPopularStocks, getWatchlist } from "@/lib/api/stock";
+
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/autoplay";
+import { Autoplay } from "swiper/modules";
 
 export default function Home() {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -81,6 +86,9 @@ export default function Home() {
   const handleGotoStockList = () => {
     router.push("/stocks/stockList");
   };
+  const handleGotoRank = () => {
+    router.push("/rank");
+  };
   const handleGotoAccount = () => {
     router.push("/user/account");
   };
@@ -91,16 +99,33 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.topSection}>
-        <div className={styles.chartContainer}>   
-          <img src="/images/main.avif" className={styles.mainImg}></img>
-          <div className={styles.chartTitle}>
-            <h1 className={styles.content}>
-              <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
-            </h1>
-            <button className={styles.gotoBtn} onClick={handleGotoStockList}>거래 하러가기</button>
-          </div>
-        </div>
-
+        <Swiper
+          modules={[Autoplay]}
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          loop={true}
+          className={styles.bannerSwiper}
+        >
+          <SwiperSlide>
+            <div className={styles.eventBanner}>
+              <h1>
+                첫 가입 시 <span>가상 투자금 1,000만원</span> 지급
+              </h1>
+              <p>지금 시작해서 랭킹에 도전하세요!</p>
+              <button className={styles.ctaBtn} onClick={handleGotoRank}>랭킹 보러가기</button>
+            </div>
+          </SwiperSlide>
+          <SwiperSlide>
+            <div className={styles.chartContainer}>   
+              <img src="/images/main.avif" className={styles.mainImg}></img>
+              <div className={styles.chartTitle}>
+                <h1 className={styles.content}>
+                  <span className={styles.highlight}>스톡리그</span>에서 투자를<br/>경험하다
+                </h1>
+                <button className={styles.gotoBtn} onClick={handleGotoStockList}>지금 시작하기</button>
+              </div>
+            </div>
+          </SwiperSlide>
+        </Swiper>
         {/* 로그인 여부에 따라 다르게 표시 */}
         {!isLoggedIn ? (
           <div className={styles.loginContainer}>

@@ -30,7 +30,7 @@ export const useStockPriceMultiSocket = (
           socketClient.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
             try {
               const data: StockPriceResponse = JSON.parse(message.body);
-              console.log(`📈 실시간 수신 - ${ticker}:`, data);
+              //console.log(`📈 실시간 수신 - ${ticker}:`, data);
               onUpdate(data);
             } catch (err) {
               console.error(`❌ JSON 파싱 오류 (${ticker})`, err, message.body);
@@ -39,7 +39,7 @@ export const useStockPriceMultiSocket = (
         });
       },
       onStompError: (frame) => {
-        console.error("🛑 STOMP 에러", frame.headers["message"], frame.body);
+        console.error("🛑 STOMP 실시간 주식가격 에러", frame.headers["message"], frame.body);
       },
     });
 

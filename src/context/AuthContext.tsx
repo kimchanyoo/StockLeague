@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 초기 로드 시 localStorage에서 토큰 불러와 상태에 반영하고 프로필 요청
   useEffect(() => {
+    
     const initAuth = async () => {
       const storedToken = localStorage.getItem("accessToken");
 
@@ -59,9 +60,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         catch (error: any) {
           const status = error?.response?.status;
-          console.error("프로필 요청 실패 상태 코드:", status);
-          console.error("에러 전체 객체:", error);
-          console.error("에러 응답 데이터:", error?.response?.data);
+          //console.error("프로필 요청 실패 상태 코드:", status);
+          //console.error("에러 전체 객체:", error);
+          //console.error("에러 응답 데이터:", error?.response?.data);
+          
           // 기존 처리 로직 유지
           if (status === 401) {
               setAccessToken(null);

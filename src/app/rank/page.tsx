@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import "./rank.css";
 import DownIcon from "@mui/icons-material/ArrowDropDown";
 import { useAuth } from "@/context/AuthContext";
-import { useRankingSocket } from "@/hooks/useRankingSocket";
+import { useRankingSocket } from "@/socketHooks/useRankingSocket";
 
 interface UserRanking {
   userId: number;
@@ -58,7 +58,7 @@ export default function Rank() {
   );
 
   // 실시간 or API 랭킹 데이터 구독
-  useRankingSocket({ accessToken, onUpdate });
+  useRankingSocket({ onUpdate });
 
   const visibleRanks = rankingData.slice(0, visibleCount);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "@/app/styles/components/stock/StockItem.module.css";
-import { useMainStockPriceSocket } from "@/hooks/useMainStockPriceSocket";
+import { useMainStockPriceSocket } from "@/socketHooks/useMainStockPriceSocket";
 import { StockPriceResponse, getStockPrice } from "@/lib/api/stock";
 
 type StockItemProps = {
@@ -67,7 +67,7 @@ export default function StockItem({ ticker, name }: StockItemProps) {
       : styles.stock_same;
 
   return (
-    <Link href={{ pathname: "/trade", query: { code: ticker, name } }}>
+    <Link href={{ pathname: "/stocks/trade"}}>
       <div className={styles.stock_item}>
         <div>{name}</div>
         <div>{formatNumber(closePrice)}</div>

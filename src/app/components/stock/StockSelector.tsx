@@ -6,7 +6,7 @@ import FilterMenu from "./FilterMenu";
 import SearchIcon from "@mui/icons-material/Search";
 import MiniStockList from "./MiniStockList";
 import { getTopStocks, Stock, getWatchlist, StockPriceResponse, getPopularStocks } from "@/lib/api/stock"; 
-import { useStockPriceMultiSocket } from "@/hooks/useStockPriceMultiSocket";
+import { useStockPriceMultiSocket } from "@/socketHooks/useStockPriceMultiSocket";
 import { useAuth } from "@/context/AuthContext";
 
 type Props = {
@@ -73,6 +73,7 @@ const StockSelector = ({ onSelect }: Props) => {
             marketType: "UNKNOWN",
           }));
           setStocks(converted);
+          if (converted.length > 0) onSelect(converted[0]);
         } else if (selectedFilter === "인기종목") {
           const res = await getPopularStocks(1, 200); // page 1, size 100 (필요시 조절 가능)
           if (res.success) {
@@ -83,6 +84,8 @@ const StockSelector = ({ onSelect }: Props) => {
               marketType: s.marketType,
             }));
             setStocks(converted);
+            // 첫 번째 종목 자동 선택
+            if (converted.length > 0) { onSelect(converted[0]); }
           } else {
             setError("인기 종목을 불러오는 데 실패했습니다.");
             setStocks([]);
@@ -97,6 +100,7 @@ const StockSelector = ({ onSelect }: Props) => {
               marketType: s.marketType,
             }));
             setStocks(converted);
+            if (converted.length > 0) onSelect(converted[0]);
           } else {
             setError("종목 리스트를 불러오는 데 실패했습니다.");
             setStocks([]);

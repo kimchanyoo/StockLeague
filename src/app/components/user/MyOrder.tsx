@@ -38,6 +38,7 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
         setHasMore(page < res.totalPage);
       } else {
         const res = await getUnexecutedOrders(page, 20);
+        console.log("미체결 응답:", res);
         const newOrders = res?.contents;
         if (!Array.isArray(newOrders)) return;
         setOrders((prev) => (page === 1 ? newOrders : [...prev, ...newOrders]));
@@ -100,9 +101,16 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
     fetchAsset();
   }, [fetchAsset]);
 
+  // 🔹 탭 변경 시 페이지/주문 초기화
+  useEffect(() => {
+    setPage(1);
+    setOrders([]);
+  }, [activeTab]);
+
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
 
   useEffect(() => {
     if (!hasMore) return;
@@ -138,13 +146,15 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
   const filteredOrders = (activeTab === "체결 내역")
   ? orders
   : activeTab === "미체결 내역"
-  ? orders.filter(o => 
-      o.orderStatus === "WAITING" || 
-      o.orderStatus === "PARTIALLY_EXECUTED" || 
-      o.orderStatus === "EXECUTED" ||
-      o.orderStatus === "CANCELED_AFTER_PARTIAL"
-    )
+  ? orders.filter(o => ["WAITING", "PARTIALLY_EXECUTED", "CANCELED_AFTER_PARTIAL"].includes(o.status))
   : [];
+  const statusMap: Record<string, string> = {
+    WAITING: "대기중",
+    PARTIALLY_EXECUTED: "부분체결",
+    CANCELED_AFTER_PARTIAL: "부분취소",
+    CANCELED: "취소됨",
+    EXECUTED: "체결완료",
+  };
       
   useEffect(() => {
     return () => {
@@ -172,6 +182,9 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
                 <strong className={order.orderType === "BUY" ? styles.buy : styles.sell}>
                   {order.orderType === "BUY" ? " 매수" : " 매도"}
                 </strong>
+                {activeTab === "미체결 내역" && (
+                  <> | <strong>{statusMap[order.status] || order.status}</strong></>
+                )}
               </div>
               <div>
                 수량:{" "}
@@ -180,14 +193,18 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
                   : order.orderAmount}
                 주 / 주문가격:{" "}
                 {activeTab === "체결 내역"
-                  ? order.executedPrice.toLocaleString()
-                  : order.orderPrice.toLocaleString()}
+                  ? (order.executedPrice ?? 0).toLocaleString()
+                  : (order.orderPrice ?? 0).toLocaleString()}
                 원
               </div>
               <div className={styles.orderDate}>
                 {activeTab === "체결 내역"
-                  ? order.executedAt.replace("T", " ").slice(0, 19)
-                  : order.createdAt.replace("T", " ").slice(0, 19)}
+                  ? order.executedAt
+                    ? order.executedAt.replace("T", " ").slice(0, 19)
+                    : "-"
+                  : order.createdAt
+                    ? order.createdAt.replace("T", " ").slice(0, 19)
+                    : "-"}
               </div>
               {activeTab === "미체결 내역" && (
                 <button

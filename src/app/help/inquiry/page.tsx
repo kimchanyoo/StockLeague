@@ -14,7 +14,7 @@ const maxPageButtons = 10;
 export default function InquiryList() {
   const router = useRouter();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const { user } = useAuth(); // 로그인 정보 가져오기
+  const { user, accessToken } = useAuth(); // 로그인 정보 가져오기
   const isLoggedIn = !!user;
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +23,8 @@ export default function InquiryList() {
   const totalPages = Math.ceil(totalCount / inquiriesPerPage);
 
   useEffect(() => {
+    if (!accessToken) return;
+
     const fetchInquiries = async () => {
       try {
         const res = await getInquiries(currentPage, inquiriesPerPage);

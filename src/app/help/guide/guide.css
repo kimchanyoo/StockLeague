@@ -16,15 +16,37 @@
 }
 
 .guide-contents {
-    width: 80%;
-    height: 500px;
-    border: 1px solid rgba(118, 118, 128, 0.12);
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 10px;
-    padding: 10px;
+  width: 80%;
+  height: 800px;
+  border-radius: 12px;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: #f9fafb;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+.guide-contents section {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 20px 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.guide-contents section h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #005bea;
+  border-bottom: 3px solid #005bea;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+.guide-contents section p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #333333;
+  white-space: pre-line; /* 줄바꿈 유지 */
 }

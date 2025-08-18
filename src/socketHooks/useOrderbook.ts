@@ -77,7 +77,7 @@ export const useOrderbook = ({
         console.log("📌 구독 요청 - destination:", destination);
 
         client.subscribe(destination, (message) => {
-          console.log("📥 수신된 메시지:", message.body);
+          //console.log("📥 수신된 메시지:", message.body);
           try {
             const data = JSON.parse(message.body) as OrderbookData;
             setOrderbook(data);
