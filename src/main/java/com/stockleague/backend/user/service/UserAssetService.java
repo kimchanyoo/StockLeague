@@ -57,6 +57,7 @@ public class UserAssetService {
             String ticker = stock.getStockTicker();
             String stockName = stock.getStockName();
             StockPriceDto latestPrice = stockPriceRedisService.getLatest(ticker);
+            BigDecimal totalQuantity = us.getQuantity().add(us.getLockedQuantity());
 
             if (latestPrice == null) {
                 continue;
@@ -65,7 +66,7 @@ public class UserAssetService {
             StockValuationDto stockValuation = StockValuationDto.of(
                     ticker,
                     stockName,
-                    us.getQuantity(),
+                    totalQuantity,
                     us.getAvgBuyPrice(),
                     BigDecimal.valueOf(latestPrice.currentPrice())
             );

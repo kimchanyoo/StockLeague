@@ -30,7 +30,7 @@ public class OrderMatchingScheduler {
      */
     @Scheduled(fixedDelay = 1000)
     public void matchOrdersFromRedis() {
-        List<String> tickers = orderQueueRedisService.getAllTickersWithOrders(); // 커스텀 구현 필요
+        List<String> tickers = orderQueueRedisService.getAllTickersWithOrders();
         for (String ticker : tickers) {
             processBuyOrders(ticker);
             processSellOrders(ticker);
