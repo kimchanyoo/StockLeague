@@ -8,7 +8,7 @@ import StockChart from "@/app/components/stock/StockChart";
 import Community from "@/app/components/stock/Community";
 import { useAuth } from "@/context/AuthContext";
 import { Stock, getWatchlist, addWatchlist, deleteWatchlist, StockPriceResponse } from "@/lib/api/stock";
-import { useStockPriceMultiSocket } from "@/hooks/useStockPriceMultiSocket";
+import { useStockPriceMultiSocket } from "@/socketHooks/useStockPriceMultiSocket";
 
 export default function Trade() {
   const { user, accessToken } = useAuth(); // 로그인 정보 가져오기

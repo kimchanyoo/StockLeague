@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import "./account.css";
 import Portfolio from "@/app/components/user/Portfolio";
 import { getUserAssetValuation, UserAssetValuation } from "@/lib/api/user"
-import { useAssetValuationSocket } from "@/hooks/useAssetValuationSocket";
+import { useAssetValuationSocket } from "@/socketHooks/useAssetValuationSocket";
 import { useAuth } from "@/context/AuthContext";
 import { useCallback } from "react";
 
@@ -39,7 +39,7 @@ export default function Account() {
       try {
         const res = await getUserAssetValuation();
 
-        setCash(Number(res.cashBalance));
+        setCash(Number(res.availableCash));
         setInvestingMoney(Number(res.stockValuation));
         setTotalAssets(Number(res.totalAsset));
 
@@ -63,12 +63,12 @@ export default function Account() {
     };
 
     fetchData();
-  }, []);
+  }, [accessToken]);
 
   const handleUpdate = useCallback((res: UserAssetValuation) => {
     console.log("📡 실시간 자산 데이터 수신:", res);
 
-    setCash(Number(res.cashBalance));
+    setCash(Number(res.availableCash));
     setInvestingMoney(Number(res.stockValuation));
     setTotalAssets(Number(res.totalAsset));
 

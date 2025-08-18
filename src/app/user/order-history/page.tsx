@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import TabMenu from "@/app/components/utills/TabMenu";
-import OrderHistoryItem from "@/app/components/stock/OrderHistoryItem";
+import OrderHistoryItem from "@/app/components/user/OrderHistoryItem";
 import { getMyOrder } from "@/lib/api/user";
 import "./order-history.css";
 

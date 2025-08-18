@@ -88,11 +88,12 @@ export default function Reports () {
       <div className="reports-list">
         <h1>
           신고 목록
-          <button onClick={toggleStatus}>
-            상태: {statusFilter === null ? "전체" : statusFilter === "WAITING" ? "미처리" : "처리완료"}
+          <button onClick={toggleStatus} style={{ cursor: "pointer" }}>
+            상태 선택: {statusFilter === null ? "전체" : statusFilter === "WAITING" ? "미처리" : "처리완료"}
           </button>
         </h1>
         {loading && <div>불러오는 중...</div>}
+        {!loading && groupedReports.length === 0 && <p style={{textAlign: "center"}}>신고 내역이 없습니다.</p>}
         {error && <div className="error">{error}</div>}
 
         {groupedReports.map((report, index) => (

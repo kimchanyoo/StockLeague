@@ -41,7 +41,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             }
           });
         } catch (error: any) {
-          console.error("STOMP 연결 중 오류 발생:", error?.message || error, error);
+          console.error("STOMP 알림 연결 중 오류 발생:", error?.message || error, error);
         }
       })();
 

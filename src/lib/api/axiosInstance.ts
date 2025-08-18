@@ -21,7 +21,13 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    if (error.response?.status === 403) {
+      // 아무것도 안 띄우고 무시
+      return; // undefined 반환 → 호출한 쪽에서 아무 일도 안 일어남
+    }
+    return Promise.reject(error);
+  }
 );
 
 // 응답 시 토큰 만료 처리

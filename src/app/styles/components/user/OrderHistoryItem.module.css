@@ -1,0 +1,55 @@
+.orderHistoryItem  {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    width: 100%;
+    padding: 1.5rem 4.6875rem ;
+    border-bottom: 1px solid #e2e2e2;
+    align-items: center;
+    text-align: center;
+}
+.orderType_buy {
+  color: #CB3030;
+  font-weight: 600;
+}
+
+.orderType_sell {
+  color: #2D7CD1;
+  font-weight: 600;
+}
+
+.createdAt {
+  color: #d9d9d9;
+  font-size: 13px;
+}
+
+.orderDetailBox {
+  border-top: 1px solid #ddd;
+  margin-top: 8px;
+  padding: 8px 0;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 6px 12px;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #fafafa;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  transition: background 0.2s;
+}
+
+.detailRow:hover {
+  background-color: #f0f8ff;
+}
+
+.detailRow div {
+  font-size: 0.9rem;
+}
+
+.detailRow div strong {
+  font-weight: 600;
+  margin-right: 4px;
+}

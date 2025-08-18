@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getDetailMyOrder, OrderItem, OrderExecution, GetDetailMyOrderResponse } from "@/lib/api/user";
-import styles from "@/app/styles/components/stock/OrderHistoryItem.module.css";
+import styles from "@/app/styles/components/user/OrderHistoryItem.module.css";
 
 type OrderHistoryItemProps = OrderItem;
 
@@ -59,8 +59,8 @@ const OrderHistoryItem: React.FC<OrderHistoryItemProps> = ({
       try {
         const res: GetDetailMyOrderResponse = await getDetailMyOrder(orderId);
         if (res.success) {
-          console.log("세부 주문 내역 응답", res.executions);
-          setExecutions(res.executions);
+          console.log("세부 주문 내역 응답", res.contents);
+          setExecutions(res.contents);
         }
       } catch (error) {
         console.error("세부 주문 내역 조회 실패", error);

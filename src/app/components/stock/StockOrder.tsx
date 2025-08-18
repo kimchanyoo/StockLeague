@@ -6,12 +6,11 @@ import MyOrder from "../user/MyOrder";
 import TabMenu from "../utills/TabMenu";
 import RemoveIcon  from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
-import { postBuyOrder, postSellOrder, OrderbookData } from "@/lib/api/stock";
+import { postBuyOrder, postSellOrder } from "@/lib/api/stock";
 import { getUserAssetValuation } from "@/lib/api/user";
-import { Client } from "@stomp/stompjs";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-hot-toast";
-import { useOrderbook } from "@/hooks/useOrderbook"; 
+import { useOrderbook } from "@/socketHooks/useOrderbook"; 
 
 interface StockOrderProps {
   stockName: string;
@@ -35,6 +34,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
 
   const { accessToken, loading } = useAuth();
   const { orderbook, isMarketOpen } = useOrderbook({ ticker, accessToken, loading });
+  const [myStockQuantity, setMyStockQuantity] = useState<number>(0);
 
   useEffect(() => {
     if (!accessToken) {
@@ -44,7 +44,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     const fetchBalance = async () => {
       try {
         const balance = await getUserAssetValuation();
-        setMyMoney(Number(balance.cashBalance));
+        setMyMoney(balance.availableCash)
       } catch (err) {
         console.error("보유 현금 조회 실패:", err);
         toast.error("보유 자산 정보를 불러오지 못했습니다.");
@@ -52,8 +52,26 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     };
 
     fetchBalance();
-  }, []);
+  }, [accessToken]);
 
+  useEffect(() => {
+    if (!accessToken) return;
+    
+    const fetchAsset = async () => {
+      try {
+        const res = await getUserAssetValuation();
+        setMyMoney(res.availableCash);
+        
+        const myStock = res.stocks.find(s => s.ticker === ticker);
+        setMyStockQuantity(myStock ? parseFloat(myStock.quantity) : 0);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAsset();
+  }, [accessToken, ticker]);
+ 
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -128,8 +146,11 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
 
   const handleQuantityRatioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const ratio = Number(e.target.value);
-    if (price > 0) {
+    if (orderType === "buy") {
       const qty = Math.floor((myMoney * ratio) / price);
+      setQuantity(qty);
+    } else {
+      const qty = Math.floor(myStockQuantity * ratio);
       setQuantity(qty);
     }
   };
@@ -182,7 +203,14 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
 
       <div className={styles.myMoney}>
         <h1>보유자산</h1>
-        <h1><span>{myMoney.toLocaleString()}</span>원</h1>
+        <h1>
+          {myMoney != null ? (
+            <span>{myMoney.toLocaleString()}</span>
+          ) : (
+            <span>로딩중...</span>
+          )}
+          원
+        </h1>
       </div>
 
       <div className={styles.orderContents}>
