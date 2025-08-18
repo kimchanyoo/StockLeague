@@ -72,14 +72,12 @@ public class UserAssetQueryService {
 
             UserAssetSnapshotDto snapshot = objectMapper.readValue(json, UserAssetSnapshotDto.class);
 
-            return UserAssetValuationDto.builder()
-                    .cashBalance(snapshot.getCashBalance())
-                    .stockValuation(snapshot.getStockValuation())
-                    .totalAsset(snapshot.getTotalAsset())
-                    .totalProfit(snapshot.getTotalProfit())
-                    .totalProfitRate(snapshot.getTotalProfitRate())
-                    .stocks(snapshot.getStocks())
-                    .build();
+            return UserAssetValuationDto.of(
+                    snapshot.getAvailableCash(),
+                    snapshot.getStocks(),
+                    false,
+                    snapshot.getReservedCash()
+            );
 
         } catch (Exception e) {
             throw new GlobalException(GlobalErrorCode.REDIS_DESERIALIZE_ERROR);

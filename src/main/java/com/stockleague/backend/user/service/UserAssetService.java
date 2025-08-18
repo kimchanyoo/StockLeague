@@ -5,6 +5,7 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.StockPriceRedisService;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
+import com.stockleague.backend.stock.repository.ReservedCashRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.domain.UserAsset;
 import com.stockleague.backend.user.domain.UserStock;
@@ -26,6 +27,7 @@ public class UserAssetService {
     private final UserRepository userRepository;
     private final UserStockRepository userStockRepository;
     private final StockPriceRedisService stockPriceRedisService;
+    private final ReservedCashRepository reservedCashRepository;
 
     /**
      * Redis의 현재가를 기반으로 사용자 보유 자산을 실시간 계산하여 반환합니다.
@@ -48,7 +50,9 @@ public class UserAssetService {
             throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
         }
 
-        BigDecimal cash = asset.getCashBalance();
+        BigDecimal availableCash = asset.getCashBalance();
+        BigDecimal reservedCash = reservedCashRepository.sumUnrefundedByUser(user);
+
         List<UserStock> userStocks = userStockRepository.findByUser(user);
         List<StockValuationDto> stockDtos = new ArrayList<>();
 
@@ -73,6 +77,6 @@ public class UserAssetService {
             stockDtos.add(stockValuation);
         }
 
-        return UserAssetValuationDto.of(cash, stockDtos, isMarketOpen);
+        return UserAssetValuationDto.of(availableCash, stockDtos, isMarketOpen, reservedCash);
     }
 }
