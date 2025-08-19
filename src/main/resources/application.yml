@@ -86,6 +86,7 @@ kakao:
 logging:
     level:
         root: info
+        org.hibernate.SQL: off
         org.springframework.web: warn
 
         org.springframework.web.socket: DEBUG

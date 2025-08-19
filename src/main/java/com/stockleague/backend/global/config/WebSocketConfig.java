@@ -52,7 +52,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/user/queue")
                 .setTaskScheduler(wsTaskScheduler())
-                .setHeartbeatValue(new long[]{10_000, 10_000});
+                .setHeartbeatValue(new long[]{10_000, 0});
         registry.setUserDestinationPrefix("/user");
         registry.setPreservePublishOrder(true);
         registry.setApplicationDestinationPrefixes("/pub");
