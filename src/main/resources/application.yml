@@ -24,7 +24,7 @@ spring:
     jpa:
         hibernate:
             ddl-auto: validate
-        show-sql: true
+        show-sql: false
         properties:
             hibernate:
                 format_sql: true
@@ -86,32 +86,41 @@ kakao:
 logging:
     level:
         root: info
-        org.hibernate.SQL: off
         org.springframework.web: warn
 
-        org.springframework.web.socket: DEBUG
-        org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: DEBUG
-        org.springframework.web.socket.handler: DEBUG
-        org.springframework.web.socket.config: DEBUG
-        org.springframework.web.socket.sockjs: DEBUG
+        # Hibernate SQL 로그 완전 끄기
+        org.hibernate.SQL: off
+        org.hibernate.type: off
+        org.hibernate.type.descriptor.sql: off
+        org.hibernate.type.descriptor.jdbc: off
+        org.hibernate.orm.jdbc.bind: off
+        org.hibernate.stat: off
+        org.hibernate: warn
+
+        # WebSocket 관련 로그 필요할 때만 디버깅
+        org.springframework.web.socket: info
+        org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: info
+        org.springframework.web.socket.handler: info
+        org.springframework.web.socket.config: info
+        org.springframework.web.socket.sockjs: info
 
         # STOMP 서브프로토콜 처리
-        org.springframework.web.socket.messaging: DEBUG
-        org.springframework.messaging.simp: DEBUG
-        org.springframework.messaging.simp.stomp: DEBUG
-        org.springframework.messaging.simp.user: DEBUG
-        org.springframework.messaging.support: DEBUG
-        org.springframework.messaging.converter: DEBUG
+        org.springframework.web.socket.messaging: info
+        org.springframework.messaging.simp: info
+        org.springframework.messaging.simp.stomp: info
+        org.springframework.messaging.simp.user: info
+        org.springframework.messaging.support: info
+        org.springframework.messaging.converter: info
 
-        # 브로커 내부 처리(전달/라우팅/하트비트 등)
-        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: INFO
-        org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: DEBUG
-        org.springframework.messaging.simp.user.DefaultSimpUserRegistry: DEBUG
+        # 브로커 내부 처리
+        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: info
+        org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: warn
+        org.springframework.messaging.simp.user.DefaultSimpUserRegistry: warn
 
+        # 프로젝트 내부 로그
         com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: info
         com.stockleague.backend.infra.redis.StockPriceRedisService: info
         com.stockleague.backend.infra.redis.StockOrderBookRedisService: info
-
         com.stockleague.backend.global.exception: debug
 openapi:
     auth-url: https://openapivts.koreainvestment.com:29443
