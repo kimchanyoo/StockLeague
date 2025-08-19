@@ -47,33 +47,38 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     if (redisService.isBlacklisted(token)) throw new MessagingException("UNAUTHORIZED: blacklisted token");
                     userId = String.valueOf(jwtProvider.getUserId(token));
                 }
-
                 if (userId == null && accessor.getSessionAttributes() != null) {
                     Object uidAttr = accessor.getSessionAttributes().get("ws.userId");
                     if (uidAttr != null) userId = uidAttr.toString();
                 }
 
-                // 인증 성공 시 Principal을 확실히 심고, 변경 헤더로 재생성하여 반환
                 accessor.setLeaveMutable(true);
                 if (userId != null) {
                     Principal p = new StompPrincipal(userId);
-                    accessor.setUser(p); // 세션에 Principal
-                    accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p); // simpUser 헤더도 명시
+                    accessor.setUser(p);
+                    accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p);
+                    if (accessor.getSessionAttributes() != null) {
+                        accessor.getSessionAttributes().put("ws.userId", userId); // 보강 저장
+                    }
                     log.info("[WS] CONNECT authenticated: userId={}", userId);
                 }
                 return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
             }
 
             case SUBSCRIBE -> {
+                restoreUserFromSessionIfPossible(accessor);
+
                 String dest = accessor.getDestination();
                 if (dest != null && dest.startsWith("/user/") && accessor.getUser() == null) {
                     log.warn("[WS] SUBSCRIBE 거절: /user/** 구독에 인증 필요 (dest={})", dest);
                     throw new MessagingException("FORBIDDEN: /user/** requires auth");
                 }
-                return message; // 재생성 불필요
+                return message;
             }
 
             case SEND -> {
+                restoreUserFromSessionIfPossible(accessor);
+
                 String dest = accessor.getDestination();
                 if (dest != null && (dest.startsWith("/topic") || dest.startsWith("/user"))) {
                     log.warn("[WS] SEND 거절: 브로커 목적지로 직접 전송 시도 dest={}", dest);
@@ -83,7 +88,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     log.warn("[WS] SEND 거절: 허용되지 않은 목적지 dest={}", dest);
                     throw new MessagingException("FORBIDDEN: client must SEND to /pub/**");
                 }
-                return message; // 재생성 불필요
+                return message;
             }
 
             default -> {
@@ -92,12 +97,21 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         }
     }
 
+    private void restoreUserFromSessionIfPossible(StompHeaderAccessor accessor) {
+        if (accessor.getUser() == null && accessor.getSessionAttributes() != null) {
+            Object uid = accessor.getSessionAttributes().get("ws.userId");
+            if (uid != null) {
+                Principal p = new StompPrincipal(uid.toString());
+                accessor.setUser(p);
+                accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p);
+            }
+        }
+    }
+
     private static String normalizeBearer(String raw) {
         if (raw == null) return "";
         String v = raw.trim().replace("\"", "");
-        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            v = v.substring(7).trim();
-        }
+        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
         return v;
     }
 }

@@ -69,7 +69,8 @@ public class UserRankingController {
                                                 "ranking": 2
                                               },
                                               "totalCount": 2,
-                                              "isMarketOpen": true
+                                              "isMarketOpen": true,
+                                              "generatedAt" : "2025-03-18T18:00:00Z"
                                             }
                                             """
                             )

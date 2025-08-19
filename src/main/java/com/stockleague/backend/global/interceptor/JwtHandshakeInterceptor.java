@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
@@ -24,26 +26,49 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) {
-        String token = extractToken(request);
-        if (token != null && jwtProvider.validateToken(token) && !redisService.isBlacklisted(token)) {
-            String userId = String.valueOf(jwtProvider.getUserId(token));
-            attributes.put("ws.userId", userId);
+        String token = extractBearer(request);
+        if (token == null) token = extractTokenFromQuery(request);
+        if (token == null) token = extractTokenFromCookie(request);
+
+        if (token != null) {
+            try {
+                if (jwtProvider.validateToken(token) && !redisService.isBlacklisted(token)) {
+                    String userId = String.valueOf(jwtProvider.getUserId(token));
+                    attributes.put("ws.userId", userId);
+                } else {
+                    log.debug("[WS] Handshake token invalid or blacklisted");
+                }
+            } catch (Exception e) {
+                log.debug("[WS] Handshake token ignored: {}", e.getMessage());
+            }
         }
         return true;
     }
 
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
-                               WebSocketHandler wsHandler, Exception ex) { }
+                               WebSocketHandler wsHandler, Exception ex) {
+    }
 
-    private String extractToken(ServerHttpRequest request) {
-        List<String> q = request.getURI().getQuery() == null ? null :
-                Arrays.stream(request.getURI().getQuery().split("&"))
-                        .filter(s -> s.startsWith("access_token="))
-                        .map(s -> s.substring("access_token=".length()))
-                        .toList();
-        if (q != null && !q.isEmpty()) return q.get(0);
+    private String extractBearer(ServerHttpRequest request) {
+        List<String> auths = request.getHeaders().get("Authorization");
+        String raw = (auths != null && !auths.isEmpty()) ? auths.get(0) : null;
+        if (raw != null && raw.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return raw.substring(7).trim();
+        }
+        return null;
+    }
 
+    private String extractTokenFromQuery(ServerHttpRequest request) {
+        String q = request.getURI().getQuery();
+        if (q == null) return null;
+        return Arrays.stream(q.split("&"))
+                .filter(s -> s.startsWith("access_token="))
+                .map(s -> s.substring("access_token=".length()))
+                .findFirst().orElse(null);
+    }
+
+    private String extractTokenFromCookie(ServerHttpRequest request) {
         if (request instanceof ServletServerHttpRequest sr) {
             HttpServletRequest req = sr.getServletRequest();
             if (req.getCookies() != null) {

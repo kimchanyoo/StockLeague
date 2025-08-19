@@ -16,7 +16,7 @@ public class RankingWebSocketPublisher {
     private static final String DEST_TOPIC_ALL = "/topic/ranking";
     private static final String DEST_QUEUE_ME  = "/queue/ranking/me";
 
-    /** 전체 랭킹 브로드캐스트 (추천 사용) */
+    /** 전체 랭킹 브로드캐스트 */
     public void publishAll(List<UserProfitRateRankingDto> rankingList, boolean marketOpen) {
         UserProfitRateRankingMessage payload = UserProfitRateRankingMessage.broadcast(rankingList, marketOpen);
         messagingTemplate.convertAndSend(DEST_TOPIC_ALL, payload);
