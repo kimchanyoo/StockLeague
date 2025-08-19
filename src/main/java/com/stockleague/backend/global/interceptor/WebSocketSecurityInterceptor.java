@@ -5,11 +5,13 @@ import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import com.stockleague.backend.auth.jwt.JwtProvider;
 import com.stockleague.backend.global.security.StompPrincipal;
 import com.stockleague.backend.infra.redis.TokenRedisService;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -27,7 +29,6 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        accessor.setLeaveMutable(true);
         StompCommand cmd = accessor.getCommand();
         if (cmd == null) return message;
 
@@ -47,19 +48,20 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     userId = String.valueOf(jwtProvider.getUserId(token));
                 }
 
-                if (userId == null) {
-                    Object uidAttr = accessor.getSessionAttributes() != null
-                            ? accessor.getSessionAttributes().get("ws.userId")
-                            : null;
-                    if (uidAttr != null) {
-                        userId = uidAttr.toString();
-                    }
+                if (userId == null && accessor.getSessionAttributes() != null) {
+                    Object uidAttr = accessor.getSessionAttributes().get("ws.userId");
+                    if (uidAttr != null) userId = uidAttr.toString();
                 }
 
-                if (userId != null && accessor.getUser() == null) {
-                    accessor.setUser(new StompPrincipal(userId));
+                // 인증 성공 시 Principal을 확실히 심고, 변경 헤더로 재생성하여 반환
+                accessor.setLeaveMutable(true);
+                if (userId != null) {
+                    Principal p = new StompPrincipal(userId);
+                    accessor.setUser(p); // 세션에 Principal
+                    accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p); // simpUser 헤더도 명시
                     log.info("[WS] CONNECT authenticated: userId={}", userId);
                 }
+                return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
             }
 
             case SUBSCRIBE -> {
@@ -68,6 +70,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     log.warn("[WS] SUBSCRIBE 거절: /user/** 구독에 인증 필요 (dest={})", dest);
                     throw new MessagingException("FORBIDDEN: /user/** requires auth");
                 }
+                return message; // 재생성 불필요
             }
 
             case SEND -> {
@@ -80,10 +83,13 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     log.warn("[WS] SEND 거절: 허용되지 않은 목적지 dest={}", dest);
                     throw new MessagingException("FORBIDDEN: client must SEND to /pub/**");
                 }
+                return message; // 재생성 불필요
             }
-            default -> { /* no-op */ }
+
+            default -> {
+                return message;
+            }
         }
-        return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
     }
 
     private static String normalizeBearer(String raw) {
