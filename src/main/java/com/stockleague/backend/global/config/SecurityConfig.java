@@ -66,6 +66,7 @@ public class SecurityConfig {
                                 "/api/v1/stocks/*/orderbook",
                                 "/api/v1/openapi/**",
                                 "/ws/**",
+                                "/ws-sockjs/**",
                                 "/ws-debug/active-users"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
