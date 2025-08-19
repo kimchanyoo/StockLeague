@@ -58,7 +58,7 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     accessor.setUser(p);
                     accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p);
                     if (accessor.getSessionAttributes() != null) {
-                        accessor.getSessionAttributes().put("ws.userId", userId); // 보강 저장
+                        accessor.getSessionAttributes().put("ws.userId", userId);
                     }
                     log.info("[WS] CONNECT authenticated: userId={}", userId);
                 }
@@ -66,18 +66,20 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
             }
 
             case SUBSCRIBE -> {
-                restoreUserFromSessionIfPossible(accessor);
+                boolean changed = restoreUserFromSessionIfPossible(accessor);
 
                 String dest = accessor.getDestination();
                 if (dest != null && dest.startsWith("/user/") && accessor.getUser() == null) {
                     log.warn("[WS] SUBSCRIBE 거절: /user/** 구독에 인증 필요 (dest={})", dest);
                     throw new MessagingException("FORBIDDEN: /user/** requires auth");
                 }
-                return message;
+                return changed
+                        ? MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders())
+                        : message;
             }
 
             case SEND -> {
-                restoreUserFromSessionIfPossible(accessor);
+                boolean changed = restoreUserFromSessionIfPossible(accessor);
 
                 String dest = accessor.getDestination();
                 if (dest != null && (dest.startsWith("/topic") || dest.startsWith("/user"))) {
@@ -88,7 +90,9 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
                     log.warn("[WS] SEND 거절: 허용되지 않은 목적지 dest={}", dest);
                     throw new MessagingException("FORBIDDEN: client must SEND to /pub/**");
                 }
-                return message;
+                return changed
+                        ? MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders())
+                        : message;
             }
 
             default -> {
@@ -97,15 +101,18 @@ public class WebSocketSecurityInterceptor implements ChannelInterceptor {
         }
     }
 
-    private void restoreUserFromSessionIfPossible(StompHeaderAccessor accessor) {
+    private boolean restoreUserFromSessionIfPossible(StompHeaderAccessor accessor) {
         if (accessor.getUser() == null && accessor.getSessionAttributes() != null) {
             Object uid = accessor.getSessionAttributes().get("ws.userId");
             if (uid != null) {
+                accessor.setLeaveMutable(true);
                 Principal p = new StompPrincipal(uid.toString());
                 accessor.setUser(p);
                 accessor.setHeader(SimpMessageHeaderAccessor.USER_HEADER, p);
+                return true;
             }
         }
+        return false;
     }
 
     private static String normalizeBearer(String raw) {
