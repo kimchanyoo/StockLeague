@@ -13,10 +13,14 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -26,30 +30,15 @@ import org.springframework.stereotype.Component;
 public class RankingLivePublisherScheduler {
 
     private final UserRepository userRepository;
-
     private final UserAssetService userAssetService;
     private final UserRankingService userRankingService;
-
     private final RankingWebSocketPublisher publisher;
+    private final SimpUserRegistry simpUserRegistry; // ⬅️ 개인 큐 전송에 필요
 
     /**
      * 10초마다 전체 유저의 실시간 수익률 랭킹을 계산하여 WebSocket으로 전송합니다.
-     *
-     * <p>
-     * - 장이 열려 있을 때만 실행됩니다. <br>
-     * - 각 유저의 실시간 자산 정보({@link UserAssetValuationDto})를 조회하여, <br>
-     *   평균 매수가(avgBuyPrice), 현재가(currentPrice), 보유 수량(quantity)를 바탕으로
-     *   <b>총 투자 원금</b>과 <b>총 평가 금액</b>을 계산합니다. <br>
-     * - 수익률은 <code>(평가 금액 - 투자 원금) / 투자 원금 * 100</code> 으로 계산되며, 소수점 둘째 자리까지 반올림됩니다. <br>
-     * - 계산된 수익률 기준으로 유저들을 정렬하고, 순위를 부여한 뒤 WebSocket으로 전체 랭킹을 브로드캐스트합니다.
-     * </p>
-     *
-     * <p>
-     * WebSocket 전송 채널은 {@code /topic/ranking}이며,
-     * {@link RankingWebSocketPublisher}를 통해 전달됩니다.
-     * </p>
-     *
-     * 예외 발생 시 개별 유저에 대해 로그만 출력하고 전체 실행은 계속됩니다.
+     * - 장이 열려 있을 때만 실행
+     * - 보유 종목이 없어도 0% 수익률로 포함되도록 calculateProfitRate 수정되어 있어야 함
      */
     @Scheduled(fixedRate = 10_000)
     public void pushLiveInvestedRanking() {
@@ -60,53 +49,63 @@ public class RankingLivePublisherScheduler {
 
         List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds(userIds);
 
-        List<UserProfitRateRankingDto> rankingList = new ArrayList<>();
+        List<UserProfitRateRankingDto> items = new ArrayList<>(users.size());
 
         for (UserIdAndNicknameProjection user : users) {
             try {
                 Long userId = user.getId();
                 String nickname = user.getNickname();
+
                 UserAssetValuationDto valuation = userAssetService.getLiveAssetValuation(userId, true);
+                if (valuation == null) continue;
 
                 BigDecimal profitRate = userRankingService.calculateProfitRate(valuation);
-                if (profitRate == null) continue;
+                if (profitRate == null) continue; // 원금 0 → 0%로 반환하도록 이미 바꿨다면 사실상 발생 X
 
                 BigDecimal totalAsset = valuation.getTotalAsset().setScale(0, RoundingMode.HALF_UP);
 
-                rankingList.add(new UserProfitRateRankingDto(
+                items.add(new UserProfitRateRankingDto(
                         userId,
                         nickname,
-                        profitRate.toString(),
-                        totalAsset.toString(),
+                        profitRate.setScale(2, RoundingMode.HALF_UP),
+                        totalAsset,
                         null
                 ));
             } catch (Exception e) {
-                log.warn("실시간 원금 랭킹 계산 실패: userId={}, err={}", user.getId(), e.getMessage());
+                log.warn("[실시간 수익률 계산 실패] userId={}, err={}", user.getId(), e.getMessage());
             }
         }
 
-        List<UserProfitRateRankingDto> sorted = rankingList.stream()
-                .sorted(Comparator.comparing((UserProfitRateRankingDto dto) -> new BigDecimal(dto.profitRate())).reversed())
-                .map(new Function<UserProfitRateRankingDto, UserProfitRateRankingDto>() {
-                    private int rank = 1;
+        if (items.isEmpty()) return;
 
-                    @Override
-                    public UserProfitRateRankingDto apply(UserProfitRateRankingDto dto) {
-                        return new UserProfitRateRankingDto(
-                                dto.userId(),
-                                dto.nickname(),
-                                dto.profitRate(),
-                                dto.totalAsset(),
-                                rank++
-                        );
-                    }
+        items.sort(
+                Comparator.comparing(UserProfitRateRankingDto::profitRate, Comparator.reverseOrder())
+                        .thenComparing(UserProfitRateRankingDto::nickname, Comparator.nullsLast(String::compareTo))
+        );
+
+        List<UserProfitRateRankingDto> ranked = IntStream.range(0, items.size())
+                .mapToObj(i -> {
+                    var d = items.get(i);
+                    return new UserProfitRateRankingDto(
+                            d.userId(), d.nickname(), d.profitRate(), d.totalAsset(), i + 1
+                    );
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        UserProfitRateRankingDto myRanking = sorted.stream()
-                .findFirst()
-                .orElse(null);
+        publisher.publishAll(ranked, /*marketOpen*/ true);
 
-        publisher.publish(sorted, myRanking);
+        Map<Long, UserProfitRateRankingDto> byUser = ranked.stream()
+                .collect(Collectors.toMap(UserProfitRateRankingDto::userId, Function.identity(), (a,b) -> a));
+
+        for (SimpUser su : simpUserRegistry.getUsers()) {
+            Long userId;
+            try {
+                userId = Long.valueOf(su.getName());
+            } catch (Exception ignore) {
+                continue;
+            }
+            UserProfitRateRankingDto my = byUser.get(userId);
+            publisher.publishMyRanking(su.getName(), my,true);
+        }
     }
 }

@@ -13,10 +13,18 @@ public class RankingWebSocketPublisher {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    private static final String DESTINATION = "/topic/ranking";
+    private static final String DEST_TOPIC_ALL = "/topic/ranking";
+    private static final String DEST_QUEUE_ME  = "/queue/ranking/me";
 
-    public void publish(List<UserProfitRateRankingDto> rankingList, UserProfitRateRankingDto myRanking) {
-        UserProfitRateRankingMessage message = UserProfitRateRankingMessage.from(rankingList, myRanking);
-        messagingTemplate.convertAndSend(DESTINATION, message);
+    /** 전체 랭킹 브로드캐스트 (추천 사용) */
+    public void publishAll(List<UserProfitRateRankingDto> rankingList, boolean marketOpen) {
+        UserProfitRateRankingMessage payload = UserProfitRateRankingMessage.broadcast(rankingList, marketOpen);
+        messagingTemplate.convertAndSend(DEST_TOPIC_ALL, payload);
+    }
+
+    /** 개인 랭킹 전송: /user/{userName}/queue/ranking/me */
+    public void publishMyRanking(String userName, UserProfitRateRankingDto myRanking, boolean marketOpen) {
+        UserProfitRateRankingMessage payload = UserProfitRateRankingMessage.personal(myRanking, marketOpen);
+        messagingTemplate.convertAndSendToUser(userName, DEST_QUEUE_ME, payload);
     }
 }
