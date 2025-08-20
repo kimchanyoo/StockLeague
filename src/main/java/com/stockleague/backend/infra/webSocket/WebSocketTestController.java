@@ -37,9 +37,6 @@ public class WebSocketTestController {
 
         SimpMessageHeaderAccessor headers = SimpMessageHeaderAccessor.create();
         headers.setContentType(MimeTypeUtils.APPLICATION_JSON);
-        if (sessionId != null && !sessionId.isBlank()) {
-            headers.setSessionId(sessionId);
-        }
         headers.setLeaveMutable(true);
 
         try {
