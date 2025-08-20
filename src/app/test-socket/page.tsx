@@ -4,19 +4,31 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuth } from "@/context/AuthContext";
-import { toast } from "react-hot-toast";
+
+interface PongDto {
+  type: string;
+  echo: string;
+  ts: number;
+}
+
+interface LogItem {
+  type: "INFO" | "PONG" | "MESSAGE" | "ERROR";
+  text: string;
+}
 
 export default function TestSocketPage() {
   const { accessToken } = useAuth();
   const [connected, setConnected] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<LogItem[]>([]);
   const [msg, setMsg] = useState("");
 
   const clientRef = useRef<Client | null>(null);
   const subsRef = useRef<StompSubscription[]>([]);
   const connectingRef = useRef(false);
 
-  const pushLog = useCallback((msg: string) => setLogs(prev => [...prev, msg]), []);
+  const pushLog = useCallback((text: string, type: LogItem["type"] = "INFO") => {
+    setLogs(prev => [...prev, { type, text }]);
+  }, []);
 
   const cleanup = useCallback(() => {
     subsRef.current.forEach(sub => sub.unsubscribe());
@@ -35,64 +47,81 @@ export default function TestSocketPage() {
       return;
     }
 
-    // 이미 연결 중이거나 Client가 있으면 실행하지 않음
     if (clientRef.current || connectingRef.current) return;
     connectingRef.current = true;
 
-    pushLog("🪙 Token: " + accessToken);
+    pushLog("🪙 Token: " + accessToken, "INFO");
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(`http://130.162.145.59:8080/ws-sockjs?access_token=${accessToken}`),
+      webSocketFactory: () =>
+        new SockJS(`http://130.162.145.59:8080/ws-sockjs?access_token=${accessToken}`),
       heartbeatIncoming: 10000,
       reconnectDelay: 3000,
-      debug: s => pushLog("[DBG] " + s),
+      debug: (msg: string) => pushLog(`[DBG] ${msg}`, "INFO"),
       onConnect: () => {
+        pushLog("onConnect 실행됨", "INFO");
         setConnected(true);
-        pushLog("✅ CONNECTED");
+        pushLog("✅ CONNECTED", "INFO");
 
-        // 구독이 이미 있으면 새로 구독하지 않음
-        if (subsRef.current.length === 0) {
-          const sub = client.subscribe("/user/queue/notifications", (m: IMessage) => {
-            try {
-              const data = JSON.parse(m.body);
-              pushLog("📩 받은 메시지: " + JSON.stringify(data));
-              toast.success("📩 받은 메시지: " + data.message);
-            } catch {
-              pushLog("📩 받은 메시지: " + m.body);
-              toast.success("📩 받은 메시지: " + m.body);
-            }
-          });
-          subsRef.current.push(sub);
-          pushLog("🟢 SUBSCRIBED /user/queue/notifications");
-        }
+        // 1️⃣ 개인 큐 구독
+        const sub1 = client.subscribe("/user/queue/notifications", (m: IMessage) => {
+          console.log("[USER RAW]", m.command, m.headers, m.body);
+          try {
+            const parsed: PongDto = JSON.parse(m.body);
+            pushLog(`📩 user MESSAGE: type=${parsed.type}, echo=${parsed.echo}, ts=${parsed.ts}`, "MESSAGE");
+          } catch {
+            pushLog(`📩 user MESSAGE(raw): ${m.body}`, "MESSAGE");
+          }
+        });
+        subsRef.current.push(sub1);
+        pushLog("🟢 SUBSCRIBED /user/queue/notifications", "INFO");
+
+        // 2️⃣ 브로드캐스트 구독
+        const sub2 = client.subscribe("/topic/broadcast", (m: IMessage) => {
+          console.log("[BROADCAST RAW]", m.command, m.headers, m.body);
+          try {
+            const parsed: PongDto = JSON.parse(m.body);
+            pushLog(`📡 broadcast MESSAGE: type=${parsed.type}, echo=${parsed.echo}, ts=${parsed.ts}`, "MESSAGE");
+          } catch {
+            pushLog(`📡 broadcast MESSAGE(raw): ${m.body}`, "MESSAGE");
+          }
+        });
+        subsRef.current.push(sub2);
+        pushLog("🟢 SUBSCRIBED /topic/broadcast", "INFO");
       },
-      onStompError: frame => pushLog(`❌ STOMP 에러: ${frame.headers["message"]}`),
+      onStompError: (frame) => pushLog(`❌ STOMP 에러: ${frame.headers["message"]}`, "ERROR"),
       onWebSocketClose: () => {
-        pushLog("⚠️ WebSocket 연결 종료");
+        pushLog("⚠️ WebSocket 연결 종료", "INFO");
         cleanup();
+      },
+      onUnhandledMessage: (m) => {
+        console.log("[UNHANDLED]", m);
+        pushLog(`[UNHANDLED] ${m.body}`, "ERROR");
       },
     });
 
     clientRef.current = client;
     client.activate();
 
-    // StrictMode 중복 마운트 방지
-    return () => {
-      cleanup();
-    };
+    return () => cleanup();
   }, [accessToken, cleanup, pushLog]);
 
-  const sendMessage = () => {
-    if (!clientRef.current || !msg) return;
+  const sendMessage = useCallback(() => {
+    if (!clientRef.current) return;
 
-    clientRef.current.publish({
-      destination: "/pub/test",
-      body: msg,
-    });
+    const message = msg || "자동 발송 메시지";
+    clientRef.current.publish({ destination: "/pub/test", body: message });
+    clientRef.current.publish({ destination: "/pub/broadcast", body: message });
 
-    pushLog("📤 메시지 발송: " + msg);
+    pushLog("📤 메시지 발송: " + message, "INFO");
     setMsg("");
-  };
+  }, [msg, pushLog]);
+
+  useEffect(() => {
+    if (!connected) return;
+    const interval = setInterval(sendMessage, 10000);
+    return () => clearInterval(interval);
+  }, [connected, sendMessage]);
 
   return (
     <div className="p-4">
@@ -100,7 +129,22 @@ export default function TestSocketPage() {
       <p>연결 상태: {connected ? "✅ 연결됨" : "❌ 끊김"}</p>
 
       <div className="mt-4 bg-gray-100 p-3 rounded h-150 overflow-auto text-sm space-y-0.5">
-        {logs.map(log => <div key={crypto.randomUUID()}>{log}</div>)}
+        {logs.map((log, idx) => (
+          <div
+            key={idx}
+            className={
+              log.type === "PONG"
+                ? "text-yellow-600"
+                : log.type === "MESSAGE"
+                ? "text-green-600"
+                : log.type === "ERROR"
+                ? "text-red-600"
+                : "text-gray-800"
+            }
+          >
+            {log.text}
+          </div>
+        ))}
       </div>
 
       <div className="mt-2 flex gap-2">
