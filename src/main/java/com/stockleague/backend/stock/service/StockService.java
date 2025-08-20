@@ -249,7 +249,7 @@ public class StockService {
      * @throws GlobalException {@code ORDER_BOOK_NOT_FOUND} - 호가 정보가 없는 경우
      */
     public StockOrderBookDto getEffectiveOrderBook(String ticker) {
-        boolean open = MarketTimeUtil.isMarketOpen();
+        boolean open = MarketTimeUtil.shouldCollectOrderbookNow();
 
         StockOrderBookDto dto = open
                 ? stockOrderBookRedisService.getLive(ticker)
