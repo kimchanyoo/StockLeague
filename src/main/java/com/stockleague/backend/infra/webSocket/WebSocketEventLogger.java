@@ -5,6 +5,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.messaging.*;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class WebSocketEventLogger {
+public class WebSocketEventLogger implements ChannelInterceptor {
 
     private static String pname(Principal p) { return (p == null ? "null" : p.getName()); }
     private static Object attr(Map<String, Object> m, String k) { return (m == null ? null : m.get(k)); }

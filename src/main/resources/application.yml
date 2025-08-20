@@ -98,7 +98,8 @@ logging:
         org.hibernate: warn
 
         # WebSocket 관련 로그 필요할 때만 디버깅
-        org.springframework.web.socket: info
+        org.springframework.web.socket: DEBUG
+        org.springframework.web.servlet.handler: TRACE
         org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: info
         org.springframework.web.socket.handler: info
         org.springframework.web.socket.config: info
