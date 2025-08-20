@@ -2,14 +2,18 @@ package com.stockleague.backend.infra.webSocket;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import org.springframework.util.MimeTypeUtils;
 
 @Slf4j
 @Controller
 public class WebSocketTestController {
+
+    public record PongDto(String type, String echo, long ts) {}
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -21,20 +25,29 @@ public class WebSocketTestController {
     public void testEcho(String message, Principal principal) {
         log.info(">>> 받은 메시지: {}", message);
         if (principal == null) {
-            log.warn("Principal is null!");
+            log.warn("Principal is null! (미인증 상태의 STOMP 메시지)");
             return;
         }
-        log.info(">>> Principal.getName() = {}", principal.getName());
+        final String username = principal.getName();
+        log.info(">>> Principal.getName() = {}", username);
 
-        String username = principal.getName();
-        String destination = "/user/" + username + "/queue/notifications";
-        String payload = "서버에서 보낸 메시지: \"" + message + "\"";
+        PongDto dto = new PongDto("PONG", message, System.currentTimeMillis());
+
+        SimpMessageHeaderAccessor headers = SimpMessageHeaderAccessor.create();
+        headers.setContentType(MimeTypeUtils.APPLICATION_JSON);
+        headers.setLeaveMutable(true);
 
         try {
-            messagingTemplate.convertAndSendToUser(username, "/queue/notifications", payload);
-            log.info("[{}] 에게 메시지 전송 성공: {}", destination, payload);
+            messagingTemplate.convertAndSendToUser(
+                    username,
+                    "/queue/notifications",
+                    dto,
+                    headers.getMessageHeaders()
+            );
+            log.info("[/user/{}/queue/notifications] JSON 전송 성공: type={}, echoLen={}, ts={}",
+                    username, dto.type(), dto.echo().length(), dto.ts());
         } catch (Exception e) {
-            log.error("[{}] 에게 메시지 전송 실패", destination, e);
+            log.error("[/user/{}/queue/notifications] 전송 실패", username, e);
         }
     }
 
