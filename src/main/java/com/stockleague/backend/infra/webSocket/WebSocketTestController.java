@@ -42,7 +42,6 @@ public class WebSocketTestController {
         log.info(">>> 받은 메시지: '{}', principal={}, simpSessionId={}", echo, username, sessionId);
 
         try {
-            // 세션 타깃팅 헤더 제거 → 동일 username의 모든 세션으로 전달
             messagingTemplate.convertAndSendToUser(username, "/queue/notifications", dto);
             log.info("[/user/{}/queue/notifications] 전송 성공 | broadcast-to-all-sessions | type={}, echoLen={}, ts={}",
                     username, dto.type(), dto.echo().length(), dto.ts());
