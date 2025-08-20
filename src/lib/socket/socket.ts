@@ -4,18 +4,24 @@ export let stompClient: Client | null = null;
 
 const messageQueue: Array<{ destination: string; body: any }> = [];
 
+// 연결 잠시 비활성화 플래그
+export let STOMP_DISABLED = true;
+
 export const connectStomp = (
   accessToken: string,
   onMessage: (body: any) => void
 ): Promise<void> => {
+  if (STOMP_DISABLED) {
+    // STOMP 비활성화 시 그냥 resolve
+    return Promise.resolve();
+  }
+
   return new Promise<void>((resolve, reject) => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!socketUrl) {
       reject(new Error("Socket URL is not defined in environment variables."));
       return;
     }
-   // console.log("Received accessToken:", accessToken);
-
     const config: StompConfig = {
       webSocketFactory: () => new WebSocket(socketUrl) as any,
       connectHeaders: {
@@ -64,12 +70,13 @@ export const connectStomp = (
 };
 
 export const disconnectStomp = () => {
-  if (stompClient && stompClient.active) {
+  if (!STOMP_DISABLED && stompClient && stompClient.active) {
     stompClient.deactivate();
   }
 };
 
 export const sendMessage = (destination: string, body: any) => {
+  if (STOMP_DISABLED) return; 
   if (stompClient && stompClient.active) {
     stompClient.publish({
       destination,
@@ -82,6 +89,7 @@ export const sendMessage = (destination: string, body: any) => {
 };
 
 const flushMessageQueue = () => {
+  if (STOMP_DISABLED) return; 
   if (stompClient && stompClient.active) {
     while (messageQueue.length > 0) {
       const msg = messageQueue.shift();

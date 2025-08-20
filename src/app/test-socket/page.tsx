@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-hot-toast";
 
@@ -13,46 +14,57 @@ export default function TestSocketPage() {
 
   const clientRef = useRef<Client | null>(null);
   const subsRef = useRef<StompSubscription[]>([]);
+  const connectingRef = useRef(false);
 
   const pushLog = useCallback((msg: string) => setLogs(prev => [...prev, msg]), []);
 
   const cleanup = useCallback(() => {
     subsRef.current.forEach(sub => sub.unsubscribe());
     subsRef.current = [];
-    clientRef.current?.deactivate();
-    clientRef.current = null;
+    if (clientRef.current) {
+      clientRef.current.deactivate();
+      clientRef.current = null;
+    }
     setConnected(false);
+    connectingRef.current = false;
   }, []);
 
   useEffect(() => {
-    if (!accessToken) { cleanup(); return; }
-    if (clientRef.current) return;
+    if (!accessToken) {
+      cleanup();
+      return;
+    }
 
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL!;
+    // 이미 연결 중이거나 Client가 있으면 실행하지 않음
+    if (clientRef.current || connectingRef.current) return;
+    connectingRef.current = true;
+
     pushLog("🪙 Token: " + accessToken);
 
-    // brokerURL에 쿼리스트링으로 토큰 전달
     const client = new Client({
-      brokerURL: `${socketUrl}?access_token=${encodeURIComponent(accessToken)}`,
-      reconnectDelay: 5000,
+      webSocketFactory: () => new SockJS(`http://130.162.145.59:8080/ws-sockjs?access_token=${accessToken}`),
       heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000,
+      reconnectDelay: 3000,
       debug: s => pushLog("[DBG] " + s),
       onConnect: () => {
         setConnected(true);
         pushLog("✅ CONNECTED");
 
-        // 기존 구독 초기화
-        subsRef.current.forEach(s => s.unsubscribe());
-        subsRef.current = [];
-
-        // 🔔 개인 메시지 구독
-        subsRef.current.push(
-          client.subscribe("/user/queue/notifications", (m: IMessage) => {
-            pushLog("📩 받은 메시지: " + m.body);
-            toast.success("📩 받은 메시지: " + m.body);
-          }, { id: "noti-sub" })
-        );
+        // 구독이 이미 있으면 새로 구독하지 않음
+        if (subsRef.current.length === 0) {
+          const sub = client.subscribe("/user/queue/notifications", (m: IMessage) => {
+            try {
+              const data = JSON.parse(m.body);
+              pushLog("📩 받은 메시지: " + JSON.stringify(data));
+              toast.success("📩 받은 메시지: " + data.message);
+            } catch {
+              pushLog("📩 받은 메시지: " + m.body);
+              toast.success("📩 받은 메시지: " + m.body);
+            }
+          });
+          subsRef.current.push(sub);
+          pushLog("🟢 SUBSCRIBED /user/queue/notifications");
+        }
       },
       onStompError: frame => pushLog(`❌ STOMP 에러: ${frame.headers["message"]}`),
       onWebSocketClose: () => {
@@ -64,8 +76,11 @@ export default function TestSocketPage() {
     clientRef.current = client;
     client.activate();
 
-    return () => cleanup();
-  }, [accessToken]);
+    // StrictMode 중복 마운트 방지
+    return () => {
+      cleanup();
+    };
+  }, [accessToken, cleanup, pushLog]);
 
   const sendMessage = () => {
     if (!clientRef.current || !msg) return;

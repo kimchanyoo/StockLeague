@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import styles from "@/app/styles/components/user/MyOrder.module.css";
-import { getAllMyExecutions, getUnexecutedOrders, cancelOrder } from "@/lib/api/user";
+import { getAllMyExecutions, getUnexecutedOrders, UserAssetValuation, cancelOrder } from "@/lib/api/user";
 import { getUserAssetValuation } from "@/lib/api/user";
 import { Client, IMessage } from "@stomp/stompjs";
 
@@ -19,7 +19,7 @@ interface AssetData {
 
 const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
   const [orders, setOrders] = useState<any[]>([]);
-  const [asset, setAsset] = useState<AssetData | null>(null);
+  const [asset, setAsset] = useState<UserAssetValuation | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef<HTMLDivElement | null>(null);
@@ -75,7 +75,7 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
           onConnect: () => {
             client.subscribe("/user/queue/asset", (message: IMessage) => {
               try {
-                const data = JSON.parse(message.body) as AssetData;
+                const data = JSON.parse(message.body) as UserAssetValuation;
                 if (data) {
                   setAsset(data);
                 }
