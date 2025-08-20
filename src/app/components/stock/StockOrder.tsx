@@ -47,7 +47,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         setMyMoney(balance.availableCash)
       } catch (err) {
         console.error("보유 현금 조회 실패:", err);
-        toast.error("보유 자산 정보를 불러오지 못했습니다.");
+        alert("보유 자산 정보를 불러오지 못했습니다.");
       }
     };
 
@@ -105,8 +105,16 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const orderTotal = quantity * price;
+
     if (!ticker || quantity <= 0 || price <= 0) {
-      toast.error("주문 정보를 다시 확인해주세요.");
+      alert("주문 정보를 다시 확인해주세요.");
+      return;
+    }
+    
+    // 주문 금액 초과 체크를 먼저
+    if (orderType === "buy" && orderTotal > myMoney) {
+      alert("보유 현금을 초과하는 주문입니다.");
       return;
     }
 
@@ -125,7 +133,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
           setPriceInput(currentPrice.toString());
           setPrice(currentPrice);
         } else {
-          toast.error(res.message || "매수 주문 실패");
+          alert(res.message || "매수 주문 실패");
         }
       } else {
         const res = await postSellOrder(request);
@@ -135,23 +143,24 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
           setPriceInput(currentPrice.toString());
           setPrice(currentPrice);
         } else {
-          toast.error(res.message || "매도 주문 실패");
+          alert(res.message || "매도 주문 실패");
         }
       }
     } catch (error) {
       console.error("주문 오류:", error);
-      toast.error("주문 처리 중 오류가 발생했습니다.");
+      alert("주문 처리 중 오류가 발생했습니다.");
     }
   };
 
   const handleQuantityRatioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const ratio = Number(e.target.value);
     if (orderType === "buy") {
-      const qty = Math.floor((myMoney * ratio) / price);
-      setQuantity(qty);
+      const qty = (myMoney * ratio) / price;
+      const adjustedQty = Math.min(parseFloat(qty.toFixed(1)), parseFloat((myMoney / price).toFixed(1)));
+      setQuantity(adjustedQty); // 소수점 한자리까지
     } else {
-      const qty = Math.floor(myStockQuantity * ratio);
-      setQuantity(qty);
+      const qty = myStockQuantity * ratio;
+      setQuantity(parseFloat(qty.toFixed(1))); // 소수점 한자리까지
     }
   };
 
@@ -305,8 +314,13 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
                 type="text"
                 value={quantity}
                 onChange={(e) => {
-                  const raw = e.target.value.replace(/[^0-9]/g, "");
-                  setQuantity(Number(raw));
+                  const raw = e.target.value.replace(/[^0-9.]/g, "");
+                  const match = raw.match(/^\d*\.?\d{0,1}$/);
+                  if (!match) return;
+                  let parsed = parseFloat(raw);
+                  if (isNaN(parsed)) parsed = 0;
+
+                  setQuantity(isNaN(parsed) ? 0 : parsed);
                 }}
               />
               <select onChange={handleQuantityRatioChange} defaultValue="">

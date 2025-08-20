@@ -4,10 +4,11 @@ import { getProfitRanking, GetProfitRankingResponse } from "@/lib/api/rank";
 import { useAuth } from "@/context/AuthContext";
 
 interface UseProfitRankingParams {
-  onUpdate: (data: GetProfitRankingResponse) => void;
+  onUpdateGlobal: (data: GetProfitRankingResponse) => void;
+  onUpdateMe: (data: GetProfitRankingResponse) => void;
 }
 
-export const useRankingSocket = ({ onUpdate }: UseProfitRankingParams) => {
+export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankingParams) => {
   const { accessToken } = useAuth();
   const [isMarketOpen, setIsMarketOpen] = useState<boolean | null>(null);
   const clientRef = useRef<Client | null>(null);
@@ -20,12 +21,13 @@ export const useRankingSocket = ({ onUpdate }: UseProfitRankingParams) => {
       .then((data) => {
         console.log("📦 초기 자산 데이터 수신:", data);
         setIsMarketOpen(data.isMarketOpen);
-        onUpdate(data);
+        onUpdateGlobal(data);
+        onUpdateMe(data);
       })
       .catch((error) => {
         console.error("❌ 초기 자산 데이터 요청 실패:", error);
       });
-  }, [accessToken, onUpdate]);
+  }, [accessToken, onUpdateGlobal, onUpdateMe]);
 
   useEffect(() => {
     if (!isMarketOpen || !accessToken) {
@@ -44,10 +46,18 @@ export const useRankingSocket = ({ onUpdate }: UseProfitRankingParams) => {
       onConnect: () => {
         console.log("✅ WebSocket 연결 성공. /topic/ranking 구독 요청 중...");
 
+        // 전체 랭킹 구독
         client.subscribe("/topic/ranking", (message: IMessage) => {
           const data: GetProfitRankingResponse = JSON.parse(message.body);
           console.log("📡 실시간 자산 데이터 수신:", data);
-          onUpdate(data);
+          onUpdateGlobal(data);
+        });
+
+        // 개인 랭킹 구독
+        client.subscribe("/user/queue/ranking/me", (message: IMessage) => {
+          const data: GetProfitRankingResponse = JSON.parse(message.body);
+          console.log("📡 개인 랭킹 데이터 수신:", data);
+          onUpdateMe(data);
         });
 
         console.log("📬 /topic/ranking 구독 완료.");
@@ -68,5 +78,5 @@ export const useRankingSocket = ({ onUpdate }: UseProfitRankingParams) => {
       client.deactivate();
       clientRef.current = null;
     };
-  }, [isMarketOpen, accessToken, onUpdate]);
+  }, [isMarketOpen, accessToken, onUpdateGlobal, onUpdateMe]);
 };

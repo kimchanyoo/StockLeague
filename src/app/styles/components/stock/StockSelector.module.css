@@ -1,11 +1,12 @@
-.container {
+.stockSelector_container {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    height: 100%;
 }
 
-.header {
+.stockSelector_header {
     position: relative;
     display: flex;
     justify-content: center;
@@ -13,19 +14,20 @@
     padding: 1rem;
     border-bottom: 1px solid #999999;
     width: 100%;
+    
 }
   
-.left {
+.stockSelector_left {
     position: absolute;
     left: 1rem;
 }
   
-.center {
+.stockSelector_center {
     font-weight: bold;
     text-align: center;
 }
 
-.search {
+.stockSelector_search {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,7 +36,7 @@
     width: 90%;
 }
 
-.searchBox {
+.stockSelector_searchBox {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -43,12 +45,12 @@
     padding: 0.2rem;
     width: 100%;
 }
-.searchBox input {
+.stockSelector_searchBox input {
     width: 100%;
     outline: none;
 }
 
-.miniStockList {
+.stockSelector_miniStockList {
     display: flex;
     flex-direction: column;
     width: 90%;

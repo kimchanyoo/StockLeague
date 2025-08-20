@@ -18,7 +18,7 @@ export const useOrderbook = ({
   const [isMarketOpen, setIsMarketOpen] = useState(false);
 
   useEffect(() => {
-    if (!ticker) return;
+    if (!ticker || ticker.trim() === "") return;
     if (loading) return;
 
     const fetchInitialOrderbook = async () => {

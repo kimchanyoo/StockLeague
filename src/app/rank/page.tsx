@@ -44,21 +44,25 @@ export default function Rank() {
   }, [visibleCount, rankingData]);
 
   // onUpdate 콜백 useCallback으로 안정화
-  const onUpdate = useCallback(
-    (data: {
-      rankingList: UserRanking[];
-      myRanking: UserRanking;
-      totalCount: number;
-      isMarketOpen: boolean;
-    }) => {
+  const onUpdateGlobal = useCallback((data: {
+    rankingList: UserRanking[];
+    totalCount: number;
+    isMarketOpen: boolean;
+  }) => {
       setRankingData(data.rankingList);
-      setMyRanking(data.myRanking);
     },
     []
   );
+  const onUpdateMe = useCallback((data: {
+    myRanking: UserRanking;
+    totalCount: number;
+    isMarketOpen: boolean;
+  }) => {
+    setMyRanking(data.myRanking);
+  }, []);
 
   // 실시간 or API 랭킹 데이터 구독
-  useRankingSocket({ onUpdate });
+  useRankingSocket({ onUpdateGlobal, onUpdateMe });
 
   const visibleRanks = rankingData.slice(0, visibleCount);
 

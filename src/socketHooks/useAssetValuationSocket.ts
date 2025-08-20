@@ -79,8 +79,8 @@ export const useAssetValuationSocket = ({
       },
     });
 
-    client.activate();
     clientRef.current = client;
+    client.activate();
 
     return () => {
       console.log("⛔ WebSocket 연결 해제");

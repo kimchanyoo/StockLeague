@@ -151,15 +151,15 @@ const StockSelector = ({ onSelect }: Props) => {
   if (error) return <div className={styles.error}>{error}</div>;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.left}>
+    <div className={styles.stockSelector_container}>
+      <div className={styles.stockSelector_header}>
+        <div className={styles.stockSelector_left}>
           <FilterMenu selected={selectedFilter} onChange={setSelectedFilter} options={availableFilters} />
         </div>
-        <h1 className={styles.center}>{selectedFilter}</h1>
+        <h1 className={styles.stockSelector_center}>{selectedFilter}</h1>
       </div>
-      <div className={styles.search}>
-        <div className={styles.searchBox}>
+      <div className={styles.stockSelector_search}>
+        <div className={styles.stockSelector_searchBox}>
           <input
             type="text"
             placeholder="종목명 또는 코드 검색"
@@ -171,7 +171,7 @@ const StockSelector = ({ onSelect }: Props) => {
           </button>
         </div>
       </div>
-      <div className={styles.miniStockList}>
+      <div className={styles.stockSelector_miniStockList}>
         <MiniStockList
           stocks={visibleStocks}
           stockPricesMap={stockPriceMap}  // Map 형태로 전달
