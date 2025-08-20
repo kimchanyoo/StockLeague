@@ -30,6 +30,8 @@ import java.util.concurrent.CompletionStage;
 @Slf4j
 @Component
 public class KisWebSocketClient {
+    private volatile String currentApprovalKey;
+
     private static final int SUBSCRIBE_DELAY_SECONDS = 3;
     private static final int TICKER_BATCH_SIZE = 5;
     private int expectedSubscribeCount = 0;
@@ -131,10 +133,11 @@ public class KisWebSocketClient {
      * WebSocket 연결 초기화 및 비동기 리스너 등록
      */
     private void initWebSocket(String approvalKey) {
+        this.currentApprovalKey = approvalKey;
         HttpClient client = HttpClient.newHttpClient();
         client.newWebSocketBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
-                .buildAsync(URI.create(WS_URL), createWebSocketListener(approvalKey))
+                .buildAsync(URI.create(WS_URL), createWebSocketListener())
                 .thenAccept(ws -> {
                     this.webSocket = ws;
                     this.isConnected = true;
@@ -177,7 +180,7 @@ public class KisWebSocketClient {
     /**
      * WebSocket 리스너 생성 (평문 메시지 수신 처리)
      */
-    private WebSocket.Listener createWebSocketListener(String approvalKey) {
+    private WebSocket.Listener createWebSocketListener() {
         return new WebSocket.Listener() {
             @Override
             public void onOpen(WebSocket webSocket) {
@@ -191,8 +194,8 @@ public class KisWebSocketClient {
                 for (int i = 0; i < batches.size(); i++) {
                     List<String> batch = batches.get(i);
                     scheduler.schedule(
-                            () -> subscribeBatch(webSocket, approvalKey, batch, collectOrderbookNow),
-                            i * SUBSCRIBE_DELAY_SECONDS, TimeUnit.SECONDS
+                            () -> subscribeBatch(webSocket, batch, collectOrderbookNow),
+                            (long) i * SUBSCRIBE_DELAY_SECONDS, TimeUnit.SECONDS
                     );
                 }
 
@@ -235,11 +238,11 @@ public class KisWebSocketClient {
     }
 
     private void subscribeBatch(
-            WebSocket webSocket, String approvalKey, List<String> batch, boolean collectOrderbookNow) {
+            WebSocket webSocket, List<String> batch, boolean collectOrderbookNow) {
         for (String ticker : batch) {
-            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker);
+            sendApprovalAndSubscribe(webSocket, "H0STCNT0", ticker);
             if (collectOrderbookNow) {
-                sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
+                sendApprovalAndSubscribe(webSocket, "H0STASP0", ticker);
             } else {
                 log.info("호가 구독 생략(15:00 이후): {}", ticker);
             }
@@ -262,14 +265,24 @@ public class KisWebSocketClient {
     /**
      * 실시간 키를 포함한 구독 요청 메시지 전송
      */
-    private void sendApprovalAndSubscribe(WebSocket webSocket, String approvalKey, String trId, String ticker) {
-        String message = buildSubscribeMessage(approvalKey, trId, ticker);
+    private void sendApprovalAndSubscribe(WebSocket webSocket, String trId, String ticker) {
+        if (!hasApprovalKey()) {
+            log.error("approval_key 없음: 구독 메시지 전송 중단 trId={}, ticker={}", trId, ticker);
+            return;
+        }
+
+        String message = buildSubscribeMessage(trId, ticker);
         webSocket.sendText(message, true);
         log.info("인증 + 구독 요청 전송: {} / {}", trId, ticker);
     }
 
     /** 해지 요청 */
     private void sendUnsubscribe(WebSocket webSocket, String trId, String ticker) {
+        if (!hasApprovalKey()) {
+            log.error("approval_key 없음: 해지 메시지 전송 중단 trId={}, ticker={}", trId, ticker);
+            return;
+        }
+
         String message = buildUnsubscribeMessage(trId, ticker);
         webSocket.sendText(message, true);
         log.info("구독 해지 요청 전송: {} / {}", trId, ticker);
@@ -278,7 +291,7 @@ public class KisWebSocketClient {
     /**
      * 구독 메시지 JSON 생성
      */
-    private String buildSubscribeMessage(String approvalKey, String trId, String trKey) {
+    private String buildSubscribeMessage(String trId, String trKey) {
         return String.format("""
                 {
                   "header": {
@@ -294,25 +307,27 @@ public class KisWebSocketClient {
                     }
                   }
                 }
-                """, approvalKey, trId, trKey);
+                """, this.currentApprovalKey, trId, trKey);
     }
 
-    /** 해지 메시지 (환경에 따라 approval_key 요구되면 header에 추가) */
+    /** 해지 메시지 */
     private String buildUnsubscribeMessage(String trId, String trKey) {
         return String.format("""
-                {
-                  "header": {
-                    "tr_type": "2",
-                    "content-type": "utf-8"
-                  },
-                  "body": {
-                    "input": {
-                      "tr_id": "%s",
-                      "tr_key": "%s"
-                    }
-                  }
+            {
+              "header": {
+                "approval_key": "%s",
+                "custtype": "P",
+                "tr_type": "2",
+                "content-type": "utf-8"
+              },
+              "body": {
+                "input": {
+                  "tr_id": "%s",
+                  "tr_key": "%s"
                 }
-                """, trId, trKey);
+              }
+            }
+            """, this.currentApprovalKey, trId, trKey);
     }
 
     /**
@@ -371,5 +386,9 @@ public class KisWebSocketClient {
             partitioned.add(tickers.subList(i, Math.min(i + size, tickers.size())));
         }
         return partitioned;
+    }
+
+    private boolean hasApprovalKey() {
+        return this.currentApprovalKey != null && !this.currentApprovalKey.isBlank();
     }
 }
