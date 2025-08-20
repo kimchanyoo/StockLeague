@@ -1,24 +1,25 @@
 package com.stockleague.backend.infra.webSocket;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 
 @Slf4j
 @Controller
+@RequiredArgsConstructor
 public class WebSocketTestController {
 
     public record PongDto(String type, String echo, long ts) {}
 
     private final SimpMessageSendingOperations messagingTemplate;
-
-    public WebSocketTestController(SimpMessageSendingOperations messagingTemplate) {
-        this.messagingTemplate = messagingTemplate;
-    }
+    private final SimpUserRegistry userRegistry;
 
     /**
      * 클라이언트가 /pub/test 로 SEND 하면,
@@ -47,6 +48,24 @@ public class WebSocketTestController {
                     username, dto.type(), dto.echo().length(), dto.ts());
         } catch (Exception e) {
             log.error("[/user/{}/queue/notifications] 전송 실패", username, e);
+        }
+
+        try {
+            SimpUser su = userRegistry.getUser(username);
+            if (su == null) {
+                log.warn("SimpUserRegistry에 user={} 가 없습니다 (세션 또는 구독이 아직 등록되지 않았을 수 있음)", username);
+            } else {
+                su.getSessions().forEach(s ->
+                        log.info("user={} 세션={}, 구독수={}, 구독목록={}",
+                                username,
+                                s.getId(),
+                                s.getSubscriptions().size(),
+                                s.getSubscriptions().stream().map(sub -> sub.getDestination()).toList()
+                        )
+                );
+            }
+        } catch (Exception e) {
+            log.warn("SimpUserRegistry 조회 중 예외", e);
         }
     }
 
