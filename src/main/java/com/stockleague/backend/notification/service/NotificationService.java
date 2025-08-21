@@ -3,14 +3,22 @@ package com.stockleague.backend.notification.service;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notification.domain.Notification;
+import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.notification.dto.NotificationListResponseDto;
 import com.stockleague.backend.notification.dto.NotificationResponseDto;
 import com.stockleague.backend.notification.repository.NotificationRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
 import io.micrometer.common.lang.Nullable;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -24,6 +32,8 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationWebSocketService wsService;
+
+    private static final List<String> ALLOWED_STATUS = List.of("unread", "read", "all");
 
     /**
      * 이벤트를 기반으로 알림을 생성하고, 커밋 후 개인 WebSocket 큐로 전송합니다.
@@ -135,5 +145,120 @@ public class NotificationService {
         } else {
             task.run();
         }
+    }
+
+    /**
+     * 알림 목록 조회 (페이지네이션 지원).
+     *
+     * <p>조회 조건:
+     * - status: unread | read | all (기타 값은 INVALID_PARAM 예외 발생)
+     * <p>- page, size: 1 이상 (아닐 경우 INVALID_PAGINATION 예외 발생)</p>
+     *
+     *<p>처리 흐름</p>
+     * <li>status 유효성 검증 및 normalize</li>
+     * <li>PageRequest 생성 (createdAt DESC 정렬)</li>
+     * <li>Repository 조회 후 DTO 매핑</li>
+     * <li>페이지 응답 DTO로 변환 반환</li>
+     *
+     * @param userId 조회할 사용자 ID
+     * @param status 조회 상태(unread/read/all)
+     * @param page   요청 페이지 번호 (1부터 시작)
+     * @param size   페이지 크기
+     * @return 알림 목록 페이지 응답 DTO
+     */
+    public NotificationListResponseDto getNotifications(Long userId, String status, int page, int size) {
+        if (page < 1 || size < 1) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PAGINATION);
+        }
+
+        String st = normalizeStatus(status);
+        if (!ALLOWED_STATUS.contains(st)) {
+            throw new GlobalException(GlobalErrorCode.INVALID_PARAM);
+        }
+
+        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<NotificationResponseDto> result = notificationRepository
+                .findByUserAndStatus(userId, st, pageable)
+                .map(NotificationResponseDto::from);
+
+        return new NotificationListResponseDto(
+                true,
+                result.getContent(),
+                page,
+                size,
+                result.getTotalElements(),
+                result.getTotalPages()
+        );
+    }
+
+    /**
+     * 읽지 않은 알림 개수 조회
+     * @param userId 사용자 ID
+     * @return 읽지 않은 알림 수
+     */
+    public long getUnreadCount(Long userId) {
+        return notificationRepository.countByUser_IdAndIsReadFalseAndIsDeletedFalse(userId);
+    }
+
+    /**
+     * 알림 단건 읽음 처리
+     * @param userId 사용자 ID
+     * @param id 알림 ID
+     * @throws GlobalException NOTIFICATION_NOT_FOUND 알림이 없거나 삭제된 경우
+     */
+    @Transactional
+    public void markRead(Long userId, Long id) {
+        Notification n = notificationRepository.findByIdAndUser_IdAndIsDeletedFalse(id, userId);
+        if (n == null) {
+            throw new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND);
+        }
+        n.markAsRead();
+    }
+
+    /**
+     * 알림 전체 읽음 처리 (target 필터 가능)
+     * @param userId 사용자 ID
+     * @param target 타겟 타입 (null 시 전체)
+     * @return 업데이트된 알림 수
+     */
+    @Transactional
+    public int markAllRead(Long userId, TargetType target) {
+        return notificationRepository.markAllAsRead(userId, target);
+    }
+
+    /**
+     * 알림 닫기(Soft Delete)
+     * @param userId 사용자 ID
+     * @param id 알림 ID
+     * @throws GlobalException NOTIFICATION_NOT_FOUND 알림이 없거나 이미 삭제된 경우
+     * @throws GlobalException FORBIDDEN 다른 사용자 소유인 경우
+     */
+    @Transactional
+    public void close(Long userId, Long id) {
+        Notification n = notificationRepository.findById(id)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND));
+
+        if (!n.getUser().getId().equals(userId)) {
+            throw new GlobalException(GlobalErrorCode.FORBIDDEN);
+        }
+        if (n.isDeleted()) {
+            throw new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND);
+        }
+        n.close();
+    }
+
+    /**
+     * 보관 기간이 지난 알림 실제 삭제(Hard Delete)
+     * @param threshold 기준 시각 (deletedAt < threshold)
+     * @return 삭제된 알림 수
+     */
+    @Transactional
+    public int purgeAll(LocalDateTime threshold) {
+        return notificationRepository.purgeDeletedBefore(threshold);
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "unread" : status.toLowerCase(Locale.ROOT);
     }
 }

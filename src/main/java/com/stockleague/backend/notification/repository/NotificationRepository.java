@@ -4,8 +4,14 @@ import com.stockleague.backend.notification.domain.Notification;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.user.domain.User;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -42,4 +48,42 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Optional<Notification> findTop1ByUserAndTypeAndTargetAndTargetIdAndIsDeletedFalseOrderByIdDesc(
             User user, NotificationType type, TargetType target, Long targetId
     );
+
+    @Query("""
+           select n from Notification n
+            where n.user.id = :userId
+              and n.isDeleted = false
+              and (
+                   :status = 'all'
+                or (:status = 'unread' and n.isRead = false)
+                or (:status = 'read'   and n.isRead = true)
+              )
+           """)
+    Page<Notification> findByUserAndStatus(@Param("userId") Long userId,
+                                           @Param("status") String status,
+                                           Pageable pageable);
+
+    long countByUser_IdAndIsReadFalseAndIsDeletedFalse(Long userId);
+
+    Notification findByIdAndUser_IdAndIsDeletedFalse(Long id, Long userId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update Notification n
+              set n.isRead = true,
+                  n.updatedAt = CURRENT_TIMESTAMP
+            where n.user.id = :userId
+              and n.isDeleted = false
+              and n.isRead = false
+              and (:target is null or n.target = :target)
+           """)
+    int markAllAsRead(@Param("userId") Long userId, @Param("target") TargetType target);
+
+    @Modifying
+    @Query("""
+           delete from Notification n
+            where n.isDeleted = true
+              and n.deletedAt < :threshold
+           """)
+    int purgeDeletedBefore(@Param("threshold") LocalDateTime threshold);
 }
