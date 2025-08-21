@@ -41,13 +41,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .addInterceptors(jwtHandshakeInterceptor)
                 .setHandshakeHandler(jwtHandshakeHandler)
                 .setAllowedOriginPatterns("*");
-
-//        registry.addEndpoint("/ws-sockjs")
-//                .addInterceptors(jwtHandshakeInterceptor)
-//                .setHandshakeHandler(jwtHandshakeHandler)
-//                .setAllowedOriginPatterns("*")
-//                .withSockJS()
-//                .setSessionCookieNeeded(false);
     }
 
     @Override

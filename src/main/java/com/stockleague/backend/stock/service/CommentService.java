@@ -5,7 +5,7 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
-import com.stockleague.backend.kafka.producer.NotificationProducer;
+import com.stockleague.backend.notification.service.NotificationService;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentLike;
 import com.stockleague.backend.stock.domain.Stock;
@@ -42,7 +42,8 @@ public class CommentService {
     private final StockRepository stockRepository;
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
-    private final NotificationProducer notificationProducer;
+
+    private final NotificationService notificationService;
 
     public CommentCreateResponseDto createComment(
             CommentCreateRequestDto request, String ticker, Long userId) {
@@ -87,20 +88,43 @@ public class CommentService {
                     .build());
             comment.increaseLikeCount();
 
+            if (!Objects.equals(comment.getUser().getId(), userId)) {
+                notificationService.notify(
+                        new NotificationEvent(
+                                comment.getUser().getId(),
+                                NotificationType.LIKE,
+                                TargetType.COMMENT,
+                                commentId
+                        )
+                );
+            }
+
             return new CommentLikeResponseDto(true, "좋아요가 등록되었습니다.",
                     true, comment.getLikeCount());
+
         } else {
             like.toggle();
             if (Boolean.TRUE.equals(like.getIsLiked())) {
                 comment.increaseLikeCount();
 
+                if (!Objects.equals(comment.getUser().getId(), userId)) {
+                    notificationService.notify(
+                            new NotificationEvent(
+                                    comment.getUser().getId(),
+                                    NotificationType.LIKE,
+                                    TargetType.COMMENT,
+                                    commentId
+                            ),
+                            "회원님의 댓글이 좋아요를 받았습니다."
+                    );
+                }
+
                 return new CommentLikeResponseDto(true, "좋아요가 등록되었습니다.",
-                        like.getIsLiked(), comment.getLikeCount());
+                        true, comment.getLikeCount());
             } else {
                 comment.decreaseLikeCount();
-
                 return new CommentLikeResponseDto(true, "좋아요가 취소되었습니다.",
-                        like.getIsLiked(), comment.getLikeCount());
+                        false, comment.getLikeCount());
             }
         }
     }
@@ -181,13 +205,12 @@ public class CommentService {
 
         comment.markDeletedByAdmin(admin);
 
-        NotificationEvent event = new NotificationEvent(
+        notificationService.notify(new NotificationEvent(
                 comment.getUser().getId(),
                 NotificationType.COMMENT_DELETED,
                 TargetType.COMMENT,
                 commentId
-        );
-        notificationProducer.send(event);
+        ));
 
         return CommentAdminDeleteResponseDto.from();
     }

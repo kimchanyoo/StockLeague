@@ -54,9 +54,6 @@ dependencies {
 	//Redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-	// kafka
-	implementation 'org.springframework.kafka:spring-kafka'
-
 	// 재시도 로직
 	implementation 'org.springframework.retry:spring-retry'
 
@@ -84,7 +81,6 @@ dependencies {
 
 	// 테스트
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

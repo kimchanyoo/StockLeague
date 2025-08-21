@@ -55,9 +55,6 @@ jobs:
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
             SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
-            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-            KAKAO_REDIRECT_URI=${{ secrets.KAKAO_REDIRECT_URI }}
             JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
             ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
             SERVER_IP=${{ secrets.SERVER_IP }}
