@@ -1,26 +1,16 @@
 package com.stockleague.backend.stock.scheduler;
 
+import com.stockleague.backend.global.util.MarketTimeUtil;
 import com.stockleague.backend.infra.redis.OrderQueueRedisService;
 import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
-import com.stockleague.backend.notification.domain.NotificationType;
-import com.stockleague.backend.notification.domain.TargetType;
-import com.stockleague.backend.notification.dto.NotificationEvent;
-import com.stockleague.backend.notification.service.NotificationService;
-import com.stockleague.backend.stock.domain.Order;
-import com.stockleague.backend.stock.domain.OrderExecution;
 import com.stockleague.backend.stock.domain.OrderType;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
-import com.stockleague.backend.stock.repository.OrderExecutionRepository;
-import com.stockleague.backend.stock.repository.OrderRepository;
 import com.stockleague.backend.stock.service.OrderMatchExecutor;
-import java.math.BigDecimal;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +24,9 @@ public class OrderMatchingScheduler {
 
     @Scheduled(fixedDelay = 1000)
     public void matchOrdersFromRedis() {
+        if(MarketTimeUtil.isMarketClosed()){
+            return;
+        }
         List<String> tickers = orderQueueRedisService.getAllTickersWithOrders();
         for (String ticker : tickers) {
             processBuyOrders(ticker);

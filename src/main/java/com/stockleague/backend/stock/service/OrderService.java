@@ -2,9 +2,11 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.global.util.MarketTimeUtil;
 import com.stockleague.backend.infra.redis.OrderQueueRedisService;
 import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
 import com.stockleague.backend.stock.domain.Order;
+import com.stockleague.backend.stock.domain.OrderSession;
 import com.stockleague.backend.stock.domain.OrderType;
 import com.stockleague.backend.stock.domain.ReservedCash;
 import com.stockleague.backend.stock.domain.Stock;
@@ -64,6 +66,8 @@ public class OrderService {
         User user = getUserById(userId);
         Stock stock = getStockByTicker(requestDto.ticker());
 
+        boolean regular = MarketTimeUtil.isMarketOpen();
+
         Order order = Order.builder()
                 .user(user)
                 .stock(stock)
@@ -72,6 +76,7 @@ public class OrderService {
                 .orderAmount(requestDto.orderAmount())
                 .remainingAmount(requestDto.orderAmount())
                 .averageExecutedPrice(requestDto.orderPrice())
+                .session(regular ? OrderSession.REGULAR : OrderSession.AFTER_HOURS_QUEUED)
                 .build();
 
         orderRepository.save(order);
@@ -80,11 +85,15 @@ public class OrderService {
         reserveCash(user, order, reservedAmount);
 
         BigDecimal remaining;
-        StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
-        if (ob == null) {
-            remaining = order.getRemainingAmount();
+        if (regular) {
+            StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
+            if (ob == null) {
+                remaining = order.getRemainingAmount();
+            } else {
+                remaining = orderMatchExecutor.processBuyOrder(order.getId(), stock.getStockTicker(), ob);
+            }
         } else {
-            remaining = orderMatchExecutor.processBuyOrder(order.getId(), stock.getStockTicker(), ob);
+            remaining = order.getRemainingAmount();
         }
 
         if (remaining.compareTo(BigDecimal.ZERO) > 0) {
@@ -108,6 +117,8 @@ public class OrderService {
         User user = getUserById(userId);
         Stock stock = getStockByTicker(requestDto.ticker());
 
+        boolean regular = MarketTimeUtil.isMarketOpen();
+
         lockSellStock(user, stock, requestDto.orderAmount());
 
         Order order = Order.builder()
@@ -118,16 +129,21 @@ public class OrderService {
                 .orderAmount(requestDto.orderAmount())
                 .remainingAmount(requestDto.orderAmount())
                 .averageExecutedPrice(requestDto.orderPrice())
+                .session(regular ? OrderSession.REGULAR : OrderSession.AFTER_HOURS_QUEUED)
                 .build();
 
         orderRepository.save(order);
 
         BigDecimal remaining;
-        StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
-        if (ob == null) {
-            remaining = order.getRemainingAmount();
+        if (regular) {
+            StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
+            if (ob == null) {
+                remaining = order.getRemainingAmount();
+            } else {
+                remaining = orderMatchExecutor.processSellOrder(order.getId(), stock.getStockTicker(), ob);
+            }
         } else {
-            remaining = orderMatchExecutor.processSellOrder(order.getId(), stock.getStockTicker(), ob);
+            remaining = order.getRemainingAmount();
         }
 
         if (remaining.compareTo(BigDecimal.ZERO) > 0) {
