@@ -37,17 +37,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-//        registry.addEndpoint("/ws")
-//                .addInterceptors(jwtHandshakeInterceptor)
-//                .setHandshakeHandler(jwtHandshakeHandler)
-//                .setAllowedOriginPatterns("*");
-
-        registry.addEndpoint("/ws-sockjs")
+        registry.addEndpoint("/ws")
                 .addInterceptors(jwtHandshakeInterceptor)
                 .setHandshakeHandler(jwtHandshakeHandler)
-                .setAllowedOriginPatterns("*")
-                .withSockJS()
-                .setSessionCookieNeeded(false);
+                .setAllowedOriginPatterns("*");
+
+//        registry.addEndpoint("/ws-sockjs")
+//                .addInterceptors(jwtHandshakeInterceptor)
+//                .setHandshakeHandler(jwtHandshakeHandler)
+//                .setAllowedOriginPatterns("*")
+//                .withSockJS()
+//                .setSessionCookieNeeded(false);
     }
 
     @Override
