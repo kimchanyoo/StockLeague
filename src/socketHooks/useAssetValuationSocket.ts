@@ -52,10 +52,7 @@ export const useAssetValuationSocket = ({
     const client = new Client({
       webSocketFactory: () => {
         console.log("WebSocket 생성 시도");
-        return new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!);
-      },
-      connectHeaders: {
-        Authorization: `Bearer ${accessToken}`,
+        return  new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}?access_token=${accessToken}`)
       },
       reconnectDelay: 10000,
       heartbeatIncoming: 10000,

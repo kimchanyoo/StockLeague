@@ -168,12 +168,12 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
     <div className={styles.orderStatus}>
       {filteredOrders.length > 0 ? (
         <ul className={styles.orderList}>
-          {filteredOrders.map((order) => (
+          {filteredOrders.map((order, index) => (
             <li
               key={
                 activeTab === "체결 내역"
-                  ? order.orderExecutionId
-                  : order.orderId
+                  ? `exec-${order.orderExecutionId ?? index}`
+                  : `order-${order.orderId ?? index}`
               }
               className={styles.orderItem}
             >

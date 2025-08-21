@@ -54,7 +54,7 @@ export default function TestSocketPage() {
 
     const client = new Client({
       webSocketFactory: () =>
-        new SockJS(`http://130.162.145.59:8080/ws-sockjs?access_token=${accessToken}`),
+        new WebSocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}?access_token=${accessToken}`),
       heartbeatIncoming: 10000,
       reconnectDelay: 3000,
       debug: (msg: string) => pushLog(`[DBG] ${msg}`, "INFO"),
