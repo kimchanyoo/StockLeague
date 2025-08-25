@@ -41,8 +41,10 @@ public class UserAssetController {
                                     summary = "자산 평가 정보 예시",
                                     value = """
                                             {
-                                                "cashBalance": "100000000.00",
-                                                "totalAsset": "160000000.00",
+                                                "availableCash": "100000000.00",
+                                                "reservedCash": "100000000.00",
+                                                "totalCash": "200000000.00",
+                                                "totalAsset": "260000000.00",
                                                 "totalProfit": "10000000.00",
                                                 "totalProfitRate": "6.67",
                                                 "stockValuation": "60000000.00",

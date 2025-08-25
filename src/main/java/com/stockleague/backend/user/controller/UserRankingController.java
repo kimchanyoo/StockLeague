@@ -1,6 +1,6 @@
 package com.stockleague.backend.user.controller;
 
-import com.stockleague.backend.user.dto.response.UserProfitRateRankingListResponseDto;
+import com.stockleague.backend.user.dto.response.UserProfitRateRankingListDto;
 import com.stockleague.backend.user.service.UserRankingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,7 +39,7 @@ public class UserRankingController {
                     responseCode = "200",
                     description = "수익률 랭킹 조회 성공",
                     content = @Content(
-                            schema = @Schema(implementation = UserProfitRateRankingListResponseDto.class),
+                            schema = @Schema(implementation = UserProfitRateRankingListDto.class),
                             examples = @ExampleObject(
                                     name = "UserProfitRateRankingList",
                                     summary = "수익률 랭킹 응답 예시",
@@ -69,14 +69,15 @@ public class UserRankingController {
                                                 "ranking": 2
                                               },
                                               "totalCount": 2,
-                                              "isMarketOpen": true
+                                              "isMarketOpen": true,
+                                              "generatedAt" : "2025-03-18T18:00:00Z"
                                             }
                                             """
                             )
                     )
             )
     })
-    public ResponseEntity<UserProfitRateRankingListResponseDto> getProfitRateRanking(Authentication authentication) {
+    public ResponseEntity<UserProfitRateRankingListDto> getProfitRateRanking(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
         return ResponseEntity.ok(userRankingService.getProfitRateRanking(userId));
     }

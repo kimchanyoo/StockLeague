@@ -47,7 +47,7 @@ public class OrderExecutionController {
                                     value = """
                                             {
                                                 "success": true,
-                                                "executions": [
+                                                "contents": [
                                                     {
                                                         "orderExecutionId": 1001,
                                                         "stockName": "삼성전자",
@@ -131,7 +131,7 @@ public class OrderExecutionController {
                                     value = """
                                             {
                                                 "success": true,
-                                                "executions": [
+                                                "contents": [
                                                     {
                                                         "orderExecutionId": 1,
                                                         "stockName": "삼성전자",
@@ -218,7 +218,7 @@ public class OrderExecutionController {
                                     value = """
                                         {
                                             "success": true,
-                                            "unexecutedOrders": [
+                                            "contents": [
                                                 {
                                                     "orderId": 101,
                                                     "stockName": "삼성전자",

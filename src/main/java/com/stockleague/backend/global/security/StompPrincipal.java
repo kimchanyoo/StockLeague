@@ -6,14 +6,10 @@ import java.util.Objects;
 public class StompPrincipal implements Principal {
     private final String name;
 
-    public StompPrincipal(String name) {
-        this.name = name;
-    }
+    public StompPrincipal(String name) { this.name = name; }
 
     @Override
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
 
     @Override
     public boolean equals(Object o) {
@@ -23,7 +19,5 @@ public class StompPrincipal implements Principal {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(name);
-    }
+    public int hashCode() { return Objects.hash(name); }
 }

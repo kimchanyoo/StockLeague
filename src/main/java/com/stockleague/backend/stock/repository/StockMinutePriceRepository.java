@@ -44,6 +44,8 @@ public interface StockMinutePriceRepository extends JpaRepository<StockMinutePri
             Pageable pageable
     );
 
-    List<StockMinutePrice> findAllByStockAndCandleTimeBetweenOrderByCandleTimeAsc(
-            Stock stock, LocalDateTime start, LocalDateTime end);
+    List<StockMinutePrice> findAllByStockAndIntervalAndCandleTimeBetweenOrderByCandleTimeAsc(
+            Stock stock, int interval, LocalDateTime start, LocalDateTime end
+    );
+
 }

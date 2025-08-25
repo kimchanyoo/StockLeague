@@ -2,6 +2,10 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.notification.domain.NotificationType;
+import com.stockleague.backend.notification.domain.TargetType;
+import com.stockleague.backend.notification.dto.NotificationEvent;
+import com.stockleague.backend.notification.service.NotificationService;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.Stock;
 import com.stockleague.backend.stock.dto.request.reply.ReplyCreateRequestDto;
@@ -33,6 +37,8 @@ public class ReplyService {
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
 
+    private final NotificationService notificationService;
+
     public ReplyCreateResponseDto createReply(ReplyCreateRequestDto request,
                                               String ticker, Long commentId, Long userId) {
 
@@ -58,6 +64,17 @@ public class ReplyService {
         parent.addReply(reply);
 
         commentRepository.save(reply);
+
+        if (!Objects.equals(parent.getUser().getId(), userId)) {
+            notificationService.notify(
+                    new NotificationEvent(
+                            parent.getUser().getId(),
+                            NotificationType.REPLY,
+                            TargetType.COMMENT,
+                            parent.getId()
+                    )
+            );
+        }
 
         return ReplyCreateResponseDto.from(reply);
     }

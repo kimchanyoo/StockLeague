@@ -24,7 +24,7 @@ spring:
     jpa:
         hibernate:
             ddl-auto: validate
-        show-sql: true
+        show-sql: false
         properties:
             hibernate:
                 format_sql: true
@@ -37,19 +37,6 @@ spring:
         validate-on-migrate: true
         out-of-order: false
         connect-retries: 5
-
-    kafka:
-        bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
-        consumer:
-            group-id: stockleague-group
-            auto-offset-reset: earliest
-            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-            properties:
-                spring.json.trusted.packages: "*"
-        producer:
-            key-serializer: org.apache.kafka.common.serialization.StringSerializer
-            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
     data:
         redis:
@@ -88,10 +75,40 @@ logging:
         root: info
         org.springframework.web: warn
 
+        # Hibernate SQL 로그 완전 끄기
+        org.hibernate.SQL: off
+        org.hibernate.type: off
+        org.hibernate.type.descriptor.sql: off
+        org.hibernate.type.descriptor.jdbc: off
+        org.hibernate.orm.jdbc.bind: off
+        org.hibernate.stat: off
+        org.hibernate: warn
+
+        # WebSocket 관련 로그 필요할 때만 디버깅
+        org.springframework.web.socket: DEBUG
+        org.springframework.web.servlet.handler: TRACE
+        org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: info
+        org.springframework.web.socket.handler: info
+        org.springframework.web.socket.config: info
+        org.springframework.web.socket.sockjs: info
+
+        # STOMP 서브프로토콜 처리
+        org.springframework.web.socket.messaging: info
+        org.springframework.messaging.simp: info
+        org.springframework.messaging.simp.stomp: info
+        org.springframework.messaging.simp.user: info
+        org.springframework.messaging.support: info
+        org.springframework.messaging.converter: info
+
+        # 브로커 내부 처리
+        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: info
+        org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: warn
+        org.springframework.messaging.simp.user.DefaultSimpUserRegistry: warn
+
+        # 프로젝트 내부 로그
         com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: info
         com.stockleague.backend.infra.redis.StockPriceRedisService: info
         com.stockleague.backend.infra.redis.StockOrderBookRedisService: info
-
         com.stockleague.backend.global.exception: debug
 openapi:
     auth-url: https://openapivts.koreainvestment.com:29443

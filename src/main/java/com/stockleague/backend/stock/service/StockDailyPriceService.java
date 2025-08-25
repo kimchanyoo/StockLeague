@@ -22,13 +22,15 @@ public class StockDailyPriceService {
     private final StockMinutePriceRepository minuteRepo;
     private final StockDailyPriceRepository dailyRepo;
 
+    private static final int BASE_INTERVAL_FOR_DAILY = 1;
+
     /**
-     * 모든 종목에 대해 당일 일봉을 생성
+     * 모든 종목에 대해 당일 일봉 생성
      */
     public void generateDailyCandles() {
         LocalDate today = LocalDate.now();
         LocalDateTime start = today.atTime(9, 0);
-        LocalDateTime end = today.atTime(15, 30);
+        LocalDateTime end   = today.atTime(15, 30);
 
         List<Stock> stocks = stockRepository.findAll();
 
@@ -38,17 +40,18 @@ public class StockDailyPriceService {
             }
 
             List<StockMinutePrice> minuteCandles =
-                    minuteRepo.findAllByStockAndCandleTimeBetweenOrderByCandleTimeAsc(stock, start, end);
+                    minuteRepo.findAllByStockAndIntervalAndCandleTimeBetweenOrderByCandleTimeAsc(
+                            stock, BASE_INTERVAL_FOR_DAILY, start, end);
 
             if (minuteCandles.isEmpty()) {
                 log.warn("[일봉 생성] 분봉 없음: {} {}", stock.getStockTicker(), today);
                 continue;
             }
 
-            long open = minuteCandles.get(0).getOpenPrice();
+            long open  = minuteCandles.get(0).getOpenPrice();
             long close = minuteCandles.get(minuteCandles.size() - 1).getClosePrice();
-            long high = minuteCandles.stream().mapToLong(StockMinutePrice::getHighPrice).max().orElse(open);
-            long low = minuteCandles.stream().mapToLong(StockMinutePrice::getLowPrice).min().orElse(open);
+            long high  = minuteCandles.stream().mapToLong(StockMinutePrice::getHighPrice).max().orElse(open);
+            long low   = minuteCandles.stream().mapToLong(StockMinutePrice::getLowPrice).min().orElse(open);
             long volume = minuteCandles.stream().mapToLong(StockMinutePrice::getVolume).sum();
 
             StockDailyPrice daily = StockDailyPrice.builder()

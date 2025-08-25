@@ -2,8 +2,11 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.global.util.MarketTimeUtil;
 import com.stockleague.backend.infra.redis.OrderQueueRedisService;
+import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
 import com.stockleague.backend.stock.domain.Order;
+import com.stockleague.backend.stock.domain.OrderSession;
 import com.stockleague.backend.stock.domain.OrderType;
 import com.stockleague.backend.stock.domain.ReservedCash;
 import com.stockleague.backend.stock.domain.Stock;
@@ -14,6 +17,7 @@ import com.stockleague.backend.stock.dto.response.order.CancelOrderResponseDto;
 import com.stockleague.backend.stock.dto.response.order.OrderListResponseDto;
 import com.stockleague.backend.stock.dto.response.order.OrderSummaryDto;
 import com.stockleague.backend.stock.dto.response.order.SellOrderResponseDto;
+import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.repository.OrderRepository;
 import com.stockleague.backend.stock.repository.ReservedCashRepository;
 import com.stockleague.backend.stock.repository.StockRepository;
@@ -45,7 +49,8 @@ public class OrderService {
     private final UserStockRepository userStockRepository;
     private final OrderQueueRedisService orderQueueRedisService;
 
-    private final OrderExecutionService orderExecutionService;
+    private final OrderMatchExecutor orderMatchExecutor;
+    private final StockOrderBookRedisService stockOrderBookRedisService;
 
     /**
      * 사용자가 종목 티커(ticker)와 주문 정보(가격, 수량)를 기반으로 매수 주문을 생성합니다.
@@ -61,6 +66,8 @@ public class OrderService {
         User user = getUserById(userId);
         Stock stock = getStockByTicker(requestDto.ticker());
 
+        boolean regular = MarketTimeUtil.isMarketOpen();
+
         Order order = Order.builder()
                 .user(user)
                 .stock(stock)
@@ -69,6 +76,7 @@ public class OrderService {
                 .orderAmount(requestDto.orderAmount())
                 .remainingAmount(requestDto.orderAmount())
                 .averageExecutedPrice(requestDto.orderPrice())
+                .session(regular ? OrderSession.REGULAR : OrderSession.AFTER_HOURS_QUEUED)
                 .build();
 
         orderRepository.save(order);
@@ -76,7 +84,18 @@ public class OrderService {
         BigDecimal reservedAmount = order.getOrderPrice().multiply(order.getOrderAmount());
         reserveCash(user, order, reservedAmount);
 
-        BigDecimal remaining = orderExecutionService.tryImmediateBuyExecution(order);
+        BigDecimal remaining;
+        if (regular) {
+            StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
+            if (ob == null) {
+                remaining = order.getRemainingAmount();
+            } else {
+                remaining = orderMatchExecutor.processBuyOrder(order.getId(), stock.getStockTicker(), ob);
+            }
+        } else {
+            remaining = order.getRemainingAmount();
+        }
+
         if (remaining.compareTo(BigDecimal.ZERO) > 0) {
             orderQueueRedisService.saveWaitingOrder(order);
         }
@@ -98,6 +117,8 @@ public class OrderService {
         User user = getUserById(userId);
         Stock stock = getStockByTicker(requestDto.ticker());
 
+        boolean regular = MarketTimeUtil.isMarketOpen();
+
         lockSellStock(user, stock, requestDto.orderAmount());
 
         Order order = Order.builder()
@@ -108,11 +129,23 @@ public class OrderService {
                 .orderAmount(requestDto.orderAmount())
                 .remainingAmount(requestDto.orderAmount())
                 .averageExecutedPrice(requestDto.orderPrice())
+                .session(regular ? OrderSession.REGULAR : OrderSession.AFTER_HOURS_QUEUED)
                 .build();
 
         orderRepository.save(order);
 
-        BigDecimal remaining = orderExecutionService.tryImmediateSellExecution(order);
+        BigDecimal remaining;
+        if (regular) {
+            StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
+            if (ob == null) {
+                remaining = order.getRemainingAmount();
+            } else {
+                remaining = orderMatchExecutor.processSellOrder(order.getId(), stock.getStockTicker(), ob);
+            }
+        } else {
+            remaining = order.getRemainingAmount();
+        }
+
         if (remaining.compareTo(BigDecimal.ZERO) > 0) {
             orderQueueRedisService.saveWaitingOrder(order);
         }
@@ -260,6 +293,8 @@ public class OrderService {
             throw new GlobalException(GlobalErrorCode.INVALID_ORDER_STATE);
         }
 
+        BigDecimal remainingBeforeCancel = order.getRemainingAmount();
+
         order.markAsCanceled();
         order.setRemainingAmount(BigDecimal.ZERO);
 
@@ -274,7 +309,15 @@ public class OrderService {
                     .orElseThrow(() -> new GlobalException(GlobalErrorCode.RESERVED_CASH_NOT_FOUND));
 
             if (!reservedCash.isRefunded()) {
-                BigDecimal refundAmount = reservedCash.getReservedAmount();
+                BigDecimal executedQty = order.getOrderAmount().subtract(remainingBeforeCancel);
+                BigDecimal actualCost = executedQty.multiply(order.getAverageExecutedPrice());
+
+                BigDecimal reserved = reservedCash.getReservedAmount();
+                BigDecimal refundAmount = reserved.subtract(actualCost);
+                if (refundAmount.compareTo(BigDecimal.ZERO) < 0) {
+                    refundAmount = BigDecimal.ZERO;
+                }
+
                 UserAsset asset = order.getUser().getUserAsset();
                 if (asset == null) {
                     throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
@@ -284,7 +327,7 @@ public class OrderService {
             }
 
         } else {
-            unlockSellStock(order.getUser(), order.getStock(), order.getRemainingAmount());
+            unlockSellStock(order.getUser(), order.getStock(), remainingBeforeCancel);
         }
 
         return CancelOrderResponseDto.from();

@@ -1,6 +1,7 @@
 package com.stockleague.backend.openapi.client;
 
 import static com.stockleague.backend.global.util.MarketTimeUtil.isMarketOpen;
+import static com.stockleague.backend.global.util.MarketTimeUtil.shouldCollectOrderbookNow;
 
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
 import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
@@ -29,6 +30,8 @@ import java.util.concurrent.CompletionStage;
 @Slf4j
 @Component
 public class KisWebSocketClient {
+    private volatile String currentApprovalKey;
+
     private static final int SUBSCRIBE_DELAY_SECONDS = 3;
     private static final int TICKER_BATCH_SIZE = 5;
     private int expectedSubscribeCount = 0;
@@ -75,12 +78,26 @@ public class KisWebSocketClient {
     }
 
     /**
-     * 평일 오후 3시 30분 31초에 WebSocket 연결 종료
+     * 평일 오후 3시 30분 10초에 WebSocket 연결 종료
      */
-    @Scheduled(cron = "31 30 15 * * MON-FRI")
+    @Scheduled(cron = "10 30 15 * * MON-FRI")
     public void scheduledDisconnect() {
         log.info("[스케줄러] 오후 15:30 WebSocket 연결 종료 요청");
         disconnect();
+    }
+
+    /** 평일 15:00:00에 호가만 해지 */
+    @Scheduled(cron = "0 0 15 * * MON-FRI", zone = "Asia/Seoul")
+    public void scheduledUnsubscribeOrderbookAt15() {
+        if (webSocket == null || !isConnected) {
+            log.info("[WebSocket] 15:00 호가 해제: 연결 없음 → 스킵");
+            return;
+        }
+        log.info("[WebSocket] 15:00 호가(H0STASP0) 일괄 해제 시작");
+        for (String ticker : tickers) {
+            sendUnsubscribe(webSocket, "H0STASP0", ticker);
+        }
+        log.info("[WebSocket] 15:00 호가 해제 완료");
     }
 
     /**
@@ -116,10 +133,11 @@ public class KisWebSocketClient {
      * WebSocket 연결 초기화 및 비동기 리스너 등록
      */
     private void initWebSocket(String approvalKey) {
+        this.currentApprovalKey = approvalKey;
         HttpClient client = HttpClient.newHttpClient();
         client.newWebSocketBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
-                .buildAsync(URI.create(WS_URL), createWebSocketListener(approvalKey))
+                .buildAsync(URI.create(WS_URL), createWebSocketListener())
                 .thenAccept(ws -> {
                     this.webSocket = ws;
                     this.isConnected = true;
@@ -162,21 +180,23 @@ public class KisWebSocketClient {
     /**
      * WebSocket 리스너 생성 (평문 메시지 수신 처리)
      */
-    private WebSocket.Listener createWebSocketListener(String approvalKey) {
+    private WebSocket.Listener createWebSocketListener() {
         return new WebSocket.Listener() {
             @Override
             public void onOpen(WebSocket webSocket) {
                 log.info("WebSocket 연결 성공");
 
-                expectedSubscribeCount = tickers.size() * 2;
+                final boolean collectOrderbookNow = shouldCollectOrderbookNow();
+                expectedSubscribeCount = tickers.size() * (1 + (collectOrderbookNow ? 1 : 0));
                 subscribeSuccessCount = 0;
 
-                List<List<String>> partitioned = partitionTickers(tickers, TICKER_BATCH_SIZE);
-
-                for (int i = 0; i < partitioned.size(); i++) {
-                    List<String> batch = partitioned.get(i);
-                    scheduler.schedule(() -> subscribeBatch(webSocket, approvalKey, batch),
-                            i * SUBSCRIBE_DELAY_SECONDS, TimeUnit.SECONDS);
+                List<List<String>> batches = partitionTickers(tickers, TICKER_BATCH_SIZE);
+                for (int i = 0; i < batches.size(); i++) {
+                    List<String> batch = batches.get(i);
+                    scheduler.schedule(
+                            () -> subscribeBatch(webSocket, batch, collectOrderbookNow),
+                            (long) i * SUBSCRIBE_DELAY_SECONDS, TimeUnit.SECONDS
+                    );
                 }
 
                 WebSocket.Listener.super.onOpen(webSocket);
@@ -187,25 +207,21 @@ public class KisWebSocketClient {
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
                 partialMessage.append(data);
-
                 if (last) {
                     String fullMessage = partialMessage.toString();
                     partialMessage.setLength(0);
-
                     try {
                         handlePlainMessage(fullMessage);
                     } catch (Exception e) {
-                        log.error("[WebSocket] 평문 메시지 처리 중 예외 발생", e);
+                        log.error("[WebSocket] 평문 처리 예외", e);
                     }
                 }
-
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
 
-
             @Override
             public void onError(WebSocket webSocket, Throwable error) {
-                log.error("WebSocket 오류 발생", error);
+                log.error("WebSocket 오류", error);
                 KisWebSocketClient.this.webSocket = null;
                 retryWithBackoff();
             }
@@ -221,10 +237,15 @@ public class KisWebSocketClient {
         };
     }
 
-    private void subscribeBatch(WebSocket webSocket, String approvalKey, List<String> batch) {
+    private void subscribeBatch(
+            WebSocket webSocket, List<String> batch, boolean collectOrderbookNow) {
         for (String ticker : batch) {
-            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STCNT0", ticker);
-            sendApprovalAndSubscribe(webSocket, approvalKey, "H0STASP0", ticker);
+            sendApprovalAndSubscribe(webSocket, "H0STCNT0", ticker);
+            if (collectOrderbookNow) {
+                sendApprovalAndSubscribe(webSocket, "H0STASP0", ticker);
+            } else {
+                log.info("호가 구독 생략(15:00 이후): {}", ticker);
+            }
         }
     }
 
@@ -244,16 +265,33 @@ public class KisWebSocketClient {
     /**
      * 실시간 키를 포함한 구독 요청 메시지 전송
      */
-    private void sendApprovalAndSubscribe(WebSocket webSocket, String approvalKey, String trId, String ticker) {
-        String message = buildSubscribeMessage(approvalKey, trId, ticker);
+    private void sendApprovalAndSubscribe(WebSocket webSocket, String trId, String ticker) {
+        if (!hasApprovalKey()) {
+            log.error("approval_key 없음: 구독 메시지 전송 중단 trId={}, ticker={}", trId, ticker);
+            return;
+        }
+
+        String message = buildSubscribeMessage(trId, ticker);
         webSocket.sendText(message, true);
         log.info("인증 + 구독 요청 전송: {} / {}", trId, ticker);
+    }
+
+    /** 해지 요청 */
+    private void sendUnsubscribe(WebSocket webSocket, String trId, String ticker) {
+        if (!hasApprovalKey()) {
+            log.error("approval_key 없음: 해지 메시지 전송 중단 trId={}, ticker={}", trId, ticker);
+            return;
+        }
+
+        String message = buildUnsubscribeMessage(trId, ticker);
+        webSocket.sendText(message, true);
+        log.info("구독 해지 요청 전송: {} / {}", trId, ticker);
     }
 
     /**
      * 구독 메시지 JSON 생성
      */
-    private String buildSubscribeMessage(String approvalKey, String trId, String trKey) {
+    private String buildSubscribeMessage(String trId, String trKey) {
         return String.format("""
                 {
                   "header": {
@@ -269,7 +307,27 @@ public class KisWebSocketClient {
                     }
                   }
                 }
-                """, approvalKey, trId, trKey);
+                """, this.currentApprovalKey, trId, trKey);
+    }
+
+    /** 해지 메시지 */
+    private String buildUnsubscribeMessage(String trId, String trKey) {
+        return String.format("""
+            {
+              "header": {
+                "approval_key": "%s",
+                "custtype": "P",
+                "tr_type": "2",
+                "content-type": "utf-8"
+              },
+              "body": {
+                "input": {
+                  "tr_id": "%s",
+                  "tr_key": "%s"
+                }
+              }
+            }
+            """, this.currentApprovalKey, trId, trKey);
     }
 
     /**
@@ -306,6 +364,11 @@ public class KisWebSocketClient {
                     messagingTemplate.convertAndSend("/topic/stocks/" + dto.ticker(), dto);
                 }
             } else if (trId.startsWith("H0STASP0")) {
+                if (!shouldCollectOrderbookNow()) {
+                    log.debug("호가 프레임 무시(15:00 이후)");
+                    return;
+                }
+
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
                 if (orderBookDto != null) {
                     stockOrderBookRedisService.save(orderBookDto);
@@ -323,5 +386,9 @@ public class KisWebSocketClient {
             partitioned.add(tickers.subList(i, Math.min(i + size, tickers.size())));
         }
         return partitioned;
+    }
+
+    private boolean hasApprovalKey() {
+        return this.currentApprovalKey != null && !this.currentApprovalKey.isBlank();
     }
 }

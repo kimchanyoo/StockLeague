@@ -13,21 +13,25 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserAssetSnapshotDto {
 
-    private BigDecimal cashBalance;
+    private BigDecimal availableCash;
+    private BigDecimal reservedCash;
+    private BigDecimal totalCash;
     private BigDecimal stockValuation;
     private BigDecimal totalAsset;
     private BigDecimal totalProfit;
     private BigDecimal totalProfitRate;
     private List<StockValuationDto> stocks;
 
-    public static UserAssetSnapshotDto from(UserAssetValuationDto liveValuation) {
+    public static UserAssetSnapshotDto from(UserAssetValuationDto dto) {
         return UserAssetSnapshotDto.builder()
-                .cashBalance(liveValuation.getCashBalance())
-                .stockValuation(liveValuation.getStockValuation())
-                .totalAsset(liveValuation.getTotalAsset())
-                .totalProfit(liveValuation.getTotalProfit())
-                .totalProfitRate(liveValuation.getTotalProfitRate())
-                .stocks(liveValuation.getStocks())
+                .availableCash(dto.getAvailableCash())
+                .reservedCash(dto.getReservedCash())
+                .totalCash(dto.getTotalCash())
+                .stockValuation(dto.getStockValuation())
+                .totalAsset(dto.getTotalAsset())
+                .totalProfit(dto.getTotalProfit())
+                .totalProfitRate(dto.getTotalProfitRate())
+                .stocks(dto.getStocks())
                 .build();
     }
 }

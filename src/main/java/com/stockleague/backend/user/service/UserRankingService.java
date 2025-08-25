@@ -6,11 +6,12 @@ import com.stockleague.backend.user.dto.projection.UserIdAndNicknameProjection;
 import com.stockleague.backend.user.dto.response.UserAssetSnapshotDto;
 import com.stockleague.backend.user.dto.response.UserAssetValuationDto;
 import com.stockleague.backend.user.dto.response.UserProfitRateRankingDto;
-import com.stockleague.backend.user.dto.response.UserProfitRateRankingListResponseDto;
+import com.stockleague.backend.user.dto.response.UserProfitRateRankingListDto;
 import com.stockleague.backend.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class UserRankingService {
      * @param myUserId 현재 로그인한 유저 ID
      * @return 전체 랭킹 리스트 및 나의 순위가 포함된 응답 DTO
      */
-    public UserProfitRateRankingListResponseDto getProfitRateRanking(Long myUserId) {
+    public UserProfitRateRankingListDto getProfitRateRanking(Long myUserId) {
         if (MarketTimeUtil.isMarketOpen()) {
             return getLiveRanking(myUserId);
         } else {
@@ -60,14 +61,15 @@ public class UserRankingService {
      * @param myUserId 현재 유저 ID (나의 순위를 계산하기 위함)
      * @return 전체 유저 수익률 랭킹 및 나의 랭킹 포함 DTO
      */
-    private UserProfitRateRankingListResponseDto getRankingFromSnapshot(Long myUserId) {
+    private UserProfitRateRankingListDto getRankingFromSnapshot(Long myUserId) {
         List<Long> userIds = userRepository.findAllUserIds();
-        String snapshotPrefix = REDIS_SNAPSHOT_PREFIX + LocalDate.now() + ":";
 
         if (userIds.isEmpty()) {
-            return new UserProfitRateRankingListResponseDto(
-                    List.of(), null, 0, false);
+            return new UserProfitRateRankingListDto(
+                    List.of(), null, 0, false, LocalDateTime.now());
         }
+
+        String snapshotPrefix = REDIS_SNAPSHOT_PREFIX + LocalDate.now() + ":";
 
         List<UserIdAndNicknameProjection> projections = userRepository.findIdAndNicknameByIds(userIds);
         Map<Long, String> nicknameMap = projections.stream()
@@ -93,8 +95,8 @@ public class UserRankingService {
                 rankings.add(new UserProfitRateRankingDto(
                         userId,
                         nickname,
-                        profitRate.setScale(2, RoundingMode.HALF_UP).toString(),
-                        snapshot.getTotalAsset().toString(),
+                        profitRate.setScale(2, RoundingMode.HALF_UP),
+                        snapshot.getTotalAsset().setScale(0, RoundingMode.HALF_UP),
                         null
                 ));
             } catch (Exception e) {
@@ -102,7 +104,7 @@ public class UserRankingService {
             }
         }
 
-        return sortAndWrap(rankings, myUserId);
+        return sortAndWrap(rankings, myUserId, false);
     }
 
     /**
@@ -115,15 +117,14 @@ public class UserRankingService {
      * @param myUserId 현재 유저 ID
      * @return 전체 유저 수익률 랭킹 및 나의 랭킹 포함 DTO
      */
-    private UserProfitRateRankingListResponseDto getLiveRanking(Long myUserId) {
+    private UserProfitRateRankingListDto getLiveRanking(Long myUserId) {
         List<Long> userIds = userRepository.findAllUserIds();
         if (userIds.isEmpty()) {
-            return new UserProfitRateRankingListResponseDto(
-                    List.of(), null, 0, true);
+            return new UserProfitRateRankingListDto(List.of(), null, 0, true, LocalDateTime.now());
         }
 
         List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds(userIds);
-        List<UserProfitRateRankingDto> rankings = new ArrayList<>();
+        List<UserProfitRateRankingDto> rankings = new ArrayList<>(users.size());
 
         for (UserIdAndNicknameProjection user : users) {
             try {
@@ -131,16 +132,16 @@ public class UserRankingService {
                 String nickname = user.getNickname();
 
                 UserAssetValuationDto valuation = userAssetService.getLiveAssetValuation(userId, true);
+                if (valuation == null) continue;
+
                 BigDecimal profitRate = calculateProfitRate(valuation);
-                if (profitRate == null) {
-                    continue;
-                }
+                if (profitRate == null) continue;
 
                 rankings.add(new UserProfitRateRankingDto(
                         userId,
                         nickname,
-                        profitRate.toString(),
-                        valuation.getTotalAsset().setScale(0, RoundingMode.HALF_UP).toString(),
+                        profitRate.setScale(2, RoundingMode.HALF_UP),
+                        valuation.getTotalAsset().setScale(0, RoundingMode.HALF_UP),
                         null
                 ));
             } catch (Exception e) {
@@ -148,7 +149,7 @@ public class UserRankingService {
             }
         }
 
-        return sortAndWrap(rankings, myUserId);
+        return sortAndWrap(rankings, myUserId, true);
     }
 
     /**
@@ -163,9 +164,11 @@ public class UserRankingService {
      * @param myUserId 현재 유저 ID
      * @return 정렬 및 랭킹 부여된 응답 DTO
      */
-    private UserProfitRateRankingListResponseDto sortAndWrap(List<UserProfitRateRankingDto> list, Long myUserId) {
-        list.sort(Comparator.comparing(
-                dto -> new BigDecimal(dto.profitRate()), Comparator.reverseOrder()));
+    private UserProfitRateRankingListDto sortAndWrap(List<UserProfitRateRankingDto> list, Long myUserId, boolean isMarketOpen) {
+        list.sort(
+                Comparator.comparing(UserProfitRateRankingDto::profitRate, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(UserProfitRateRankingDto::nickname, Comparator.nullsLast(String::compareTo))
+        );
 
         for (int i = 0; i < list.size(); i++) {
             UserProfitRateRankingDto dto = list.get(i);
@@ -174,11 +177,11 @@ public class UserRankingService {
         }
 
         UserProfitRateRankingDto myRanking = list.stream()
-                .filter(dto -> dto.userId().equals(myUserId))
+                .filter(dto -> Objects.equals(dto.userId(), myUserId))
                 .findFirst()
                 .orElse(null);
 
-        return new UserProfitRateRankingListResponseDto(list, myRanking, list.size(), MarketTimeUtil.isMarketOpen());
+        return new UserProfitRateRankingListDto(list, myRanking, list.size(), isMarketOpen, LocalDateTime.now());
     }
 
     /**
@@ -198,7 +201,7 @@ public class UserRankingService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (totalCost.compareTo(BigDecimal.ZERO) == 0) {
-            return null;
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         }
 
         BigDecimal totalValuation = valuation.getStocks().stream()

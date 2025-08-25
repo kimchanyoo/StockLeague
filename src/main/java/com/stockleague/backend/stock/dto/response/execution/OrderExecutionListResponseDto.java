@@ -4,7 +4,7 @@ import java.util.List;
 
 public record OrderExecutionListResponseDto(
         boolean success,
-        List<OrderExecutionSummaryDto> executions
+        List<OrderExecutionSummaryDto> contents
 ) {
     public static OrderExecutionListResponseDto from(List<OrderExecutionSummaryDto> executions) {
         return new OrderExecutionListResponseDto(

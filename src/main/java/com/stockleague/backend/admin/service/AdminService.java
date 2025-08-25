@@ -8,7 +8,7 @@ import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
-import com.stockleague.backend.kafka.producer.NotificationProducer;
+import com.stockleague.backend.notification.service.NotificationService;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.user.domain.User;
@@ -22,9 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminService {
 
     private final UserRepository userRepository;
-    private final NotificationProducer notificationProducer;
     private final TokenRedisService tokenRedisService;
     private final CommentRepository commentRepository;
+
+    private final NotificationService notificationService;
 
     @Transactional
     public AdminUserForceWithdrawResponseDto forceWithdrawUser(
@@ -41,13 +42,12 @@ public class AdminService {
         user.ban(requestDto.reason());
         comment.bannedByAdmin(admin);
 
-        NotificationEvent event = new NotificationEvent(
+        notificationService.notify(new NotificationEvent(
                 user.getId(),
                 NotificationType.USER_BANNED,
                 TargetType.USER,
                 user.getId()
-        );
-        notificationProducer.send(event);
+        ));
 
         tokenRedisService.deleteRefreshToken(userId);
 

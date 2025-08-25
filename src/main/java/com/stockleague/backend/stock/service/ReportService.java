@@ -5,7 +5,7 @@ import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
-import com.stockleague.backend.kafka.producer.NotificationProducer;
+import com.stockleague.backend.notification.service.NotificationService;
 import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.domain.CommentReport;
 import com.stockleague.backend.stock.domain.Status;
@@ -44,7 +44,8 @@ public class ReportService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final UserWarningRepository userWarningRepository;
-    private final NotificationProducer notificationProducer;
+
+    private final NotificationService notificationService;
 
     public CommentReportCreateResponseDto createReport(CommentReportCreateRequestDto request, Long userId, Long targetId) {
 
@@ -160,15 +161,14 @@ public class ReportService {
                 .build()
         );
 
-        NotificationEvent event = new NotificationEvent(
-                user.getId(),
-                NotificationType.COMMENT_DELETED_AND_WARNED,
-                TargetType.COMMENT,
-                commentId
+        notificationService.notify(
+                new NotificationEvent(
+                        user.getId(),
+                        NotificationType.COMMENT_DELETED_AND_WARNED,
+                        TargetType.COMMENT,
+                        commentId
+                )
         );
-
-        notificationProducer.send(event);
-
         return new CommentDeleteAdminResponseDto(
                 true,
                 "댓글이 삭제되고 경고가 부여되었습니다."

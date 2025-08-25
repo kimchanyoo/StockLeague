@@ -149,7 +149,8 @@ public class KisWebSocketResponseParser {
                     askVolumes,
                     bidPrices,
                     bidVolumes,
-                    LocalDateTime.now()
+                    LocalDateTime.now(),
+                    isMarketOpen()
             );
 
         } catch (Exception e) {

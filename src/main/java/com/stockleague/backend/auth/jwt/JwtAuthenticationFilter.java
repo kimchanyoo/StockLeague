@@ -26,8 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null) {
             log.info("[JWT] 추출된 accessToken (앞 10자): {}", token.substring(0, Math.min(10, token.length())));
-        } else {
-            log.warn("[JWT] Authorization 헤더에서 accessToken을 찾지 못했습니다.");
         }
 
         // 토큰 유효성 검사

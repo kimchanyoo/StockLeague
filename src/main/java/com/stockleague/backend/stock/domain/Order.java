@@ -87,6 +87,10 @@ public class Order {
     @Column(name = "executed_at")
     private LocalDateTime executedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "session", nullable = false)
+    private OrderSession session;
+
     @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderExecution> orderExecutions = new ArrayList<>();
