@@ -58,7 +58,7 @@ export const useAssetValuationSocket = ({
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        console.log("✅ WebSocket 연결 성공");
+        //console.log("✅ WebSocket 연결 성공");
         client.subscribe("/user/queue/asset", (message: IMessage) => {
           try {
             const data: UserAssetValuation = JSON.parse(message.body);

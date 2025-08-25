@@ -78,7 +78,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     if (!el) return;
     if (loading) return;
     if (!accessToken) {
-      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(주문)");
+      //console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(주문)");
       return;
     }
 

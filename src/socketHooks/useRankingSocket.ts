@@ -44,7 +44,7 @@ export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankin
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        console.log("✅ WebSocket 연결 성공. /topic/ranking 구독 요청 중...");
+        //console.log("✅ WebSocket 연결 성공. /topic/ranking 구독 요청 중...");
 
         // 전체 랭킹 구독
         client.subscribe("/topic/ranking", (message: IMessage) => {
