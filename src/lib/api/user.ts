@@ -113,6 +113,12 @@ export interface GetUnexecutedOrdersResponse {
   totalPage: number;
 }
 
+// 관리자용
+export interface UserCountResponse {
+  success: boolean;
+  userCount: number;
+}
+
 // ─────────────────────────────
 // 유저 API
 // ─────────────────────────────
@@ -160,3 +166,16 @@ export const cancelOrder = async (orderId: number) => {
   return res.data;
 };
 
+// 관리자용
+
+// 최근 7일 신규 가입자 수 조회
+export const getNewUserCount = async (): Promise<UserCountResponse> => {
+  const res = await axiosInstance.get("/api/v1/admin/users/new/count");
+  return res.data;
+};
+
+// 활성화된 유저 수 조회
+export const getActiveUserCount = async (): Promise<UserCountResponse> => {
+  const res = await axiosInstance.get("/api/v1/admin/users/active/count");
+  return res.data;
+};
