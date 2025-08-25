@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 public class MarketTimeUtil {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
-    private static final LocalTime MARKET_OPEN = LocalTime.of(9, 0);
+    private static final LocalTime MARKET_OPEN = LocalTime.of(8, 59);
     private static final LocalTime ORDERBOOK_CUTOFF = LocalTime.of(15, 0);
     private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
 
