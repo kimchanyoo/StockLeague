@@ -46,7 +46,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         const balance = await getUserAssetValuation();
         setMyMoney(balance.availableCash)
       } catch (err) {
-        console.error("보유 현금 조회 실패:", err);
+        //console.error("보유 현금 조회 실패:", err);
         alert("보유 자산 정보를 불러오지 못했습니다.");
       }
     };
@@ -65,7 +65,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         const myStock = res.stocks.find(s => s.ticker === ticker);
         setMyStockQuantity(myStock ? parseFloat(myStock.quantity) : 0);
       } catch (err) {
-        console.error(err);
+        //console.error(err);
       }
     };
 
@@ -147,7 +147,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         }
       }
     } catch (error) {
-      console.error("주문 오류:", error);
+      //console.error("주문 오류:", error);
       alert("주문 처리 중 오류가 발생했습니다.");
     }
   };

@@ -20,7 +20,7 @@ export function useMainStockPriceSocket(
 
     const url = process.env.NEXT_PUBLIC_SOCKET_URL;
     if (!url) {
-      console.error("NEXT_PUBLIC_SOCKET_URL is not set");
+      //console.error("NEXT_PUBLIC_SOCKET_URL is not set");
       return;
     }
 
@@ -52,27 +52,27 @@ export function useMainStockPriceSocket(
                 //console.log("[STOCK MESSAGE 수신]", data)
                 onUpdate(JSON.parse(msg.body) as StockPriceResponse);
               } catch (e) {
-                console.error("JSON 파싱 오류:", e);
+                //console.error("JSON 파싱 오류:", e);
               }
             });
           },
           onDisconnect: () => { activatedRef.current = false; },
           onWebSocketClose: (evt) => {
             activatedRef.current = false;
-            console.log("WS closed 메인", evt?.code, evt?.reason);
+            //console.log("WS closed 메인", evt?.code, evt?.reason);
           },
           onWebSocketError: (evt) => {
-           console.error("WS error 메인", evt);
+           //console.error("WS error 메인", evt);
           },
           onStompError: (frame) => {
-            console.error("STOMP 에러 메인", frame.headers["message"], frame.body);
+            //console.error("STOMP 에러 메인", frame.headers["message"], frame.body);
           },
         });
 
         client.activate();
         clientRef.current = client;
       } catch (e) {
-        console.error("초기 가격 조회 실패:", e);
+        //console.error("초기 가격 조회 실패:", e);
       }
     };
 

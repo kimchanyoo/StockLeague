@@ -93,7 +93,7 @@ export default function Nickname() {
 
       router.push("/auth/success");
     } catch (error) {
-      console.error("회원가입 실패:", error);
+      //console.error("회원가입 실패:", error);
       setError("회원가입 중 문제가 발생했습니다.");
     }
   };

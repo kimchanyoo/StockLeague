@@ -130,7 +130,7 @@ export const createInquiry = async ({
       };
     }
   } catch (error) {
-    console.error("서버와의 통신 중 문제가 발생: ", error);
+    //console.error("서버와의 통신 중 문제가 발생: ", error);
     throw new Error("서버와의 통신 중 문제가 발생했습니다.");
   }
 };
@@ -156,7 +156,7 @@ export const updateInquiry = async (inquiryId: number, data: InquiryCreateReques
       message: res.data.message,
     };
   } catch (error) {
-    console.error("문의 수정 중 오류 발생:", error);
+    //console.error("문의 수정 중 오류 발생:", error);
     throw new Error("문의 수정 중 문제가 발생했습니다.");
   }
 };
@@ -171,7 +171,7 @@ export const deleteInquiry = async (inquiryId: number) => {
       message: res.data.message,
     };
   } catch (error) {
-    console.error("문의 삭제 중 오류 발생:", error);
+    //console.error("문의 삭제 중 오류 발생:", error);
     throw new Error("문의 삭제 중 문제가 발생했습니다.");
   }
 };
@@ -196,7 +196,7 @@ export const getAdminInquiries = async (
       throw new Error(res.data.message || "문의 내역을 불러오지 못했습니다.");
     }
   } catch (error: any) {
-    console.error("관리자 문의 목록 조회 중 오류 발생:", error);
+    //console.error("관리자 문의 목록 조회 중 오류 발생:", error);
     throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
   }
 };
@@ -215,7 +215,7 @@ export const getAdminInquiryDetail = async (
       throw new Error(res.data.message || "문의사항을 불러오지 못했습니다.");
     }
   } catch (error: any) {
-    console.error("관리자 문의 상세 조회 중 오류 발생:", error);
+    //console.error("관리자 문의 상세 조회 중 오류 발생:", error);
     // 에러 객체에 message가 없으면 기본 메시지 반환
     throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
   }
@@ -235,7 +235,7 @@ export const createInquiryAnswer = async (
       throw new Error(res.data.message || "답변 등록에 실패했습니다.");
     }
   } catch (error: any) {
-    console.error("문의 답변 등록 중 오류 발생:", error);
+    //console.error("문의 답변 등록 중 오류 발생:", error);
     throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
   }
 };

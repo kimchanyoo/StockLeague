@@ -38,14 +38,14 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
         setHasMore(page < res.totalPage);
       } else {
         const res = await getUnexecutedOrders(page, 20);
-        console.log("미체결 응답:", res);
+        //console.log("미체결 응답:", res);
         const newOrders = res?.contents;
         if (!Array.isArray(newOrders)) return;
         setOrders((prev) => (page === 1 ? newOrders : [...prev, ...newOrders]));
         setHasMore(page < res.totalPage);
       }
     } catch (err) {
-      console.error("❌ 주문 내역 불러오기 실패:", err);
+      //console.error("❌ 주문 내역 불러오기 실패:", err);
     }
   }, [page, activeTab, accessToken]);
 
@@ -80,12 +80,12 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
                   setAsset(data);
                 }
               } catch (err) {
-                console.error("❌ WebSocket 데이터 파싱 오류:", err);
+                //console.error("❌ WebSocket 데이터 파싱 오류:", err);
               }
             });
           },
           onStompError: (frame) => {
-            console.error("❌ STOMP 오류:", frame);
+            //console.error("❌ STOMP 오류:", frame);
           },
         });
 
@@ -93,7 +93,7 @@ const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
         clientRef.current = client;
       }
     } catch (err) {
-      console.error("❌ 자산 정보 조회 실패:", err);
+      //console.error("❌ 자산 정보 조회 실패:", err);
     }
   }, [accessToken]);
 

@@ -59,11 +59,11 @@ const OrderHistoryItem: React.FC<OrderHistoryItemProps> = ({
       try {
         const res: GetDetailMyOrderResponse = await getDetailMyOrder(orderId);
         if (res.success) {
-          console.log("세부 주문 내역 응답", res.contents);
+          //console.log("세부 주문 내역 응답", res.contents);
           setExecutions(res.contents);
         }
       } catch (error) {
-        console.error("세부 주문 내역 조회 실패", error);
+        //console.error("세부 주문 내역 조회 실패", error);
       } finally {
         setLoading(false);
       }

@@ -25,7 +25,7 @@ export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankin
         onUpdateMe(data);
       })
       .catch((error) => {
-        console.error("❌ 초기 자산 데이터 요청 실패:", error);
+        //console.error("❌ 초기 자산 데이터 요청 실패:", error);
       });
   }, [accessToken, onUpdateGlobal, onUpdateMe]);
 
@@ -63,10 +63,10 @@ export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankin
         console.log("📬 /topic/ranking 구독 완료.");
       },
       onStompError: (frame) => {
-        console.error("❗ STOMP 에러 발생:", frame);
+        //console.error("❗ STOMP 에러 발생:", frame);
       },
       onWebSocketError: (event) => {
-        console.error("❗ WebSocket 에러 발생:", event);
+        //console.error("❗ WebSocket 에러 발생:", event);
       },
     });
 

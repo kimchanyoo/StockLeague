@@ -23,7 +23,7 @@ export default function OrderHistory() {
         setOrderData(res.orders || []);
         setTotalPages(res.totalPages || 1);
       } catch (err) {
-        console.error("주문 내역 조회 실패", err);
+        //console.error("주문 내역 조회 실패", err);
       }
     };
     fetchData();

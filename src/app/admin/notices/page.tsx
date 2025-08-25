@@ -38,10 +38,10 @@ export default function Notices() {
         setNotices(data.notices);
         setTotalCount(data.totalCount);
       } else {
-        console.error("공지사항 목록 조회 실패");
+        //console.error("공지사항 목록 조회 실패");
       }
     } catch (error) {
-      console.error("공지사항 API 오류", error);
+      //console.error("공지사항 API 오류", error);
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export default function Notices() {
       setCurrentCategory(detail.category);
       setCurrentIsPinned(detail.isPinned);
     } catch (error) {
-      console.error("공지 상세 조회 실패", error);
+      //console.error("공지 상세 조회 실패", error);
       alert("공지 상세를 불러오지 못했습니다.");
     }
   };
@@ -99,7 +99,7 @@ export default function Notices() {
       setCurrentPage(1);
     } catch (e) {
       alert("저장 실패");
-      console.error(e);
+      //console.error(e);
     }
   };
 
@@ -117,7 +117,7 @@ export default function Notices() {
       await fetchAdminNotices(currentPage); // 목록 새로고침
       alert(`공지 ${!notice.isPinned ? "고정" : "고정 해제"} 완료`);
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       alert("고정 상태 변경 실패");
     }
   };
@@ -127,7 +127,7 @@ export default function Notices() {
       const detail = await getNoticeDetail(noticeId);
       setSelectedNotice(detail);
     } catch (error) {
-      console.error("공지 상세 조회 실패", error);
+      //console.error("공지 상세 조회 실패", error);
     }
   };
 
@@ -137,7 +137,7 @@ export default function Notices() {
       setNotices(notices.map(n => n.noticeId === noticeId ? { ...n, isDeleted: true } : n));
     } catch (e) {
       alert("삭제 실패");
-      console.error(e);
+      //console.error(e);
     }
   };
 
@@ -147,7 +147,7 @@ export default function Notices() {
       setNotices(notices.map(n => n.noticeId === noticeId ? { ...n, isDeleted: false } : n));
     } catch (e) {
       alert("복구 실패");
-      console.error(e);
+      //console.error(e);
     }
   }
 

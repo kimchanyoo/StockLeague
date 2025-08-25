@@ -127,7 +127,7 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
       }
 
     } catch (error) {
-      console.error("조치 처리 중 오류 발생:", error);
+      //console.error("조치 처리 중 오류 발생:", error);
       alert("조치 처리 중 오류가 발생했습니다.");
     }
   };
