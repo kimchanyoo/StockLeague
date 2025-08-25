@@ -69,7 +69,8 @@ public class SecurityConfig {
                                 "/ws-sockjs/**",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/api/v1/health/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN") // 관리자 전용 URL
                         .anyRequest().authenticated() // 나머지는 로그인한 사용자만 접근 가능

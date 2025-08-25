@@ -72,47 +72,69 @@ kakao:
 
 logging:
     level:
-        root: info
-        org.springframework.web: warn
+        # 전체 기본은 INFO
+        root: INFO
 
-        # Hibernate SQL 로그 완전 끄기
-        org.hibernate.SQL: off
-        org.hibernate.type: off
-        org.hibernate.type.descriptor.sql: off
-        org.hibernate.type.descriptor.jdbc: off
-        org.hibernate.orm.jdbc.bind: off
-        org.hibernate.stat: off
-        org.hibernate: warn
+        # Spring 프레임워크 전반은 경고만
+        org.springframework: WARN
+        org.springframework.web: WARN
 
-        # WebSocket 관련 로그 필요할 때만 디버깅
-        org.springframework.web.socket: DEBUG
-        org.springframework.web.servlet.handler: TRACE
-        org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: info
-        org.springframework.web.socket.handler: info
-        org.springframework.web.socket.config: info
-        org.springframework.web.socket.sockjs: info
+        # WebSocket/메시징은 평소엔 경고만
+        org.springframework.web.socket: WARN
+        org.springframework.web.servlet.handler: WARN
+        org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: WARN
+        org.springframework.web.socket.handler: WARN
+        org.springframework.web.socket.config: WARN
+        org.springframework.web.socket.sockjs: WARN
 
-        # STOMP 서브프로토콜 처리
-        org.springframework.web.socket.messaging: info
-        org.springframework.messaging.simp: info
-        org.springframework.messaging.simp.stomp: info
-        org.springframework.messaging.simp.user: info
-        org.springframework.messaging.support: info
-        org.springframework.messaging.converter: info
+        org.springframework.web.socket.messaging: WARN
+        org.springframework.messaging: WARN
+        org.springframework.messaging.simp: WARN
+        org.springframework.messaging.simp.stomp: WARN
+        org.springframework.messaging.simp.user: WARN
+        org.springframework.messaging.support: WARN
+        org.springframework.messaging.converter: WARN
+        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: WARN
+        org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: WARN
+        org.springframework.messaging.simp.user.DefaultSimpUserRegistry: WARN
 
-        # 브로커 내부 처리
-        org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: info
-        org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: warn
-        org.springframework.messaging.simp.user.DefaultSimpUserRegistry: warn
+        # Hibernate 완전 차단 + 자체 경고만
+        org.hibernate.SQL: OFF
+        org.hibernate.type: OFF
+        org.hibernate.type.descriptor.sql: OFF
+        org.hibernate.type.descriptor.jdbc: OFF
+        org.hibernate.orm.jdbc.bind: OFF
+        org.hibernate.stat: OFF
+        org.hibernate: WARN
 
-        # 프로젝트 내부 로그
-        com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: info
-        com.stockleague.backend.infra.redis.StockPriceRedisService: info
-        com.stockleague.backend.infra.redis.StockOrderBookRedisService: info
-        com.stockleague.backend.global.exception: debug
+        # 톰캣이 종종 뿜는 이상한 요청/스캔 로그는 ERROR만
+        org.apache.coyote.http11.Http11Processor: ERROR
+        org.apache.catalina.connector: ERROR
+
+        # 정적 리소스 404(예: /ws 를 정적 자원으로 찾다가 터지는 로그) 억제
+        org.springframework.web.servlet.resource: ERROR
+        # 기본 에러 컨트롤러 404 스팸 억제 (favicon.ico 등)
+        org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController: OFF
+
+        # 프로젝트 내부 로거
+        com.stockleague.backend: INFO
+        com.stockleague.backend.global.exception: WARN
+        com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: INFO
+        com.stockleague.backend.infra.redis.StockPriceRedisService: INFO
+        com.stockleague.backend.infra.redis.StockOrderBookRedisService: INFO
 openapi:
     auth-url: https://openapivts.koreainvestment.com:29443
     appKey: ${OPENAPI_API_KEY}
     appSecret: ${OPENAPI_API_SECRET}
     grant-type: client_credentials
     scope: oob
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info
+    endpoint:
+        health:
+            probes:
+                enabled: true
