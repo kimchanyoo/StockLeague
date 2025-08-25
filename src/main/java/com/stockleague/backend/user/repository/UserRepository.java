@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<UserIdAndNicknameProjection> findIdAndNicknameByIds(@Param("userIds") List<Long> userIds);
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
+
+    long countByIsBannedFalse();
 }

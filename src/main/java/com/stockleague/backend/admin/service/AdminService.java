@@ -1,6 +1,7 @@
 package com.stockleague.backend.admin.service;
 
 import com.stockleague.backend.admin.dto.request.AdminUserForceWithdrawRequestDto;
+import com.stockleague.backend.admin.dto.response.ActiveUserCountResponseDto;
 import com.stockleague.backend.admin.dto.response.AdminUserForceWithdrawResponseDto;
 import com.stockleague.backend.admin.dto.response.NewUserCountResponseDto;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
@@ -64,6 +65,14 @@ public class AdminService {
         return new NewUserCountResponseDto(
                 true,
                 userRepository.countByCreatedAtAfter(daysAgo)
+        );
+    }
+
+    public ActiveUserCountResponseDto countActiveUsers() {
+
+        return new ActiveUserCountResponseDto(
+                true,
+                userRepository.countByIsBannedFalse()
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.stockleague.backend.admin.controller;
 
 import com.stockleague.backend.admin.dto.request.AdminUserForceWithdrawRequestDto;
+import com.stockleague.backend.admin.dto.response.ActiveUserCountResponseDto;
 import com.stockleague.backend.admin.dto.response.AdminUserForceWithdrawResponseDto;
 import com.stockleague.backend.admin.dto.response.NewUserCountResponseDto;
 import com.stockleague.backend.admin.service.AdminService;
@@ -137,6 +138,54 @@ public class AdminController {
     })
     public ResponseEntity<NewUserCountResponseDto> getNewUserCountLast7Days() {
         NewUserCountResponseDto response = adminService.countNewUsers();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users/active/count")
+    @Operation(
+            summary = "활성화된 유저 수 조회",
+            description = "관리자가 밴 처리되지 않은 활성화된 유저 수를 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "활성 유저 수 조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = ActiveUserCountResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "ActiveUserCountSuccess",
+                                    summary = "활성화된 유저 수 조회 성공 예시",
+                                    value = """
+                                        {
+                                          "success": true,
+                                          "userCount": 128
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "권한 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    name = "NoAdminPermission",
+                                    summary = "관리자 권한 없음",
+                                    value = """
+                                        {
+                                          "success": false,
+                                          "message": "관리자 권한이 필요합니다.",
+                                          "errorCode": "FORBIDDEN"
+                                        }
+                                        """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<ActiveUserCountResponseDto> getActiveUserCount() {
+        ActiveUserCountResponseDto response = adminService.countActiveUsers();
         return ResponseEntity.ok(response);
     }
 }
