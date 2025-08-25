@@ -23,13 +23,13 @@ export const useOrderbook = ({
 
     const fetchInitialOrderbook = async () => {
       try {
-        console.log("📡 API로 최신 호가 조회 시작:", ticker);
+        //console.log("📡 API로 최신 호가 조회 시작:", ticker);
         const data = await getOrderbook(ticker);
-        console.log("✅ API 응답:", data);
+        //console.log("✅ API 응답:", data);
         setOrderbook(data);
         setIsMarketOpen(data.isMarketOpen);
       } catch (err) {
-        console.error("❌ 호가 조회 실패:", err);
+        //console.error("❌ 호가 조회 실패:", err);
       }
     };
 
@@ -37,22 +37,20 @@ export const useOrderbook = ({
   }, [ticker, loading]);
 
   useEffect(() => {
-    console.log("🔄 useEffect 실행됨 - ticker:", ticker, "loading:", loading, "accessToken:", accessToken, "isMarketOpen:", isMarketOpen);
-
     if (!ticker) {
-      console.warn("⏩ ticker 없음 - WebSocket 연결 건너뜀");
+      //console.warn("⏩ ticker 없음 - WebSocket 연결 건너뜀");
       return;
     }
     if (loading) {
-      console.warn("⏩ 로딩 중 - WebSocket 연결 대기");
+      //console.warn("⏩ 로딩 중 - WebSocket 연결 대기");
       return;
     }
     if (!accessToken) {
-      console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(호가)");
+      //console.warn("⚠️ accessToken 없음 - WebSocket 연결 건너뜀(호가)");
       return;
     }
     if (!isMarketOpen) {
-      console.warn("🛑 장 마감 상태 - WebSocket 연결 안 함");
+      //console.warn("🛑 장 마감 상태 - WebSocket 연결 안 함");
       return;
     }
 
@@ -71,7 +69,7 @@ export const useOrderbook = ({
       heartbeatOutgoing: 10_000,
 
       onConnect: () => {
-        console.log("✅ WebSocket 연결 성공 - ticker:", ticker);
+        //console.log("✅ WebSocket 연결 성공 - ticker:", ticker);
 
         const destination = `/topic/orderbook/${ticker}`;
         console.log("📌 구독 요청 - destination:", destination);
@@ -82,20 +80,20 @@ export const useOrderbook = ({
             const data = JSON.parse(message.body) as OrderbookData;
             setOrderbook(data);
           } catch (err) {
-            console.error("❌ 호가 데이터 처리 오류:", err);
+            //console.error("❌ 호가 데이터 처리 오류:", err);
           }
         });
       },
 
       onStompError: (frame) => {
-        console.error("❌ WebSocket STOMP 오류:", frame.headers["message"], frame.body);
+        //console.error("❌ WebSocket STOMP 오류:", frame.headers["message"], frame.body);
       },
       onWebSocketClose: (event) => {
         console.warn("🔌 WebSocket 연결 종료됨",event);
         console.log("close code:", event.code, "reason:", event.reason);
       },
       onWebSocketError: (event) => {
-        console.error("🚨 WebSocket 오류 발생:", event);
+        //console.error("🚨 WebSocket 오류 발생:", event);
       }
     });
 

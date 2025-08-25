@@ -2,16 +2,22 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { connectStomp, disconnectStomp } from "@/lib/socket/socket";
 import { useAuth } from "@/context/AuthContext";
-import { markNotificationRead, closeNotification, markAllNotificationsRead, Notification } from "@/lib/api/notification";
+import { 
+  markNotificationRead, 
+  closeNotification, 
+  markAllNotificationsRead, 
+  getNotifications, 
+  Notification 
+} from "@/lib/api/notification";
 
 interface NotificationContextType {
   notifications: Notification[];
   addNotification: (notification: Notification) => void;
   removeNotification: (notificationId: number) => void;
-
   readNotification: (id: number) => Promise<void>;
   closeSingleNotification: (id: number) => Promise<void>;
   readAllNotifications: (target?: string) => Promise<void>;
+  refreshNotifications: () => Promise<void>; // 🔥 새로 추가
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -20,12 +26,28 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const { user, loading, accessToken } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  // 🔥 초기 알림 불러오기
+  const refreshNotifications = async () => {
+    try {
+      const res = await getNotifications("all", 1, 20); 
+      if (res.success) {
+        setNotifications(res.content);
+      }
+    } catch (err) {
+      //console.error("알림 목록 조회 실패:", err);
+    }
+  };
+
   useEffect(() => {
     if (!loading && user && accessToken) {
       let isMounted = true;
 
       (async () => {
         try {
+          // DB에서 기존 알림 가져오기
+          await refreshNotifications();
+
+          // STOMP 연결
           await connectStomp(accessToken, (msg) => {
             if (!msg) {
               console.warn("⚠️ 메시지가 없습니다:", msg);
@@ -36,7 +58,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             }
           });
         } catch (error: any) {
-          console.error("STOMP 알림 연결 중 오류 발생:", error?.message || error, error);
+          //console.error("STOMP 알림 연결 중 오류 발생:", error?.message || error, error);
         }
       })();
 
@@ -48,7 +70,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     return () => {};
   }, [user, loading, accessToken]);
 
-  // 상태 조작 함수
+  // 상태 조작 함수들
   const addNotification = (notification: Notification) => {
     setNotifications((prev) => [notification, ...prev]);
   };
@@ -57,7 +79,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     setNotifications((prev) => prev.filter((n) => n.notificationId !== notificationId));
   };
 
-   // ✅ 단건 읽음 처리
   const readNotification = async (id: number) => {
     try {
       const res = await markNotificationRead(id);
@@ -67,11 +88,10 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         );
       }
     } catch (err) {
-      console.error("알림 읽음 처리 실패:", err);
+      //console.error("알림 읽음 처리 실패:", err);
     }
   };
 
-  // ✅ 단건 닫기
   const closeSingleNotification = async (id: number) => {
     try {
       const res = await closeNotification(id);
@@ -79,11 +99,10 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         removeNotification(id);
       }
     } catch (err) {
-      console.error("알림 닫기 실패:", err);
+      //console.error("알림 닫기 실패:", err);
     }
   };
 
-  // ✅ 전체 읽음 처리
   const readAllNotifications = async (target?: string) => {
     try {
       const res = await markAllNotificationsRead(target);
@@ -95,7 +114,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         );
       }
     } catch (err) {
-      console.error("전체 알림 읽음 처리 실패:", err);
+      //console.error("전체 알림 읽음 처리 실패:", err);
     }
   };
 
@@ -106,7 +125,8 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         removeNotification,
         readNotification,
         closeSingleNotification,
-        readAllNotifications, 
+        readAllNotifications,
+        refreshNotifications, // 🔥 Context에서 사용 가능하게
       }}
     >
       {children}

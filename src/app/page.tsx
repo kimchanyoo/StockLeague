@@ -48,7 +48,7 @@ export default function Home() {
           setNotices(res.notices);
         }
       } catch (err) {
-        console.error("❌ 공지사항 불러오기 실패:", err);
+        //console.error("❌ 공지사항 불러오기 실패:", err);
       }
     };
     loadNotices();

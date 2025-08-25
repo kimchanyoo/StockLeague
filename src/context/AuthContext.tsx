@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       router.push("/");
     } catch (error) {
-      console.error("로그아웃 중 오류:", error);
+      //console.error("로그아웃 중 오류:", error);
       alert("로그아웃 실패. 다시 시도해주세요.");
     }
   };

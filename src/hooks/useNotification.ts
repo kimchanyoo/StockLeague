@@ -14,7 +14,7 @@ export const useNotification = (accessToken: string | null) => {
       const res = await getNotifications("unread", 1, 20);
       setNotifications(res.content);
     } catch (err) {
-      console.error("알림 조회 실패:", err);
+      //console.error("알림 조회 실패:", err);
     } finally {
       setLoading(false);
     }
@@ -30,7 +30,7 @@ export const useNotification = (accessToken: string | null) => {
         const notification: Notification = payload;
         setNotifications((prev) => [notification, ...prev]);
       } catch (err) {
-        console.error("실시간 알림 파싱 실패:", err, payload);
+        //console.error("실시간 알림 파싱 실패:", err, payload);
       }
     });
 
@@ -49,7 +49,7 @@ export const useNotification = (accessToken: string | null) => {
         );
       }
     } catch (err) {
-      console.error("읽음 처리 실패:", err);
+      //console.error("읽음 처리 실패:", err);
     }
   };
 
@@ -61,7 +61,7 @@ export const useNotification = (accessToken: string | null) => {
         setNotifications((prev) => prev.filter((n) => n.notificationId !== id));
       }
     } catch (err) {
-      console.error("알림 닫기 실패:", err);
+      //console.error("알림 닫기 실패:", err);
     }
   };
 

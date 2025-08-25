@@ -32,7 +32,7 @@ export const connectStomp = (
             const payload = JSON.parse(message.body);
             onMessage(payload);
           } catch (e) {
-            console.error("STOMP 메시지 파싱 실패:", e);
+            //console.error("STOMP 메시지 파싱 실패:", e);
           }
         });
 
@@ -40,7 +40,7 @@ export const connectStomp = (
         resolve();
       },
       onStompError: (frame) => {
-        console.error("STOMP 에러:", frame);
+        //console.error("STOMP 에러:", frame);
         reject(new Error("STOMP 연결 실패"));
       },
       onWebSocketClose: (event) => {

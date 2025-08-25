@@ -30,7 +30,7 @@ export default function StockItem({ ticker, name }: StockItemProps) {
         const data = await getStockPrice(ticker);
         if (isMounted) setStock(data);
       } catch (e) {
-        console.error("초기 시세 조회 실패", e);
+        //console.error("초기 시세 조회 실패", e);
       }
     };
 

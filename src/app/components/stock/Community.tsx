@@ -34,7 +34,7 @@ const Community = ({ ticker }: Props) => {
         setStockName(matchedStock.stockName);
       }
     } catch (err) {
-      console.error("종목 이름 가져오기 실패", err);
+      //console.error("종목 이름 가져오기 실패", err);
     }
   };
 
@@ -71,7 +71,7 @@ const Community = ({ ticker }: Props) => {
       setCurrentPage(1); // 첫 페이지로 이동 (선택사항)
       setRefreshTrigger((prev) => prev + 1);  // 댓글 목록 새로고침
     } catch (e) {
-      console.error("댓글 작성 실패", e);
+      //console.error("댓글 작성 실패", e);
     }
   };
 

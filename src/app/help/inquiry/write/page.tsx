@@ -25,7 +25,7 @@ export default function Write() {
         setCategory(data.category);
       }).catch((err) => {
         alert("문의 내용을 불러오지 못했습니다.");
-        console.error(err);
+        //console.error(err);
       });
     }
   }, [inquiryId, isEdit]);
@@ -56,7 +56,7 @@ export default function Write() {
       }
     } catch (error) {
       alert("오류가 발생했습니다. 다시 시도해주세요.");
-      console.error(error);
+      //console.error(error);
     }
   };
 

@@ -26,7 +26,7 @@ export const useAssetValuationSocket = ({
         onUpdate(data);
       })
       .catch((err) => {
-        console.error("초기 자산 불러오기 실패:", err);
+        //console.error("초기 자산 불러오기 실패:", err);
       });
   }, [accessToken, onUpdate]);
 
@@ -43,7 +43,7 @@ export const useAssetValuationSocket = ({
       return;
     }
     if (!process.env.NEXT_PUBLIC_SOCKET_URL) {
-      console.error("NEXT_PUBLIC_SOCKET_URL 환경변수 미설정");
+      //console.error("NEXT_PUBLIC_SOCKET_URL 환경변수 미설정");
       return;
     }
 
@@ -67,7 +67,7 @@ export const useAssetValuationSocket = ({
               onUpdate(data);
             }
           } catch (err) {
-            console.error("실시간 자산 데이터 파싱 실패:", err);
+            //console.error("실시간 자산 데이터 파싱 실패:", err);
           }
         });
       },

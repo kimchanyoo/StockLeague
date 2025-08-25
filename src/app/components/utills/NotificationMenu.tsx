@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import styles from "@/app/styles/components/utills/Notification.module.css";
 import CloseIcon from '@mui/icons-material/Close';
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import { useNotification } from "@/context/NotificationContext";
 
 const NotificationMenu = () => {
@@ -22,7 +23,7 @@ const NotificationMenu = () => {
   return (
     <div className={styles.notificationMenu} ref={menuRef}>
       <div onClick={() => setOpen(!open)} className={styles.iconWrapper}>
-        알림
+        <NotificationsIcon fontSize="medium" />
         {notifications.length > 0 && (
           <span className={styles.badge}>{notifications.length}</span>
         )}

@@ -104,13 +104,13 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
             setRealTimeCandle(data);
 
           } catch (err) {
-            console.error("실시간 데이터 처리 오류:", err);
+            //console.error("실시간 데이터 처리 오류:", err);
           }
         });
       },
 
       onStompError: (frame) => {
-        console.error("WebSocket STOMP 오류:", frame.headers["message"]);
+        //console.error("WebSocket STOMP 오류:", frame.headers["message"]);
       },
     });
 
@@ -136,7 +136,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
       })
       .catch((err) => {
         if (!isMounted) return;
-        console.error("캔들 데이터 로드 실패:", err);
+        //console.error("캔들 데이터 로드 실패:", err);
         setCandles([]);
         setOffset(0);
       });
@@ -232,7 +232,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
         setOffset((prevOffset) => prevOffset + addCount);
       })
       .catch((err) => {
-        console.error("추가 캔들 로드 실패:", err);
+        //console.error("추가 캔들 로드 실패:", err);
       })
       .finally(() => setIsLoading(false));
   }, [isLoading, offset, selectedInterval, ticker]);

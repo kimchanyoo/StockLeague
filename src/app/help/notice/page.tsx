@@ -26,7 +26,7 @@ export default function NoticeList() {
         setNotices(data.notices);
         setTotalCount(data.totalCount);
       } catch (error) {
-        console.error("공지사항을 불러오는 데 실패했습니다:", error);
+        //console.error("공지사항을 불러오는 데 실패했습니다:", error);
       }
     };
 

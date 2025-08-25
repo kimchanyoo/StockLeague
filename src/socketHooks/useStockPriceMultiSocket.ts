@@ -24,22 +24,22 @@ export const useStockPriceMultiSocket = (
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        console.log("✅ WebSocket 연결 성공");
+        //console.log("✅ WebSocket 연결 성공");
         subscribedTickers.forEach((ticker) => {
-          console.log(`🔔 구독 시작: /topic/stocks/${ticker}`);
+          //console.log(`🔔 구독 시작: /topic/stocks/${ticker}`);
           socketClient.subscribe(`/topic/stocks/${ticker}`, (message: IMessage) => {
             try {
               const data: StockPriceResponse = JSON.parse(message.body);
               //console.log(`📈 실시간 수신 - ${ticker}:`, data);
               onUpdate(data);
             } catch (err) {
-              console.error(`❌ JSON 파싱 오류 (${ticker})`, err, message.body);
+              //console.error(`❌ JSON 파싱 오류 (${ticker})`, err, message.body);
             }
           });
         });
       },
       onStompError: (frame) => {
-        console.error("🛑 STOMP 실시간 주식가격 에러", frame.headers["message"], frame.body);
+        //console.error("🛑 STOMP 실시간 주식가격 에러", frame.headers["message"], frame.body);
       },
     });
 

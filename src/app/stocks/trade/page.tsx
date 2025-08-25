@@ -47,7 +47,7 @@ export default function Trade() {
         const found = watchlists.find(item => item.StockTicker === selectedStock.stockTicker);
         setIsFavorite(!!found);
       } catch (err) {
-        console.error("관심 종목 확인 중 오류:", err);
+        //console.error("관심 종목 확인 중 오류:", err);
         setIsFavorite(false); // 오류 시 안전하게 false 처리
       }
     };
@@ -76,7 +76,7 @@ export default function Trade() {
         }
       }
     } catch (err) {
-      console.error(err);
+      //console.error(err);
       alert("관심 종목 등록 중 오류가 발생했습니다.");
       // 상태 변경 없이 유지
     }
