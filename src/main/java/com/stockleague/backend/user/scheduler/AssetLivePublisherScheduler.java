@@ -31,15 +31,11 @@ public class AssetLivePublisherScheduler {
 
         for (SimpUser simpUser : simpUserRegistry.getUsers()) {
             String principalName = simpUser.getName();
-            log.info("[대상 유저] principalName: {}, 세션 수: {}", principalName, simpUser.getSessions().size());
 
             try {
                 Long userId = parseUserIdStrict(principalName);
                 UserAssetValuationDto dto = userAssetService.getLiveAssetValuation(userId, true);
                 publisher.sendToUser(principalName, dto);
-
-                log.info("[전송 성공] principalName={}, userId={}, 평가금액={}, 수익률={}",
-                        principalName, userId, dto.getTotalAsset(), dto.getTotalProfitRate());
             } catch (Exception e) {
                 log.warn("[실시간 자산] 푸시 실패 - principalName={}, err={}", principalName, e.getMessage());
             }

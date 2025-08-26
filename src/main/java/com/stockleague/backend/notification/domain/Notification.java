@@ -77,9 +77,4 @@ public class Notification {
         this.isRead = true;
         this.updatedAt = LocalDateTime.now();
     }
-
-    public void close() {
-        this.isDeleted = true;
-        this.deletedAt = LocalDateTime.now();
-    }
 }
