@@ -1,7 +1,9 @@
 package com.stockleague.backend.admin.service;
 
 import com.stockleague.backend.admin.dto.request.AdminUserForceWithdrawRequestDto;
+import com.stockleague.backend.admin.dto.response.ActiveUserCountResponseDto;
 import com.stockleague.backend.admin.dto.response.AdminUserForceWithdrawResponseDto;
+import com.stockleague.backend.admin.dto.response.NewUserCountResponseDto;
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
 import com.stockleague.backend.infra.redis.TokenRedisService;
@@ -13,6 +15,7 @@ import com.stockleague.backend.stock.domain.Comment;
 import com.stockleague.backend.stock.repository.CommentRepository;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,8 @@ public class AdminService {
     private final CommentRepository commentRepository;
 
     private final NotificationService notificationService;
+
+    private final int newUserCountWithinDays = 7;
 
     @Transactional
     public AdminUserForceWithdrawResponseDto forceWithdrawUser(
@@ -52,5 +57,22 @@ public class AdminService {
         tokenRedisService.deleteRefreshToken(userId);
 
         return new AdminUserForceWithdrawResponseDto(true, "회원이 이용 정지되었습니다.");
+    }
+
+    public NewUserCountResponseDto countNewUsers() {
+        LocalDateTime daysAgo = LocalDateTime.now().minusDays(newUserCountWithinDays);
+
+        return new NewUserCountResponseDto(
+                true,
+                userRepository.countByCreatedAtAfter(daysAgo)
+        );
+    }
+
+    public ActiveUserCountResponseDto countActiveUsers() {
+
+        return new ActiveUserCountResponseDto(
+                true,
+                userRepository.countByIsBannedFalse()
+        );
     }
 }
