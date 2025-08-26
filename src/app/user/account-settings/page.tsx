@@ -8,6 +8,7 @@ import { withdrawUser, updateNickname } from "@/lib/api/auth";
 export default function AccountSettings() {
   const { logout } = useAuth();
   const [newNickname, setNewNickname] = useState("");
+  const [daysLeft, setDaysLeft] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
@@ -15,19 +16,23 @@ export default function AccountSettings() {
   }
 
   const handleNicknameChange = async () => {
-    if (!newNickname.trim()) {
-      alert("닉네임을 입력해주세요.");
-      return;
-    }
+    if (!newNickname.trim()) return alert("닉네임을 입력해주세요.");
 
     try {
       setLoading(true);
       const res = await updateNickname(newNickname.trim());
-      alert(res.message); // ex: "회원 정보가 수정되었습니다."
-      setNewNickname(""); // 입력 초기화
-      window.location.reload();
-    } catch (err: any) {
-      alert(err.message || "닉네임 변경 중 오류가 발생했습니다.");
+
+      if (!res.success) {
+        setDaysLeft(res.daysLeft ?? 0);
+        return alert(res.message);
+      }
+
+      alert(res.message);
+      setDaysLeft(res.nextNicknameChangeAt 
+        ? Math.ceil((new Date(res.nextNicknameChangeAt).getTime() - Date.now()) / (1000*60*60*24))
+        : 0
+      );
+      setNewNickname("");
     } finally {
       setLoading(false);
     }
@@ -62,8 +67,21 @@ export default function AccountSettings() {
           <span>StockLeague 닉네임은 랭킹 및 커뮤니티에서 사용됩니다.</span>
         </label>
         <div className="btnGroup">
-          <input type="text" placeholder="새 닉네임" value={newNickname} onChange={(e) => setNewNickname(e.target.value)}/>
-          <button className="change" onClick={handleNicknameChange} disabled={loading}>
+          <div className="nicknameInput">
+            <input 
+              type="text" 
+              placeholder="새 닉네임" 
+              value={newNickname} 
+              onChange={(e) => setNewNickname(e.target.value)} 
+              disabled={daysLeft > 0}
+            />
+            {daysLeft > 0 && (
+              <p className="nicknameWarning">
+                {daysLeft}일 뒤에 다시 변경할 수 있습니다.
+              </p>
+            )}
+          </div>
+          <button className="change" onClick={handleNicknameChange} disabled={loading || daysLeft > 0}>
             {loading ? "저장 중..." : "변경사항 저장"}
           </button>
         </div>

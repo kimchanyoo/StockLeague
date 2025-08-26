@@ -32,14 +32,14 @@ export default function InquiryDetailPage() {
   }
 
   return (
-    <div className="container">
-      <h1 className="title">1:1 문의
+    <div className="inquiryDetails-container">
+      <h1 className="inquiryDetails-title">1:1 문의
         <span>상세내용</span>
       </h1>  
-      <div className="inquiry-container">
-        <div className="inquiry-title">
+      <div className="inquiryDetails-container">
+        <div className="inquiryDetails-detailsTitle">
           <h1>문의내용</h1>
-          <div className="inquiry-subTitle">
+          <div className="inquiryDetails-subTitle">
             <p>문의 유형: <span>{categories[inquiry.category] || inquiry.category}</span></p>
             <p>
               상태:{" "}
@@ -50,7 +50,7 @@ export default function InquiryDetailPage() {
           </div>
         </div>
 
-        <div className="inquiry-details">
+        <div className="inquiryDetails-details">
           <div>
             <h1><strong>{inquiry.title}</strong></h1>
             <p className="date">문의 날짜: {new Date(inquiry.createdAt).toLocaleDateString()}</p>
@@ -59,7 +59,7 @@ export default function InquiryDetailPage() {
         </div>
 
         {inquiry.answers ? (
-          <>
+          <div className='answer-container'>
             <label>답변내용</label>
             <div className="answer-contents">
               <p className="date">
@@ -67,7 +67,7 @@ export default function InquiryDetailPage() {
               </p>
               <p>{inquiry.answers.content}</p>
             </div>
-          </>
+          </div>
         ) : (
           <p className="no-answer">답변이 아직 없습니다.</p> 
         )}

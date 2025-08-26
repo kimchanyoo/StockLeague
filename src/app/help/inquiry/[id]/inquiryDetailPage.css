@@ -1,7 +1,7 @@
-.container {
+.inquiryDetails-container {
     max-width: 1440px;
     min-width: 1100px;
-    width: 100%;
+    width: 100vw;
     margin: 0 auto; 
     flex-direction: column;
     display: flex;
@@ -15,7 +15,7 @@
     justify-content: flex-start;
     width: 100%;
 }
-.title {
+.inquiryDetails-title {
     font-size: 3rem;
     font-weight: bold;
     padding: 30px;
@@ -28,41 +28,49 @@
     gap: 10px;
     margin-bottom: 30px;
 }
-.title span {
+.inquiryDetails-title span {
     font-size: 1rem;
     font-weight: normal;
 }
-.inquiry-container {
+.inquiryDetails-container {
     display: flex;
     flex-direction: column;
     width: 100%;
     gap: 20px;
 }
 
-.inquiry-title {
+.inquiryDetails-detailsTitle {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     width: 100%;
 }
-.inquiry-subTitle {
+.inquiryDetails-subTitle {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     font-weight: bold;
 }
-.inquiry-subTitle span {
+.inquiryDetails-subTitle span {
     font-weight: normal;
 }
-.inquiry-title h1 {
+.inquiryDetails-title h1 {
     font-size: 20px;
     font-weight: bold;
 }
 
 /* 문의/답변 박스 */
-.inquiry-details,
+.answer-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.inquiryDetails-details,
 .answer-contents {
     width: 100%;
     border: 1px solid rgba(118, 118, 128, 0.12);
@@ -76,11 +84,8 @@
     padding: 1rem;
 }
 
-.additional-inquiries {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.answer-container label {
+    margin-bottom: 20px;
 }
 
 .date {

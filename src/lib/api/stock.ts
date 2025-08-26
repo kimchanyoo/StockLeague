@@ -213,13 +213,13 @@ export const getCandleData = async (
 
 // 매수 주문
 export const postBuyOrder = async ( data: BuyOrderRequest ): Promise<BuyOrderResponse> => {
-  const res = await axiosInstance.post("/api/v1/order/buy", data);
+  const res = await axiosInstance.post(`/api/v1/order/buy`, data);
   return res.data;
 };
 
 // 매도 주문
 export const postSellOrder = async ( data: SellOrderRequest ): Promise<SellOrderResponse> => {
-  const res = await axiosInstance.post("/api/v1/order/sell", data);
+  const res = await axiosInstance.post(`/api/v1/order/sell`, data);
   return res.data;
 };
 

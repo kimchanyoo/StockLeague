@@ -61,7 +61,6 @@ const MobileMenu = () => {
                 <h1>종목/거래</h1>
                 <nav className={styles.menuLinks}>
                   <a href="/stocks/trade">거래소</a>
-                  <a href="/stocks/stockkList">주식목록</a>
                 </nav>
               </div>
               <div className={styles.menuTitle}>
@@ -70,7 +69,7 @@ const MobileMenu = () => {
                   <a href="/help/guide">이용안내</a>
                   <a href="/help/notice">공지사항</a>
                   <a href="/help/inquiry">1:1문의하기</a>
-                  <a href="#">FAQ</a>
+                  <a href="https://www.notion.so/FAQ-216af0b607f880248008e1e15a111ccd?source=copy_link" target="_blank" rel="noopener noreferrer">FAQ</a>
                 </nav>
               </div>
               <div className={styles.menuTitle}>

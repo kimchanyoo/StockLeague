@@ -14,6 +14,24 @@
     padding: 30px;
 }
 
+.nicknameInput {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px; /* 요소 간 간격 */
+    position: relative;
+}
+
+.nicknameWarning {
+  color: red;
+  font-size: 0.9rem;
+  height: 1em; /* 항상 자리 차지 */
+  margin: 0;
+  position: absolute;
+  bottom: -20px; /* input 바로 아래 */
+  left: 0;
+}
+
 .nickNameChange, 
 .loginManagement,
 .secession {
