@@ -5,7 +5,7 @@ import "./inquiry.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import MoreVert from "@/app/components/help/MoreVert";
-import { getInquiries, Inquiry, deleteInquiry } from "@/lib/api/inquiry";
+import { getInquiries, Inquiry, deleteInquiry, getInquiryDetail} from "@/lib/api/inquiry";
 import { useAuth } from '@/context/AuthContext'; // 추가
 
 const inquiriesPerPage = 10;
@@ -94,22 +94,40 @@ export default function InquiryList() {
                   {item.status === "WAITING" ? "답변전" : "답변완"}
                 </div>
                 <MoreVert 
-                  onEdit={() => router.push(`/help/inquiry/write?inquiryId=${item.inquiryId}`)} 
+                  onEdit={async () => {
+                    try {
+                      const detail = await getInquiryDetail(item.inquiryId);
+                      if (detail.status === "ANSWERED") {
+                        alert("이미 답변된 문의는 수정할 수 없습니다.");
+                        return;
+                      }
+                      router.push(`/help/inquiry/write?inquiryId=${item.inquiryId}`);
+                    } catch (error) {
+                      alert("문의 내역을 확인할 수 없습니다.");
+                    }
+                  }} 
+                    
                   onDelete={async () => {
                     const confirmed = confirm("정말 삭제하시겠습니까?");
                     if (!confirmed) return;
-
                     try {
-                      await deleteInquiry(item.inquiryId);
-                      alert("삭제되었습니다.");
-
-                      // 삭제 후 목록 갱신
-                      const res = await getInquiries(currentPage, inquiriesPerPage);
-                      setInquiries(res.inquiries);
-                      setTotalCount(res.totalCount);
-                    } catch (error) {
-                      //console.error("삭제 실패:", error);
-                      alert("삭제에 실패했습니다.");
+                      const res = await deleteInquiry(item.inquiryId);
+                      if (res.success) {
+                        alert("삭제되었습니다.");
+                        // 삭제 후 목록 갱신
+                        const updated = await getInquiries(currentPage, inquiriesPerPage);
+                        setInquiries(updated.inquiries);
+                        setTotalCount(updated.totalCount);
+                      } else {
+                        alert(res.message || "삭제에 실패했습니다.");
+                      }
+                    } catch (error: any) {
+                      // 서버에서 내려주는 에러 메시지 처리
+                      if (error.response?.data?.message) {
+                        alert(error.response.data.message);
+                      } else {
+                        alert("삭제 중 오류가 발생했습니다.");
+                      }
                     }
                   }} 
                 />

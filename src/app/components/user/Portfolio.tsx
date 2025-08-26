@@ -39,18 +39,32 @@ const Portfolio: React.FC = () => {
   const chartData = useMemo(() => {
     if (totalAssets === 0) return [];
 
-    const stockData = stocks.map((stock) => ({
+     // 비중 순으로 정렬
+    const sortedStocks = [...stocks].sort(
+      (a, b) => Number(b.valuation) - Number(a.valuation)
+    );
+
+    // 상위 5개만 표시, 나머지는 기타
+    const topStocks = sortedStocks.slice(0, 5).map((stock) => ({
       name: stock.stockName,
       value: (Number(stock.valuation) / totalAssets) * 100,
     }));
 
-    return [
-      ...stockData,
-      {
-        name: "주문 가능 금액",
-        value: (cash / totalAssets) * 100,
-      },
-    ];
+    const others = sortedStocks.slice(5).reduce((acc, stock) => acc + Number(stock.valuation), 0);
+
+    const data = [...topStocks];
+    if (others > 0) {
+      data.push({
+        name: "기타",
+        value: (others / totalAssets) * 100,
+      });
+    }
+    data.push({
+      name: "주문 가능 금액",
+      value: (cash / totalAssets) * 100,
+    });
+
+    return data;
   }, [stocks, cash, totalAssets]);
 
   if (loading) return <p>포트폴리오를 불러오는 중입니다...</p>;

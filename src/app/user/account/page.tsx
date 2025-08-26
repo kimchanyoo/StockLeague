@@ -66,7 +66,6 @@ export default function Account() {
   }, [accessToken]);
 
   const handleUpdate = useCallback((res: UserAssetValuation) => {
-    console.log("📡 실시간 자산 데이터 수신:", res);
 
     setCash(Number(res.availableCash));
     setInvestingMoney(Number(res.stockValuation));

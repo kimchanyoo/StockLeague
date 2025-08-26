@@ -98,3 +98,13 @@
     margin-top: 30px;
     font-weight: bold;
 }
+
+.answer-back-btn {
+    padding: 8px 16px;
+    background-color: #006ADD;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    margin-top: 30px;
+    cursor: pointer;
+}
