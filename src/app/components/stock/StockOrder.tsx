@@ -30,7 +30,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const [priceInput, setPriceInput] = useState(currentPrice.toString());
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const totalPrice = quantity * price;
+  const totalPrice = parseFloat((quantity * price).toFixed(1));
 
   const { accessToken, loading } = useAuth();
   const { orderbook, isMarketOpen } = useOrderbook({ ticker, accessToken, loading });
@@ -47,7 +47,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         setMyMoney(balance.availableCash)
       } catch (err) {
         //console.error("보유 현금 조회 실패:", err);
-        alert("보유 자산 정보를 불러오지 못했습니다.");
+        //alert("보유 자산 정보를 불러오지 못했습니다.");
       }
     };
 
@@ -106,6 +106,11 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     e.preventDefault();
 
     const orderTotal = quantity * price;
+    console.log("📦 주문 요청:", {
+      ticker,
+      orderPrice: price,
+      orderAmount: quantity,
+    });
 
     if (!ticker || quantity <= 0 || price <= 0) {
       alert("주문 정보를 다시 확인해주세요.");
@@ -152,15 +157,23 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     }
   };
 
+  useEffect(() => {
+    // 탭(매수/매도) 바뀔 때마다 초기화
+    setQuantity(0);
+    setPrice(currentPrice);
+    setPriceInput(currentPrice.toString());
+    setUseCurrentPrice(false);
+  }, [orderType]);
+
   const handleQuantityRatioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const ratio = Number(e.target.value);
     if (orderType === "buy") {
       const qty = (myMoney * ratio) / price;
-      const adjustedQty = Math.min(parseFloat(qty.toFixed(1)), parseFloat((myMoney / price).toFixed(1)));
-      setQuantity(adjustedQty); // 소수점 한자리까지
+      const adjustedQty = Math.min(Number(qty.toFixed(2)), Number((myMoney / price).toFixed(2)));
+      setQuantity(adjustedQty);
     } else {
       const qty = myStockQuantity * ratio;
-      setQuantity(parseFloat(qty.toFixed(1))); // 소수점 한자리까지
+      setQuantity(Number(qty.toFixed(2)));
     }
   };
 
@@ -188,15 +201,15 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
     setPriceInput(price.toLocaleString());
   };
 
-  const bidOrders = orderbook?.bidPrices.map((price, i) => ({
+  const bidOrders = (orderbook?.bidPrices.map((price, i) => ({
     price,
     quantity: orderbook.bidVolumes[i],
-  })) ?? [];
+  })) ?? []).sort((a, b) => b.price - a.price); // 매수: 내림차순
 
-  const askOrders = orderbook?.askPrices.map((price, i) => ({
+  const askOrders = (orderbook?.askPrices.map((price, i) => ({
     price,
     quantity: orderbook.askVolumes[i],
-  })) ?? [];
+  })) ?? []).sort((a, b) => a.price - b.price); // 매도: 오름차순
 
 
   // 최대값 (퍼센트 기준용)
@@ -227,7 +240,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         <div className={styles.quoteBox}>
           <div className={styles.scrollArea} ref={scrollRef}>
             {/* 매도 호가 (ask) - 위쪽 */}
-            {askOrders.map((order, i) => {
+            {[...askOrders].reverse().map((order, i) => {
               const percent = (order.quantity / maxAskQty) * 100;
               return (
                 <div
@@ -315,7 +328,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
                 value={quantity}
                 onChange={(e) => {
                   const raw = e.target.value.replace(/[^0-9.]/g, "");
-                  const match = raw.match(/^\d*\.?\d{0,1}$/);
+                  const match = raw.match(/^\d*\.?\d{0,2}$/);
                   if (!match) return;
                   let parsed = parseFloat(raw);
                   if (isNaN(parsed)) parsed = 0;

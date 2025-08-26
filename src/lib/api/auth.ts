@@ -40,11 +40,36 @@ export const fetchUserProfile = async () => {
 
 // 닉네임 수정 요청
 export async function updateNickname(nickname: string) {
-    const res = await axiosInstance.patch("/api/v1/user/profile", {
-      nickname,
-    });
-    return res.data; 
-};
+  try {
+    const res = await axiosInstance.patch("/api/v1/user/profile", { nickname });
+    return {
+      success: true,
+      message: res.data.message,
+      nickname: res.data.nickname,
+      nextNicknameChangeAt: res.data.nextNicknameChangeAt
+    };
+  } catch (err: any) {
+    const res = err.response?.data;
+    if (!res) throw err;
+
+    switch (res.errorCode) {
+      case "NICKNAME_CHANGE_NOT_ALLOWED":
+        return {
+          success: false,
+          message: res.message,
+          daysLeft: res.details.daysLeft
+        };
+      case "DUPLICATED_NICKNAME":
+      case "NICKNAME_FORMAT_INVALID":
+        return {
+          success: false,
+          message: res.message
+        };
+      default:
+        throw err;
+    }
+  }
+}
 
 // 탈퇴
 export const withdrawUser = async (confirmMessage: string) => {

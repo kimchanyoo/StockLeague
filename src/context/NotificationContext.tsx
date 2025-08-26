@@ -7,17 +7,20 @@ import {
   closeNotification, 
   markAllNotificationsRead, 
   getNotifications, 
+  getUnreadNotificationCount,
   Notification 
 } from "@/lib/api/notification";
 
 interface NotificationContextType {
   notifications: Notification[];
+  unreadCount: number;  
   addNotification: (notification: Notification) => void;
   removeNotification: (notificationId: number) => void;
   readNotification: (id: number) => Promise<void>;
   closeSingleNotification: (id: number) => Promise<void>;
   readAllNotifications: (target?: string) => Promise<void>;
-  refreshNotifications: () => Promise<void>; // 🔥 새로 추가
+  refreshNotifications: () => Promise<void>;
+  refreshUnreadCount: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -25,6 +28,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, accessToken } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // 🔥 초기 알림 불러오기
   const refreshNotifications = async () => {
@@ -86,6 +90,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         setNotifications((prev) =>
           prev.map((n) => (n.notificationId === id ? { ...n, isRead: true } : n))
         );
+        await refreshUnreadCount();
       }
     } catch (err) {
       //console.error("알림 읽음 처리 실패:", err);
@@ -112,21 +117,35 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             target ? (n.target === target ? { ...n, isRead: true } : n) : { ...n, isRead: true }
           )
         );
+        await refreshUnreadCount();
       }
     } catch (err) {
       //console.error("전체 알림 읽음 처리 실패:", err);
     }
   };
 
+  const refreshUnreadCount = async () => {
+    try {
+      const res = await getUnreadNotificationCount();
+      if (res.success) {
+        setUnreadCount(res.unreadCount);
+      }
+    } catch (err) {
+      //console.error("읽지 않은 알림 개수 조회 실패:", err);
+    }
+  };
+
   return (
     <NotificationContext.Provider value={{ 
         notifications,
+        unreadCount,  
         addNotification,
         removeNotification,
         readNotification,
         closeSingleNotification,
         readAllNotifications,
-        refreshNotifications, // 🔥 Context에서 사용 가능하게
+        refreshNotifications,
+        refreshUnreadCount,
       }}
     >
       {children}

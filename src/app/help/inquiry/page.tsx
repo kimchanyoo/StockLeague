@@ -36,7 +36,7 @@ export default function InquiryList() {
     };
 
     fetchInquiries();
-  }, [currentPage]);
+  }, [accessToken, currentPage]);
 
   const handlePageClick = (page: number) => {
     setCurrentPage(page);
@@ -80,7 +80,7 @@ export default function InquiryList() {
               onClick={() => router.push(`/help/inquiry/${item.inquiryId}`)}
             >
               <div className="inquiry-info">
-                <h2 className="inquiry-title">{item.title}</h2>
+                <h2 className="inquiry-itemTitle">{item.title}</h2>
                 <span className="inquiry-date">
                   {new Date(item.createdAt).toLocaleDateString()}
                 </span>

@@ -113,22 +113,22 @@ export default function Inquiries() {
         {inquiries.map((inq) => (
           <div
             key={inq.inquiryId}
-            className={`inquiry-item ${inq.status === "ANSWERED" ? "answered" : "pending"}`}
+            className={`inquiries-item ${inq.status === "ANSWERED" ? "answered" : "pending"}`}
             onClick={() => {
               fetchInquiryDetail(inq.inquiryId);
             }}
           >
-            <div className="inquiry-title">{inq.title}</div>
-            <div className="inquiry-category">[{categories[inq.category] || inq.category}]</div>
-            <div className="inquiry-date">{new Date(inq.createdAt).toLocaleDateString()}</div>
-            <div className="inquiry-status">{inq.status === "ANSWERED" ? "답변 완료" : "처리 중"}</div>
+            <div className="inquiries-title">{inq.title}</div>
+            <div className="inquiries-category">[{categories[inq.category] || inq.category}]</div>
+            <div className="inquiries-date">{new Date(inq.createdAt).toLocaleDateString()}</div>
+            <div className="inquiries-status">{inq.status === "ANSWERED" ? "답변 완료" : "처리 중"}</div>
           </div>
         ))}
 
         {selectedInquiry && (
-          <div className="inquiry-detail">
+          <div className="inquiries-detail">
             <h2>{selectedInquiry.title}</h2>
-            <p className="inquiry-content">{selectedInquiry.content}</p>
+            <p className="inquiries-content">{selectedInquiry.content}</p>
 
             {/* 답변이 있으면 항상 보여줌 */}
             {selectedInquiry.answers?.content && (
@@ -146,7 +146,7 @@ export default function Inquiries() {
                   placeholder="답변을 입력하세요"
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
-                  className="inquiry-answer-textarea"
+                  className="inquiries-answer-textarea"
                 />
                 <div className="button-group">
                   <button onClick={handleSubmit} className="submit-button" disabled={loading}>

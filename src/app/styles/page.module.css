@@ -50,6 +50,7 @@
 }
 .highlight {
     color: #ffffff;
+    font-size: 2rem;
 }
 .gotoBtn {
     display: flex;

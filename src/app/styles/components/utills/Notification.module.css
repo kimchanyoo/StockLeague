@@ -8,7 +8,6 @@
   position: relative;
   font-weight: bold;
 }
-  
 .badge {
   position: absolute;
   top: -15px;
@@ -19,7 +18,6 @@
   padding: 2px 6px;
   border-radius: 50%;
 }
-  
 .dropdown {
   position: absolute;
   display: flex;
@@ -38,13 +36,15 @@
 
 }
 
-  
 .item {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 10px;
+  padding: 8px 10px;
   font-size: 0.9rem;
-  text-align: center;
+  text-align: left;
+  gap: 5px;
+  transition: background 0.2s;
 }
 
 .item:hover {
@@ -54,6 +54,16 @@
   
 .item:not(:last-child) {
   border-bottom: 1px solid #eee;
+}
+
+.readMessage {
+  color: #888;
+}
+
+.readIcon {
+  cursor: pointer;
+  color: green;
+  margin-right: 5px;
 }
 
 .closeIcon {
@@ -72,3 +82,25 @@
   color: #999;
 }
   
+.readAllButton {
+  display: flex;
+  justify-content: center; /* 중앙 정렬 */
+  padding: 5px 10px;
+  width: 100%;
+}
+
+.readAllButton button {
+  flex: 1;               /* 버튼이 부모 컨테이너 전체 폭 차지 */
+  background-color: #b0b0b0; /* 기본 회색 */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 0;        /* 높이 조정 */
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.readAllButton button:hover {
+  background-color: #999999; /* 조금 더 진한 회색 */
+}
