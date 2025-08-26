@@ -65,6 +65,7 @@ public enum GlobalErrorCode {
     // === 닉네임 ===
     NICKNAME_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "닉네임 형식이 올바르지 않습니다."),
     DUPLICATED_NICKNAME(HttpStatus.BAD_REQUEST, "이미 사용 중인 닉네임입니다."),
+    NICKNAME_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "닉네임 변경은 30일마다 가능합니다."),
 
     // === 문의/공지 ===
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 문의를 찾을 수 없습니다."),

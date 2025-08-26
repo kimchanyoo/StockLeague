@@ -9,6 +9,9 @@ import com.stockleague.backend.user.dto.response.UserProfileResponseDto;
 import com.stockleague.backend.user.dto.response.UserProfileUpdateResponseDto;
 import com.stockleague.backend.user.dto.response.UserWithdrawResponseDto;
 import com.stockleague.backend.user.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,9 +51,31 @@ public class UserService {
             throw new GlobalException(GlobalErrorCode.DUPLICATED_NICKNAME);
         }
 
-        user.updateNickname(nickname);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime last = user.getLastNicknameChangedAt();
+        if (last != null) {
+            LocalDateTime nextAvailable = last.plusDays(30);
+            if (now.isBefore(nextAvailable)) {
+                long daysLeft = ChronoUnit.DAYS.between(now, nextAvailable);
+                throw new GlobalException(
+                        GlobalErrorCode.NICKNAME_CHANGE_NOT_ALLOWED,
+                        Map.of("daysLeft", daysLeft, "nextAvailableAt", nextAvailable)
+                );
+            }
+        }
 
-        return new UserProfileUpdateResponseDto(true, "회원 정보가 수정되었습니다.", nickname);
+        user.updateNickname(nickname);
+        user.setLastNicknameChangedAt(now);
+
+        LocalDateTime nextAvailable = now.plusDays(30);
+
+        return new UserProfileUpdateResponseDto(
+                true,
+                "회원 정보가 수정되었습니다.",
+                nickname,
+                now,
+                nextAvailable
+        );
     }
 
     @Transactional
