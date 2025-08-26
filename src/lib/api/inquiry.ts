@@ -26,7 +26,7 @@ export interface InquiryAnswer {
   answerId: number;
   userId: number;
   content: string;
-  createdAt: string;
+  answeredAt: string;
 }
 export interface InquiryDetailResponse {
   success: boolean;
@@ -38,7 +38,7 @@ export interface InquiryDetailResponse {
   status: "WAITING" | "ANSWERED";
   createdAt: string;
   updatedAt: string;
-  answers?: InquiryAnswer;
+  answers: InquiryAnswer;
 }
 
 // 관리자용
@@ -154,10 +154,15 @@ export const updateInquiry = async (inquiryId: number, data: InquiryCreateReques
     return {
       success: res.data.success,
       message: res.data.message,
+      errorCode: res.data.errorCode,
     };
-  } catch (error) {
-    //console.error("문의 수정 중 오류 발생:", error);
-    throw new Error("문의 수정 중 문제가 발생했습니다.");
+  } catch (error: any) {
+    const res = error.response?.data;
+    return {
+      success: false,
+      message: res?.message || "문의 수정 중 문제가 발생했습니다.",
+      errorCode: res?.errorCode,
+    };
   }
 };
 
@@ -169,10 +174,15 @@ export const deleteInquiry = async (inquiryId: number) => {
     return {
       success: res.data.success,
       message: res.data.message,
+      errorCode: res.data.errorCode,
     };
-  } catch (error) {
-    //console.error("문의 삭제 중 오류 발생:", error);
-    throw new Error("문의 삭제 중 문제가 발생했습니다.");
+  } catch (error: any) {
+    const res = error.response?.data;
+    return {
+      success: false,
+      message: res?.message || "문의 삭제 중 문제가 발생했습니다.",
+      errorCode: res?.errorCode,
+    };
   }
 };
 

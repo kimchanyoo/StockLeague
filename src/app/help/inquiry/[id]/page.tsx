@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from "react";
 import { getInquiryDetail, InquiryDetailResponse } from '@/lib/api/inquiry';  // API 함수 임포트
 import { categories } from "@/app/components/help/InquiryDropdown"
@@ -9,8 +9,14 @@ import "./inquiryDetailPage.css";
 export default function InquiryDetailPage() {
   const params = useParams();
   const { id } = params;
+  const router = useRouter();
 
   const [inquiry, setInquiry] = useState<InquiryDetailResponse | null>(null);
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? dateStr.replace(" ", "T") : d.toLocaleDateString();
+  };
 
   useEffect(() => {
     const fetchInquiryDetail = async () => {
@@ -38,7 +44,7 @@ export default function InquiryDetailPage() {
       </h1>  
       <div className="inquiryDetails-container">
         <div className="inquiryDetails-detailsTitle">
-          <h1>문의내용</h1>
+          <h1><strong>문의 내용</strong></h1>
           <div className="inquiryDetails-subTitle">
             <p>문의 유형: <span>{categories[inquiry.category] || inquiry.category}</span></p>
             <p>
@@ -60,10 +66,10 @@ export default function InquiryDetailPage() {
 
         {inquiry.answers ? (
           <div className='answer-container'>
-            <label>답변내용</label>
+            <label><strong>답변 내용</strong></label>
             <div className="answer-contents">
               <p className="date">
-                답변 날짜: {new Date(inquiry.answers.createdAt).toLocaleDateString()}
+                답변 날짜: {formatDate(inquiry.answers.answeredAt)}
               </p>
               <p>{inquiry.answers.content}</p>
             </div>
@@ -72,6 +78,7 @@ export default function InquiryDetailPage() {
           <p className="no-answer">답변이 아직 없습니다.</p> 
         )}
       </div>
+      <button onClick={() => router.push("/help/inquiry")} className="answer-back-btn">목록으로</button>
     </div>
   );
 }

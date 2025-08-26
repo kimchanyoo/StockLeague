@@ -21,7 +21,7 @@ export const useAssetValuationSocket = ({
     
     getUserAssetValuation()
       .then((data) => {
-        console.log("📦 초기 자산 데이터:", data);
+        //console.log("📦 초기 자산 데이터:", data);
         setIsMarketOpen(data.marketOpen);
         onUpdate(data);
       })
@@ -32,14 +32,14 @@ export const useAssetValuationSocket = ({
 
   // 2. 장 열려 있을 경우에만 WebSocket 연결
   useEffect(() => {
-    console.log("▶ useEffect 실행 - isMarketOpen:", isMarketOpen, "accessToken:", accessToken);
+    //console.log("▶ useEffect 실행 - isMarketOpen:", isMarketOpen, "accessToken:", accessToken);
 
     if (!isMarketOpen) {
-      console.log("장 미개장 상태라서 WebSocket 연결 안함");
+      //console.log("장 미개장 상태라서 WebSocket 연결 안함");
       return;
     }
     if (!accessToken) {
-      console.log("accessToken 없음 - WebSocket 연결 안함");
+      //console.log("accessToken 없음 - WebSocket 연결 안함");
       return;
     }
     if (!process.env.NEXT_PUBLIC_SOCKET_URL) {
