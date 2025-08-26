@@ -248,10 +248,23 @@ public class OrderService {
      * @throws GlobalException USER_STOCK_NOT_FOUND - 사용자가 해당 종목을 보유하고 있지 않은 경우
      */
     private void unlockSellStock(User user, Stock stock, BigDecimal amount) {
-        UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+        UserStock us = userStockRepository.findByUserAndStock(user, stock)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
 
-        userStock.unlockQuantity(amount);
+        BigDecimal beforeLocked = us.getLockedQuantity();
+        BigDecimal beforeQty    = us.getQuantity();
+
+        us.unlockQuantity(amount);
+        userStockRepository.save(us);
+
+        log.info("[UserStock][CANCEL] userId={}, ticker={}, locked {} -> {}, qty {} -> {} (unlock={})",
+                user.getId(),
+                stock.getStockTicker(),
+                beforeLocked.stripTrailingZeros().toPlainString(),
+                us.getLockedQuantity().stripTrailingZeros().toPlainString(),
+                beforeQty.stripTrailingZeros().toPlainString(),
+                us.getQuantity().stripTrailingZeros().toPlainString(),
+                amount.stripTrailingZeros().toPlainString());
     }
 
     /**

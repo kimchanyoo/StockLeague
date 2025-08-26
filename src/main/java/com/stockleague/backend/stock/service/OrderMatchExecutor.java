@@ -87,7 +87,7 @@ public class OrderMatchExecutor {
         }
 
         orderExecutionRepository.saveAll(executions);
-        order.updateExecutionInfo(executedAmount, totalExecutedPrice);
+        order.applyExecutionDelta(executedAmount, totalExecutedPrice);
         orderRepository.save(order);
 
         applyBuyStock(order.getUser(), order.getStock(), executedAmount, order.getAverageExecutedPrice());
@@ -178,7 +178,7 @@ public class OrderMatchExecutor {
         }
 
         orderExecutionRepository.saveAll(executions);
-        order.updateExecutionInfo(executedAmount, totalExecutedPrice);
+        order.applyExecutionDelta(executedAmount, totalExecutedPrice);
         orderRepository.save(order);
 
         finalizeSellStock(order.getUser(), order.getStock(), executedAmount);
@@ -301,7 +301,17 @@ public class OrderMatchExecutor {
     private void finalizeSellStock(User user, Stock stock, BigDecimal executedAmount) {
         UserStock us = userStockRepository.findByUserAndStock(user, stock)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
+
+        BigDecimal beforeLocked = us.getLockedQuantity();
         us.executeSell(executedAmount);
+        userStockRepository.save(us);
+
+        log.info("[UserStock][SELL] userId={}, ticker={}, locked {} -> {} (exec={})",
+                user.getId(),
+                stock.getStockTicker(),
+                beforeLocked.stripTrailingZeros().toPlainString(),
+                us.getLockedQuantity().stripTrailingZeros().toPlainString(),
+                executedAmount.stripTrailingZeros().toPlainString());
     }
 
     /**
