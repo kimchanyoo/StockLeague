@@ -33,7 +33,7 @@ public class RankingLivePublisherScheduler {
     private final UserAssetService userAssetService;
     private final UserRankingService userRankingService;
     private final RankingWebSocketPublisher publisher;
-    private final SimpUserRegistry simpUserRegistry; // ⬅️ 개인 큐 전송에 필요
+    private final SimpUserRegistry simpUserRegistry;
 
     /**
      * 10초마다 전체 유저의 실시간 수익률 랭킹을 계산하여 WebSocket으로 전송합니다.
