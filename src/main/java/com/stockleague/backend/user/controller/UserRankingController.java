@@ -1,5 +1,6 @@
 package com.stockleague.backend.user.controller;
 
+import com.stockleague.backend.user.domain.RankingSort;
 import com.stockleague.backend.user.dto.response.UserProfitRateRankingListDto;
 import com.stockleague.backend.user.service.UserRankingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,6 +80,64 @@ public class UserRankingController {
     })
     public ResponseEntity<UserProfitRateRankingListDto> getProfitRateRanking(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        return ResponseEntity.ok(userRankingService.getProfitRateRanking(userId));
+        return ResponseEntity.ok(userRankingService.getRanking(userId, RankingSort.PROFIT_RATE_DESC));
+    }
+
+    @GetMapping("/total-asset")
+    @Operation(
+            summary = "총자산 랭킹 조회",
+            description = """
+                    유저들의 '총자산(현금+평가금액)' 기준 랭킹을 반환합니다.
+                    - 장중: Redis 현재가 기반 실시간 자산 합산
+                    - 장마감: Redis 스냅샷의 총자산 사용
+                    - 응답: 전체 랭킹 리스트 + 로그인 사용자의 순위
+                    """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "총자산 랭킹 조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = UserProfitRateRankingListDto.class),
+                            examples = @ExampleObject(
+                                    name = "UserTotalAssetRankingList",
+                                    summary = "총자산 랭킹 응답 예시",
+                                    value = """
+                                            {
+                                              "rankingList": [
+                                                {
+                                                  "userId": 3,
+                                                  "nickname": "bigWhale",
+                                                  "profitRate": "1.25",
+                                                  "totalAsset": "250000000",
+                                                  "ranking": 1
+                                                },
+                                                {
+                                                  "userId": 1,
+                                                  "nickname": "stockMaster",
+                                                  "profitRate": "12.45",
+                                                  "totalAsset": "184000000",
+                                                  "ranking": 2
+                                                }
+                                              ],
+                                              "myRanking": {
+                                                "userId": 1,
+                                                "nickname": "stockMaster",
+                                                "profitRate": "12.45",
+                                                "totalAsset": "184000000",
+                                                "ranking": 2
+                                              },
+                                              "totalCount": 2,
+                                              "isMarketOpen": true,
+                                              "generatedAt" : "2025-03-18T18:00:10Z"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<UserProfitRateRankingListDto> getTotalAssetRanking(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(userRankingService.getRanking(userId, RankingSort.TOTAL_ASSET_DESC));
     }
 }

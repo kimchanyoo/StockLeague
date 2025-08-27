@@ -2,6 +2,7 @@ package com.stockleague.backend.user.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockleague.backend.global.util.MarketTimeUtil;
+import com.stockleague.backend.user.domain.RankingSort;
 import com.stockleague.backend.user.dto.projection.UserIdAndNicknameProjection;
 import com.stockleague.backend.user.dto.response.UserAssetSnapshotDto;
 import com.stockleague.backend.user.dto.response.UserAssetValuationDto;
@@ -32,36 +33,39 @@ public class UserRankingService {
     private static final String REDIS_SNAPSHOT_PREFIX = "user:asset:closing:";
 
     /**
-     * 현재 장 상태에 따라 적절한 수익률 랭킹 조회 API를 호출합니다.
+     * 현재 장 상태와 정렬 기준에 따라 적절한 랭킹을 조회합니다.
      * <p>
-     * - 장이 열려 있으면 실시간 랭킹({@link #getLiveRanking(Long)})을 조회하고,<br>
-     * - 장이 닫혀 있으면 Redis에 저장된 장 마감 기준
-     * 랭킹({@link #getRankingFromSnapshot(Long)})을 조회합니다.
+     * - 장중(시장 열림): 실시간 자산 정보를 기반으로 랭킹 계산
+     * - 장마감(시장 닫힘): Redis에 저장된 장 마감 스냅샷 정보를 기반으로 랭킹 계산
+     * - 정렬 기준: {@link RankingSort} (수익률/총자산)
      * </p>
      *
-     * @param myUserId 현재 로그인한 유저 ID
-     * @return 전체 랭킹 리스트 및 나의 순위가 포함된 응답 DTO
+     * @param myUserId 현재 로그인한 사용자 ID
+     * @param sort     정렬 기준 (수익률/총자산)
+     * @return 전체 랭킹 및 나의 랭킹 정보가 포함된 DTO
      */
-    public UserProfitRateRankingListDto getProfitRateRanking(Long myUserId) {
+    public UserProfitRateRankingListDto getRanking(Long myUserId, RankingSort sort) {
         if (MarketTimeUtil.isMarketOpen()) {
-            return getLiveRanking(myUserId);
+            return getLiveRanking(myUserId, sort);
         } else {
-            return getRankingFromSnapshot(myUserId);
+            return getRankingFromSnapshot(myUserId, sort);
         }
     }
 
     /**
-     * 장 마감 후 Redis에 저장된 스냅샷을 기반으로 수익률 랭킹을 조회합니다.
+     * 장 마감 후 Redis 스냅샷 데이터를 기반으로 랭킹을 계산합니다.
      * <p>
-     * - Redis 키: user:asset:closing:yyyy-MM-dd:{userId} 형식<br>
-     * - 수익률은 스냅샷에 저장된 값을 사용하고, 유저 닉네임은 projection으로 조회합니다.<br>
-     * - 스냅샷이 없거나 수익률이 null인 경우 해당 유저는 제외됩니다.
+     * - Redis 키 형식: {@code user:asset:closing:yyyy-MM-dd:{userId}}
+     * - 스냅샷에 저장된 총자산/수익률 값을 사용
+     * - 스냅샷이 없거나 총자산이 null이면 해당 유저는 제외
+     * - 정렬 기준: {@link RankingSort} (수익률/총자산)
      * </p>
      *
-     * @param myUserId 현재 유저 ID (나의 순위를 계산하기 위함)
-     * @return 전체 유저 수익률 랭킹 및 나의 랭킹 포함 DTO
+     * @param myUserId 현재 로그인한 사용자 ID
+     * @param sort     정렬 기준
+     * @return 랭킹 결과 DTO
      */
-    private UserProfitRateRankingListDto getRankingFromSnapshot(Long myUserId) {
+    private UserProfitRateRankingListDto getRankingFromSnapshot(Long myUserId, RankingSort sort) {
         List<Long> userIds = userRepository.findAllUserIds();
 
         if (userIds.isEmpty()) {
@@ -80,23 +84,21 @@ public class UserRankingService {
         for (Long userId : userIds) {
             try {
                 String json = stringRedisTemplate.opsForValue().get(snapshotPrefix + userId);
-                if (json == null) {
-                    continue;
-                }
+                if (json == null) continue;
 
                 UserAssetSnapshotDto snapshot = objectMapper.readValue(json, UserAssetSnapshotDto.class);
                 BigDecimal profitRate = snapshot.getTotalProfitRate();
-                if (profitRate == null) {
-                    continue;
-                }
+                BigDecimal totalAsset = snapshot.getTotalAsset();
+
+                if (totalAsset == null) continue;
 
                 String nickname = nicknameMap.getOrDefault(userId, "탈퇴회원");
 
                 rankings.add(new UserProfitRateRankingDto(
                         userId,
                         nickname,
-                        profitRate.setScale(2, RoundingMode.HALF_UP),
-                        snapshot.getTotalAsset().setScale(0, RoundingMode.HALF_UP),
+                        profitRate == null ? null : profitRate.setScale(2, RoundingMode.HALF_UP),
+                        totalAsset.setScale(0, RoundingMode.HALF_UP),
                         null
                 ));
             } catch (Exception e) {
@@ -104,20 +106,23 @@ public class UserRankingService {
             }
         }
 
-        return sortAndWrap(rankings, myUserId, false);
+        return sortAndWrap(rankings, myUserId, false, sort);
     }
 
     /**
-     * 현재 자산 정보를 기반으로 실시간 수익률 랭킹을 계산합니다.
+     * 현재 실시간 자산 정보를 기반으로 랭킹을 계산합니다.
      * <p>
-     * - 모든 유저의 실시간 자산 정보를 조회하여 평균 매수가, 보유 수량, 현재가로 수익률을 계산합니다.<br>
-     * - 계산 도중 예외 발생 시 해당 유저는 제외됩니다.
+     * - Redis 현재가 기반으로 사용자별 보유 자산을 평가
+     * - 총자산, 수익률 계산 후 랭킹 산출
+     * - 예외 발생 시 해당 유저는 제외
+     * - 정렬 기준: {@link RankingSort} (수익률/총자산)
      * </p>
      *
-     * @param myUserId 현재 유저 ID
-     * @return 전체 유저 수익률 랭킹 및 나의 랭킹 포함 DTO
+     * @param myUserId 현재 로그인한 사용자 ID
+     * @param sort     정렬 기준
+     * @return 랭킹 결과 DTO
      */
-    private UserProfitRateRankingListDto getLiveRanking(Long myUserId) {
+    private UserProfitRateRankingListDto getLiveRanking(Long myUserId, RankingSort sort) {
         List<Long> userIds = userRepository.findAllUserIds();
         if (userIds.isEmpty()) {
             return new UserProfitRateRankingListDto(List.of(), null, 0, true, LocalDateTime.now());
@@ -134,14 +139,16 @@ public class UserRankingService {
                 UserAssetValuationDto valuation = userAssetService.getLiveAssetValuation(userId, true);
                 if (valuation == null) continue;
 
+                BigDecimal totalAsset = valuation.getTotalAsset();
+                if (totalAsset == null) continue;
+
                 BigDecimal profitRate = calculateProfitRate(valuation);
-                if (profitRate == null) continue;
 
                 rankings.add(new UserProfitRateRankingDto(
                         userId,
                         nickname,
-                        profitRate.setScale(2, RoundingMode.HALF_UP),
-                        valuation.getTotalAsset().setScale(0, RoundingMode.HALF_UP),
+                        profitRate == null ? null : profitRate.setScale(2, RoundingMode.HALF_UP),
+                        totalAsset.setScale(0, RoundingMode.HALF_UP),
                         null
                 ));
             } catch (Exception e) {
@@ -149,51 +156,76 @@ public class UserRankingService {
             }
         }
 
-        return sortAndWrap(rankings, myUserId, true);
+        return sortAndWrap(rankings, myUserId, true, sort);
     }
 
     /**
-     * 수익률을 기준으로 정렬하고 순위를 부여하여 응답 형식으로 반환합니다.
+     * 랭킹 리스트를 주어진 기준에 따라 정렬하고 순위를 부여합니다.
      * <p>
-     * - 수익률 기준 내림차순 정렬<br>
-     * - 랭킹은 1부터 시작<br>
-     * - 내 랭킹을 별도로 추출하여 포함
+     * - 수익률 기준 내림차순 정렬: {@link RankingSort#PROFIT_RATE_DESC}
+     * - 총자산 기준 내림차순 정렬: {@link RankingSort#TOTAL_ASSET_DESC}
+     * - 동률일 경우 보조 정렬 기준: (총자산/수익률 → 닉네임 → userId)
+     * - 순위는 1부터 시작하며, 나의 랭킹 정보도 별도로 추출
      * </p>
      *
-     * @param list     수익률 DTO 리스트
-     * @param myUserId 현재 유저 ID
-     * @return 정렬 및 랭킹 부여된 응답 DTO
+     * @param list        정렬할 랭킹 DTO 리스트
+     * @param myUserId    현재 로그인한 사용자 ID
+     * @param isMarketOpen 시장 열림 여부
+     * @param sort        정렬 기준
+     * @return 정렬 및 순위가 부여된 DTO
      */
-    private UserProfitRateRankingListDto sortAndWrap(List<UserProfitRateRankingDto> list, Long myUserId, boolean isMarketOpen) {
-        list.sort(
-                Comparator.comparing(UserProfitRateRankingDto::profitRate, Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparing(UserProfitRateRankingDto::nickname, Comparator.nullsLast(String::compareTo))
-        );
+    private UserProfitRateRankingListDto sortAndWrap(
+            List<UserProfitRateRankingDto> list,
+            Long myUserId,
+            boolean isMarketOpen,
+            RankingSort sort
+    ) {
+        Comparator<UserProfitRateRankingDto> byProfitDesc =
+                Comparator.comparing(UserProfitRateRankingDto::profitRate,
+                        Comparator.nullsLast(Comparator.reverseOrder()));
+
+        Comparator<UserProfitRateRankingDto> byAssetDesc =
+                Comparator.comparing(UserProfitRateRankingDto::totalAsset,
+                        Comparator.nullsLast(Comparator.reverseOrder()));
+
+        Comparator<UserProfitRateRankingDto> tieBreaker =
+                Comparator.comparing(UserProfitRateRankingDto::nickname, Comparator.nullsLast(String::compareTo))
+                        .thenComparing(UserProfitRateRankingDto::userId, Comparator.nullsLast(Long::compareTo));
+
+        Comparator<UserProfitRateRankingDto> finalComparator =
+                (sort == RankingSort.TOTAL_ASSET_DESC)
+                        ? byAssetDesc.thenComparing(byProfitDesc).thenComparing(tieBreaker)
+                        : byProfitDesc.thenComparing(byAssetDesc).thenComparing(tieBreaker);
+
+        list.sort(finalComparator);
 
         for (int i = 0; i < list.size(); i++) {
-            UserProfitRateRankingDto dto = list.get(i);
+            var d = list.get(i);
             list.set(i, new UserProfitRateRankingDto(
-                    dto.userId(), dto.nickname(), dto.profitRate(), dto.totalAsset(), i + 1));
+                    d.userId(), d.nickname(), d.profitRate(), d.totalAsset(), i + 1
+            ));
         }
 
-        UserProfitRateRankingDto myRanking = list.stream()
-                .filter(dto -> Objects.equals(dto.userId(), myUserId))
-                .findFirst()
-                .orElse(null);
+        UserProfitRateRankingDto myRanking = (myUserId == null) ? null :
+                list.stream()
+                        .filter(dto -> Objects.equals(dto.userId(), myUserId))
+                        .findFirst()
+                        .orElse(null);
 
         return new UserProfitRateRankingListDto(list, myRanking, list.size(), isMarketOpen, LocalDateTime.now());
     }
 
     /**
-     * 자산 정보를 기반으로 수익률을 계산합니다.
+     * 개별 사용자의 자산 정보를 기반으로 수익률(%)을 계산합니다.
      * <p>
-     * - 총 매수 원금 = ∑(평균매수가 × 보유 수량)<br>
-     * - 총 평가 금액 = ∑(현재가 × 보유 수량)<br>
-     * - 수익률 = (평가금액 - 원금) / 원금 * 100 (% 단위)
+     * - 총 매수 원금 = ∑(평균 매수가 × 보유 수량)
+     * - 총 평가 금액 = ∑(현재가 × 보유 수량)
+     * - 수익률 = (평가금액 - 원금) / 원금 × 100
+     * - 원금이 0인 경우 0% 반환
      * </p>
      *
      * @param valuation 사용자 자산 평가 정보
-     * @return 수익률 (%), 계산 불가능하면 null
+     * @return 수익률(%) 값
      */
     public BigDecimal calculateProfitRate(UserAssetValuationDto valuation) {
         BigDecimal totalCost = valuation.getStocks().stream()
