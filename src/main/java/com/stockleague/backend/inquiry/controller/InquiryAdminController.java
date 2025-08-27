@@ -133,7 +133,7 @@ public class InquiryAdminController {
                                                 "answerId": 2,
                                                 "userId": 999,
                                                 "content": "확인하겠습니다.",
-                                                "createdAt": "2025-03-18T14:15:00Z"
+                                                "answeredAt": "2025-03-18T14:15:00Z"
                                               }
                                             }
                                             """

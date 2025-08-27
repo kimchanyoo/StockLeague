@@ -5,7 +5,6 @@ import com.stockleague.backend.inquiry.dto.request.InquiryCreateRequestDto;
 import com.stockleague.backend.inquiry.dto.request.InquiryUpdateRequestDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryCreateResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDeleteResponseDto;
-import com.stockleague.backend.inquiry.dto.response.InquiryDetailForAdminResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryDetailForUserResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryPageResponseDto;
 import com.stockleague.backend.inquiry.dto.response.InquiryUpdateResponseDto;
@@ -174,7 +173,7 @@ public class InquiryController {
     @Operation(summary = "문의사항 상세 정보 조회(유저용)", description = "유저가 1:1문의 상세 정보를 조회하는 API")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "문의사항 상세 조회 성공",
-                    content = @Content(schema = @Schema(implementation = InquiryDetailForAdminResponseDto.class),
+                    content = @Content(schema = @Schema(implementation = InquiryDetailForUserResponseDto.class),
                             examples = @ExampleObject(
                                     name = "InquiryDetailSuccess",
                                     summary = "문의 상세 조회 성공",
@@ -193,7 +192,7 @@ public class InquiryController {
                                                 "answerId": 2,
                                                 "userId": 999,
                                                 "content": "확인하겠습니다.",
-                                                "createdAt": "2025-03-18T14:15:00Z"
+                                                "answeredAt": "2025-03-18T14:15:00Z"
                                               }
                                             }
                                             """
@@ -217,7 +216,7 @@ public class InquiryController {
                     )
             )
     })
-    public ResponseEntity<InquiryDetailForUserResponseDto> getInquiryDetailForAdmin(
+    public ResponseEntity<InquiryDetailForUserResponseDto> getInquiryDetailForUser(
             @PathVariable Long inquiryId, Authentication authentication
     ) {
         Long userId = (Long) authentication.getPrincipal();
