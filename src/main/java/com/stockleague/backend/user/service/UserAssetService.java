@@ -42,6 +42,10 @@ public class UserAssetService {
      */
     @Transactional(readOnly = true)
     public UserAssetValuationDto getLiveAssetValuation(Long userId, boolean isMarketOpen) {
+        if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
+            throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_NOT_FOUND));
 

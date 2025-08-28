@@ -152,4 +152,8 @@ public class Order {
     }
 
     private static BigDecimal nz(BigDecimal v) { return v == null ? ZERO : v; }
+
+    public void cancelBySystem() {
+        this.setStatus(OrderStatus.CANCELED);
+    }
 }

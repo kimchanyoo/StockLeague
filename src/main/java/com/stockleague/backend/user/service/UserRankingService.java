@@ -136,6 +136,10 @@ public class UserRankingService {
                 Long userId = user.getId();
                 String nickname = user.getNickname();
 
+                if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
+                    continue;
+                }
+
                 UserAssetValuationDto valuation = userAssetService.getLiveAssetValuation(userId, true);
                 if (valuation == null) continue;
 
