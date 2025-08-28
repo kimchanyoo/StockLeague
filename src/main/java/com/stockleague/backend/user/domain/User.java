@@ -88,9 +88,10 @@ public class User {
     @Column(name = "last_nickname_changed_at")
     private LocalDateTime lastNicknameChangedAt;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private UserStatus status;
+    private UserStatus status = UserStatus.ACTIVE;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @PrimaryKeyJoinColumn
