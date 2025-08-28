@@ -66,43 +66,39 @@ public class UserRankingService {
      * @return 랭킹 결과 DTO
      */
     private UserProfitRateRankingListDto getRankingFromSnapshot(Long myUserId, RankingSort sort) {
-        List<Long> userIds = userRepository.findAllUserIds();
-
-        if (userIds.isEmpty()) {
-            return new UserProfitRateRankingListDto(
-                    List.of(), null, 0, false, LocalDateTime.now());
+        List<UserIdAndNicknameProjection> users = userRepository.findActiveIdAndNickname();
+        if (users.isEmpty()) {
+            return new UserProfitRateRankingListDto(List.of(), null, 0, false, LocalDateTime.now());
         }
 
-        String snapshotPrefix = REDIS_SNAPSHOT_PREFIX + LocalDate.now() + ":";
+        String prefix = REDIS_SNAPSHOT_PREFIX + LocalDate.now() + ":";
+        List<Long> ids = users.stream().map(UserIdAndNicknameProjection::getId).toList();
+        List<String> keys = ids.stream().map(id -> prefix + id).toList();
 
-        List<UserIdAndNicknameProjection> projections = userRepository.findIdAndNicknameByIds(userIds);
-        Map<Long, String> nicknameMap = projections.stream()
-                .collect(Collectors.toMap(UserIdAndNicknameProjection::getId, UserIdAndNicknameProjection::getNickname));
+        List<String> payloads = stringRedisTemplate.opsForValue().multiGet(keys);
 
-        List<UserProfitRateRankingDto> rankings = new ArrayList<>();
+        List<UserProfitRateRankingDto> rankings = new ArrayList<>(users.size());
+        for (int i = 0; i < ids.size(); i++) {
+            String json = (payloads == null || i >= payloads.size()) ? null : payloads.get(i);
+            if (json == null) continue;
 
-        for (Long userId : userIds) {
             try {
-                String json = stringRedisTemplate.opsForValue().get(snapshotPrefix + userId);
-                if (json == null) continue;
-
                 UserAssetSnapshotDto snapshot = objectMapper.readValue(json, UserAssetSnapshotDto.class);
                 BigDecimal profitRate = snapshot.getTotalProfitRate();
                 BigDecimal totalAsset = snapshot.getTotalAsset();
-
                 if (totalAsset == null) continue;
 
-                String nickname = nicknameMap.getOrDefault(userId, "탈퇴회원");
+                String nickname = users.get(i).getNickname();
 
                 rankings.add(new UserProfitRateRankingDto(
-                        userId,
+                        ids.get(i),
                         nickname,
-                        profitRate == null ? null : profitRate.setScale(2, RoundingMode.HALF_UP),
+                        (profitRate == null) ? null : profitRate.setScale(2, RoundingMode.HALF_UP),
                         totalAsset.setScale(0, RoundingMode.HALF_UP),
                         null
                 ));
             } catch (Exception e) {
-                log.warn("[스냅샷 랭킹 계산 실패] userId={}, err={}", userId, e.getMessage());
+                log.warn("[스냅샷 랭킹 계산 실패] userId={}, err={}", ids.get(i), e.getMessage());
             }
         }
 
@@ -123,22 +119,17 @@ public class UserRankingService {
      * @return 랭킹 결과 DTO
      */
     private UserProfitRateRankingListDto getLiveRanking(Long myUserId, RankingSort sort) {
-        List<Long> userIds = userRepository.findAllUserIds();
-        if (userIds.isEmpty()) {
+        List<UserIdAndNicknameProjection> users = userRepository.findActiveIdAndNickname();
+        if (users.isEmpty()) {
             return new UserProfitRateRankingListDto(List.of(), null, 0, true, LocalDateTime.now());
         }
 
-        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNicknameByIds(userIds);
         List<UserProfitRateRankingDto> rankings = new ArrayList<>(users.size());
 
         for (UserIdAndNicknameProjection user : users) {
             try {
                 Long userId = user.getId();
                 String nickname = user.getNickname();
-
-                if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
-                    continue;
-                }
 
                 UserAssetValuationDto valuation = userAssetService.getLiveAssetValuation(userId, true);
                 if (valuation == null) continue;

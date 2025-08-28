@@ -2,7 +2,6 @@ package com.stockleague.backend.user.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
-import com.stockleague.backend.infra.redis.TokenRedisService;
 import com.stockleague.backend.infra.redis.UserRedisCleanupService;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.dto.request.UserProfileUpdateRequestDto;
@@ -17,10 +16,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserRedisCleanupService userRedisCleanupService;
-    private final TokenRedisService tokenRedisService;
-    private final PlatformTransactionManager txm;
+    private final UserDeletionTxService deletionTx;
 
     private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
 
@@ -95,22 +90,9 @@ public class UserService {
             throw new GlobalException(GlobalErrorCode.INVALID_WITHDRAW_CONFIRM_MESSAGE);
         }
 
-        TransactionTemplate requiresNew = new TransactionTemplate(txm);
-        requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-
-        TransactionTemplate required = new TransactionTemplate(txm);
-        required.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-
-        requiresNew.executeWithoutResult(status -> {
-            int updated = userRepository.markDeleting(id);
-            if (updated == 0) throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
-        });
-
-        tokenRedisService.deleteRefreshToken(id);
-
-        userRedisCleanupService.purgeAllForUser(id);
-
-        required.executeWithoutResult(status -> userRepository.deleteById(id));
+        deletionTx.markDeleting(id);
+        deletionTx.cleanupRedis(id);
+        deletionTx.hardDeleteUser(id);
 
         return new UserWithdrawResponseDto(true, "회원 탈퇴가 완료되었습니다.");
     }

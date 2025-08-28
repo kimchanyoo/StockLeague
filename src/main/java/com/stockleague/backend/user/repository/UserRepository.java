@@ -20,11 +20,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByNickname(String nickname);
 
-    @Query("SELECT u.id FROM User u")
-    List<Long> findAllUserIds();
-
-    @Query("SELECT u.id AS id, u.nickname AS nickname FROM User u WHERE u.id IN :userIds")
-    List<UserIdAndNicknameProjection> findIdAndNicknameByIds(@Param("userIds") List<Long> userIds);
+    @Query("select u.id as id, u.nickname as nickname from User u where u.status = 'ACTIVE'")
+    List<UserIdAndNicknameProjection> findActiveIdAndNickname();
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
@@ -36,4 +33,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select (u.status = 'ACTIVE') from User u where u.id = :id")
     Boolean isActive(Long id);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "DELETE FROM users WHERE user_id = :id", nativeQuery = true)
+    int hardDeleteById(@Param("id") Long id);
 }

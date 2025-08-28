@@ -162,12 +162,4 @@ public class User {
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
     }
-
-    public void markDeleting() {
-        this.status = UserStatus.DELETING;
-    }
-
-    public void markDeleted() {
-        this.status = UserStatus.DELETED;
-    }
 }
