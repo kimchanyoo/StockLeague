@@ -94,7 +94,7 @@ logging:
 
         # WebSocket은 계속 억제
         org.springframework.web.socket: WARN
-        org.springframework.web.servlet.handler: WARN
+        org.springframework.web.servlet.handler: TRACE
         org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: WARN
         org.springframework.web.socket.handler: WARN
         org.springframework.web.socket.config: WARN
