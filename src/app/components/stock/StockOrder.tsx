@@ -152,7 +152,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         }
       }
     } catch (error) {
-      //console.error("주문 오류:", error);
+      console.error("주문 오류:", error);
       alert("주문 처리 중 오류가 발생했습니다.");
     }
   };
