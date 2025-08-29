@@ -53,14 +53,6 @@ public class OrderMatchExecutor {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
 
-        Long userId = order.getUser().getId();
-        if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
-            orderRepository.cancelOrderById(orderId, "USER_DELETING");
-            orderQueueRedisService.removeOrderFromQueue(OrderType.BUY, ticker, orderId);
-            log.info("[Match][BUY] skip: user {} is not active. orderId={} canceled.", userId, orderId);
-            return BigDecimal.ZERO;
-        }
-
         BigDecimal remaining = order.getRemainingAmount();
         List<OrderExecution> executions = new ArrayList<>();
         BigDecimal executedAmount = BigDecimal.ZERO;
@@ -99,13 +91,6 @@ public class OrderMatchExecutor {
         orderExecutionRepository.saveAll(executions);
         order.applyExecutionDelta(executedAmount, totalExecutedPrice);
         orderRepository.save(order);
-
-        if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
-            orderRepository.cancelOrderById(orderId, "USER_DELETING_DURING_MATCH");
-            orderQueueRedisService.removeOrderFromQueue(OrderType.BUY, ticker, orderId);
-            log.info("[Match][BUY] aborted mid-flight: user {} became inactive. orderId={} canceled.", userId, orderId);
-            return order.getRemainingAmount();
-        }
 
         applyBuyStock(order.getUser(), order.getStock(), executedAmount, order.getAverageExecutedPrice());
 
@@ -159,14 +144,6 @@ public class OrderMatchExecutor {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
 
-        Long userId = order.getUser().getId();
-        if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
-            orderRepository.cancelOrderById(orderId, "USER_DELETING");
-            orderQueueRedisService.removeOrderFromQueue(OrderType.SELL, ticker, orderId);
-            log.info("[Match][SELL] skip: user {} is not active. orderId={} canceled.", userId, orderId);
-            return BigDecimal.ZERO;
-        }
-
         BigDecimal remaining = order.getRemainingAmount();
         List<OrderExecution> executions = new ArrayList<>();
         BigDecimal executedAmount = BigDecimal.ZERO;
@@ -205,13 +182,6 @@ public class OrderMatchExecutor {
         orderExecutionRepository.saveAll(executions);
         order.applyExecutionDelta(executedAmount, totalExecutedPrice);
         orderRepository.save(order);
-
-        if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
-            orderRepository.cancelOrderById(orderId, "USER_DELETING_DURING_MATCH");
-            orderQueueRedisService.removeOrderFromQueue(OrderType.SELL, ticker, orderId);
-            log.info("[Match][SELL] aborted mid-flight: user {} became inactive. orderId={} canceled.", userId, orderId);
-            return order.getRemainingAmount();
-        }
 
         finalizeSellStock(order.getUser(), order.getStock(), executedAmount);
         applySellRevenue(order.getUser(), totalExecutedPrice);
