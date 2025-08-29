@@ -94,10 +94,6 @@ public class RankingLivePublisherScheduler {
                 continue;
             }
 
-            if (Boolean.FALSE.equals(userRepository.isActive(userId))) {
-                continue;
-            }
-
             publisher.publishMyRankingByProfit(su.getName(), profitByUser.get(userId), true);
             publisher.publishMyAssetRanking(su.getName(), assetByUser.get(userId), true);
         }

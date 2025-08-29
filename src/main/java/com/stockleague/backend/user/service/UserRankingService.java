@@ -14,7 +14,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -66,7 +65,7 @@ public class UserRankingService {
      * @return 랭킹 결과 DTO
      */
     private UserProfitRateRankingListDto getRankingFromSnapshot(Long myUserId, RankingSort sort) {
-        List<UserIdAndNicknameProjection> users = userRepository.findActiveIdAndNickname();
+        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNickname();
         if (users.isEmpty()) {
             return new UserProfitRateRankingListDto(List.of(), null, 0, false, LocalDateTime.now());
         }
@@ -119,7 +118,7 @@ public class UserRankingService {
      * @return 랭킹 결과 DTO
      */
     private UserProfitRateRankingListDto getLiveRanking(Long myUserId, RankingSort sort) {
-        List<UserIdAndNicknameProjection> users = userRepository.findActiveIdAndNickname();
+        List<UserIdAndNicknameProjection> users = userRepository.findIdAndNickname();
         if (users.isEmpty()) {
             return new UserProfitRateRankingListDto(List.of(), null, 0, true, LocalDateTime.now());
         }

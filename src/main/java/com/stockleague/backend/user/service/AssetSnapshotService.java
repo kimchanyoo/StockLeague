@@ -40,8 +40,6 @@ public class AssetSnapshotService {
 
         for (User user : allUsers) {
             try {
-                if(!user.isActive()) continue;
-
                 UserAssetValuationDto live = userAssetService.getLiveAssetValuation(user.getId(), false);
                 UserAssetSnapshotDto snapshot = UserAssetSnapshotDto.from(live);
 

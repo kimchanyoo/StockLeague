@@ -19,12 +19,6 @@ public class UserDeletionTxService {
     private final UserRedisCleanupService userRedisCleanupService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markDeleting(Long userId) {
-        int upd = userRepository.markDeleting(userId);
-        if (upd == 0) throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void hardDeleteUser(Long userId) {
         int rows = userRepository.hardDeleteById(userId);
         if (rows == 0) throw new GlobalException(GlobalErrorCode.USER_NOT_FOUND);

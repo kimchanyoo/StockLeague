@@ -87,11 +87,6 @@ public class User {
     @Column(name = "last_nickname_changed_at")
     private LocalDateTime lastNicknameChangedAt;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    private UserStatus status = UserStatus.ACTIVE;
-
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @PrimaryKeyJoinColumn
     private UserAsset userAsset;
@@ -157,9 +152,5 @@ public class User {
         this.isBanned = true;
         this.bannedAt = LocalDateTime.now();
         this.banReason = reason;
-    }
-
-    public boolean isActive() {
-        return this.status == UserStatus.ACTIVE;
     }
 }

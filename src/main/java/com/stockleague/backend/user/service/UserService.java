@@ -90,7 +90,6 @@ public class UserService {
             throw new GlobalException(GlobalErrorCode.INVALID_WITHDRAW_CONFIRM_MESSAGE);
         }
 
-        deletionTx.markDeleting(id);
         deletionTx.cleanupRedis(id);
         deletionTx.hardDeleteUser(id);
 
