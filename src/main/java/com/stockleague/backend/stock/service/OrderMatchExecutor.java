@@ -48,7 +48,7 @@ public class OrderMatchExecutor {
     /**
      * 매수 주문 1건 처리 (트랜잭션 경계) - 체결내역 저장 → 주문 갱신 → 커밋 후 개인 웹소켓으로 알림
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public BigDecimal processBuyOrder(Long orderId, String ticker, StockOrderBookDto orderBook) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
@@ -139,7 +139,7 @@ public class OrderMatchExecutor {
     /**
      * 매도 주문 1건 처리 (트랜잭션 경계)
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public BigDecimal processSellOrder(Long orderId, String ticker, StockOrderBookDto orderBook) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));

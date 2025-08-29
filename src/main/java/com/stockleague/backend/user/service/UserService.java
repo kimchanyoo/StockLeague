@@ -2,7 +2,6 @@ package com.stockleague.backend.user.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
-import com.stockleague.backend.infra.redis.UserRedisCleanupService;
 import com.stockleague.backend.user.domain.User;
 import com.stockleague.backend.user.dto.request.UserProfileUpdateRequestDto;
 import com.stockleague.backend.user.dto.request.UserWithdrawRequestDto;
@@ -23,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserRedisCleanupService userRedisCleanupService;
     private final UserDeletionTxService deletionTx;
 
     private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
