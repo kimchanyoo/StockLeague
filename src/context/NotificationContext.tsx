@@ -50,7 +50,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         try {
           // DB에서 기존 알림 가져오기
           await refreshNotifications();
-
+          await refreshUnreadCount(); 
           // STOMP 연결
           await connectStomp(accessToken, (msg) => {
             if (!msg) {
@@ -59,6 +59,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
             }
             if (isMounted) {
               setNotifications((prev) => [msg, ...prev]);
+              refreshUnreadCount();
             }
           });
         } catch (error: any) {

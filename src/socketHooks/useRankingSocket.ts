@@ -1,41 +1,40 @@
 import { useEffect, useState, useRef } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
-import { getProfitRanking, GetProfitRankingResponse } from "@/lib/api/rank";
+import { getRanking, GetRankingResponse, RankingMode } from "@/lib/api/rank";
 import { useAuth } from "@/context/AuthContext";
 
-interface UseProfitRankingParams {
-  onUpdateGlobal: (data: GetProfitRankingResponse) => void;
-  onUpdateMe: (data: GetProfitRankingResponse) => void;
+interface UseRankingSocketParams {
+  mode: RankingMode;
+  onUpdateGlobal: (data: GetRankingResponse) => void;
+  onUpdateMe: (data: GetRankingResponse) => void;
 }
 
-export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankingParams) => {
+export const useRankingSocket = ({ mode, onUpdateGlobal, onUpdateMe }: UseRankingSocketParams) => {
   const { accessToken } = useAuth();
   const [isMarketOpen, setIsMarketOpen] = useState<boolean | null>(null);
   const clientRef = useRef<Client | null>(null);
 
+  // 초기 API
   useEffect(() => {
     if (!accessToken) return;
 
-    console.log("🔑 accessToken 확인됨. 장중 여부 및 초기 데이터 요청 중...");
-    getProfitRanking()
+    getRanking(mode)
       .then((data) => {
-        console.log("📦 초기 자산 데이터 수신:", data);
         setIsMarketOpen(data.isMarketOpen);
         onUpdateGlobal(data);
         onUpdateMe(data);
       })
       .catch((error) => {
-        //console.error("❌ 초기 자산 데이터 요청 실패:", error);
+        console.error(`❌ ${mode} 랭킹 API 실패:`, error);
       });
-  }, [accessToken, onUpdateGlobal, onUpdateMe]);
+  }, [accessToken, mode, onUpdateGlobal, onUpdateMe]);
 
+  // WebSocket
   useEffect(() => {
-    if (!isMarketOpen || !accessToken) {
-      console.log("⏸️ WebSocket 연결 조건 불충족. 연결하지 않음.");
-      return;
-    }
+    if (!isMarketOpen || !accessToken) return;
 
-    console.log("🔌 WebSocket 클라이언트 생성 및 연결 시도 중...");
+    const topic = mode === "profit" ? "/topic/ranking/profit" : "/topic/ranking/asset";
+    const queue = mode === "profit" ? "/user/queue/ranking/me/profit" : "/user/queue/ranking/me/asset";
 
     const client = new Client({
       webSocketFactory: () => new WebSocket(process.env.NEXT_PUBLIC_SOCKET_URL!),
@@ -44,29 +43,17 @@ export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankin
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        //console.log("✅ WebSocket 연결 성공. /topic/ranking 구독 요청 중...");
+        console.log(`✅ ${mode} WebSocket 연결 성공`);
 
-        // 전체 랭킹 구독
-        client.subscribe("/topic/ranking", (message: IMessage) => {
-          const data: GetProfitRankingResponse = JSON.parse(message.body);
-          console.log("📡 실시간 자산 데이터 수신:", data);
+        client.subscribe(topic, (message: IMessage) => {
+          const data: GetRankingResponse = JSON.parse(message.body);
           onUpdateGlobal(data);
         });
 
-        // 개인 랭킹 구독
-        client.subscribe("/user/queue/ranking/me", (message: IMessage) => {
-          const data: GetProfitRankingResponse = JSON.parse(message.body);
-          console.log("📡 개인 랭킹 데이터 수신:", data);
+        client.subscribe(queue, (message: IMessage) => {
+          const data: GetRankingResponse = JSON.parse(message.body);
           onUpdateMe(data);
         });
-
-        console.log("📬 /topic/ranking 구독 완료.");
-      },
-      onStompError: (frame) => {
-        //console.error("❗ STOMP 에러 발생:", frame);
-      },
-      onWebSocketError: (event) => {
-        //console.error("❗ WebSocket 에러 발생:", event);
       },
     });
 
@@ -74,9 +61,9 @@ export const useRankingSocket = ({ onUpdateGlobal, onUpdateMe }: UseProfitRankin
     clientRef.current = client;
 
     return () => {
-      console.log("🔌 WebSocket 연결 해제 중...");
+      console.log("🔌 WebSocket 해제");
       client.deactivate();
       clientRef.current = null;
     };
-  }, [isMarketOpen, accessToken, onUpdateGlobal, onUpdateMe]);
+  }, [isMarketOpen, accessToken, mode, onUpdateGlobal, onUpdateMe]);
 };

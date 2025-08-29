@@ -21,7 +21,7 @@ export const useAssetValuationSocket = ({
     
     getUserAssetValuation()
       .then((data) => {
-        //console.log("📦 초기 자산 데이터:", data);
+        console.log("📦 초기 자산 데이터:", data);
         setIsMarketOpen(data.marketOpen);
         onUpdate(data);
       })
@@ -62,7 +62,7 @@ export const useAssetValuationSocket = ({
         client.subscribe("/user/queue/asset", (message: IMessage) => {
           try {
             const data: UserAssetValuation = JSON.parse(message.body);
-            console.log("📡 실시간 자산 데이터 수신:", data);
+            //console.log("📡 실시간 자산 데이터 수신:", data);
             if (data.marketOpen) {
               onUpdate(data);
             }

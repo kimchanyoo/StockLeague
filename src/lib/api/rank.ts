@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 
-export interface ProfitRankingItem {
+export interface UserRanking {
   userId: number;
   nickname: string;
   profitRate: string;
@@ -8,14 +8,22 @@ export interface ProfitRankingItem {
   ranking: number;
 }
 
-export interface GetProfitRankingResponse {
-  rankingList: ProfitRankingItem[];
-  myRanking: ProfitRankingItem;
+export interface GetRankingResponse {
+  rankingList: UserRanking[];
+  myRanking: UserRanking | null;
   totalCount: number;
   isMarketOpen: boolean;
+  generatedAt: string;
 }
 
-export const getProfitRanking = async (): Promise<GetProfitRankingResponse> => {
-  const res = await axiosInstance.get<GetProfitRankingResponse>("/api/v1/ranking/profit-rate");
-  return res.data;
+export type RankingMode = "profit" | "asset";
+
+export const getRanking = async (mode: RankingMode): Promise<GetRankingResponse> => {
+  const endpoint =
+    mode === "profit"
+      ? "/api/v1/ranking/profit-rate"
+      : "/api/v1/ranking/total-asset";
+
+  const { data } = await axiosInstance.get<GetRankingResponse>(endpoint);
+  return data;
 };

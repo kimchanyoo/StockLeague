@@ -5,19 +5,13 @@ import "./rank.css";
 import DownIcon from "@mui/icons-material/ArrowDropDown";
 import { useAuth } from "@/context/AuthContext";
 import { useRankingSocket } from "@/socketHooks/useRankingSocket";
-
-interface UserRanking {
-  userId: number;
-  nickname: string;
-  profitRate: string;
-  totalAsset: string;
-  ranking: number;
-}
+import { UserRanking, RankingMode } from "@/lib/api/rank";
 
 export default function Rank() {
-  const { user, accessToken } = useAuth();
+  const { user } = useAuth();
   const isLoggedIn = !!user;
 
+  const [mode, setMode] = useState<RankingMode>("profit");
   const [visibleCount, setVisibleCount] = useState(20);
   const [myRankVisible, setMyRankVisible] = useState(true);
   const [rankingData, setRankingData] = useState<UserRanking[]>([]);
@@ -25,16 +19,12 @@ export default function Rank() {
 
   const myRankRef = useRef<HTMLDivElement>(null);
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + 20);
-  };
+  const handleLoadMore = () => setVisibleCount((prev) => prev + 20);
 
-  // 내 순위 화면 표시 여부 관찰
+  // 내 순위 화면 표시 여부
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setMyRankVisible(!entry.isIntersecting);
-      },
+      ([entry]) => setMyRankVisible(!entry.isIntersecting),
       { threshold: 0.1 }
     );
     if (myRankRef.current) observer.observe(myRankRef.current);
@@ -43,26 +33,15 @@ export default function Rank() {
     };
   }, [visibleCount, rankingData]);
 
-  // onUpdate 콜백 useCallback으로 안정화
-  const onUpdateGlobal = useCallback((data: {
-    rankingList: UserRanking[];
-    totalCount: number;
-    isMarketOpen: boolean;
-  }) => {
-      setRankingData(data.rankingList);
-    },
-    []
-  );
-  const onUpdateMe = useCallback((data: {
-    myRanking: UserRanking;
-    totalCount: number;
-    isMarketOpen: boolean;
-  }) => {
+  const onUpdateGlobal = useCallback((data: any) => {
+    setRankingData(data.rankingList);
+  }, []);
+
+  const onUpdateMe = useCallback((data: any) => {
     setMyRanking(data.myRanking);
   }, []);
 
-  // 실시간 or API 랭킹 데이터 구독
-  useRankingSocket({ onUpdateGlobal, onUpdateMe });
+  useRankingSocket({ mode, onUpdateGlobal, onUpdateMe });
 
   const visibleRanks = rankingData.slice(0, visibleCount);
 
@@ -76,6 +55,23 @@ export default function Rank() {
   return (
     <div className="rank_container">
       <h1 className="title">👑 랭킹 👑</h1>
+
+      {/* 모드 토글 버튼 */}
+      <div className="ranking-toggle">
+        <button
+          className={mode === "profit" ? "active" : ""}
+          onClick={() => setMode("profit")}
+        >
+          수익률 기준
+        </button>
+        <button
+          className={mode === "asset" ? "active" : ""}
+          onClick={() => setMode("asset")}
+        >
+          총자산 기준
+        </button>
+      </div>
+
       <div className="rankBox">
         <div className="rankCategory">
           <h1>순위</h1>
@@ -118,6 +114,7 @@ export default function Rank() {
           </div>
         )}
       </div>
+
       {visibleCount < rankingData.length && (
         <button className="loadMoreBtn" onClick={handleLoadMore}>
           더보기 <DownIcon fontSize="large" />

@@ -11,12 +11,6 @@ interface MyOrderProps {
   accessToken: string;
 }
 
-interface AssetData {
-  totalAsset: string; // API 응답에선 string 타입으로 옵니다
-  cashBalance: string;
-  marketOpen: boolean;
-}
-
 const MyOrder = ({ activeTab, accessToken }: MyOrderProps) => {
   const [orders, setOrders] = useState<any[]>([]);
   const [asset, setAsset] = useState<UserAssetValuation | null>(null);
