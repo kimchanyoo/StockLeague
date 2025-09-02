@@ -233,8 +233,8 @@ public class UserController {
             @RequestBody @Valid UserWithdrawRequestDto request) {
         Long userId = (Long) authentication.getPrincipal();
 
-        UserWithdrawResponseDto result = userService.deleteUser(userId, request);
         authService.clearUserTokens(userId, servletRequest, response);
+        UserWithdrawResponseDto result = userService.deleteUser(userId, request);
 
         return ResponseEntity.ok(result);
     }
