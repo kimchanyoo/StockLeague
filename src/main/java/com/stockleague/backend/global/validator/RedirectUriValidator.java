@@ -12,7 +12,7 @@ public class RedirectUriValidator {
             "http://localhost:3000/auth/callback",
             "http://130.162.145.59/auth/callback",
             "https://130.162.145.59/auth/callback",
-            "https://130.162.145.59:8080/auth/callback",
+            "http://130.162.145.59:8080/auth/callback",
             "http://130.162.145.59:8080/login/oauth2/code/kakao"
     );
 
