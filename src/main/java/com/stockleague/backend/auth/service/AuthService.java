@@ -51,14 +51,27 @@ public class AuthService {
     private static final String REFRESH_COOKIE_NAME = "refresh_token";
 
     public OAuthLoginResponseDto login(OAuthLoginRequestDto requestDto,
-                                       HttpServletResponse response) {
+                                       HttpServletResponse response,
+                                       HttpServletRequest httpRequest) {
         OAuthClient client = oauthClients.stream()
                 .filter(c -> c.supports(OauthServerType.valueOf(requestDto.provider())))
                 .findFirst()
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.UNSUPPORTED_OAUTH_PROVIDER));
 
-        if(!RedirectUriValidator.isAllowed(requestDto.redirectUri())) {
-            log.warn("허용되지 않은 redirectUri 요청: {}", requestDto.redirectUri());
+        String host = httpRequest.getHeader("X-Forwarded-Host");
+        String proto = httpRequest.getHeader("X-Forwarded-Proto");
+
+        if (host == null) {
+            host = httpRequest.getHeader("Host");
+        }
+        if (proto == null) {
+            proto = httpRequest.getScheme();
+        }
+
+        String effectiveRedirectUri = proto + "://" + host + "/auth/callback";
+
+        if(!RedirectUriValidator.isAllowed(effectiveRedirectUri)) {
+            log.warn("허용되지 않은 redirectUri 요청: {}", effectiveRedirectUri);
             throw new GlobalException(GlobalErrorCode.INVALID_REDIRECT_URI);
         }
 

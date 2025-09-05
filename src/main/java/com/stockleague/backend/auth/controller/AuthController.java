@@ -118,9 +118,10 @@ public class AuthController {
     })
     public ResponseEntity<OAuthLoginResponseDto> socialLogin(
             @RequestBody @Valid OAuthLoginRequestDto requestDto,
+            HttpServletRequest request,
             HttpServletResponse response
     ) {
-        return ResponseEntity.ok(authService.login(requestDto, response));
+        return ResponseEntity.ok(authService.login(requestDto, response, request));
     }
 
     @PostMapping("/logout")

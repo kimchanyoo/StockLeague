@@ -11,6 +11,7 @@ public class RedirectUriValidator {
     private static final Set<String> WHITELIST = Set.of(
             "http://localhost:3000/auth/callback",
             "http://130.162.145.59/auth/callback",
+            "https://130.162.145.59/auth/callback",
             "http://130.162.145.59:8080/login/oauth2/code/kakao"
     );
 
