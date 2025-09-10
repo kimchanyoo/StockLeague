@@ -40,7 +40,7 @@
 ---
 
 ## 🛠 기술 스택
-- **Frontend**: Next.js (App Router), TypeScript, React Query, Recoil/Redux, TailwindCSS, Recharts, lightweight-charts  
+- **Frontend**: Next.js (App Router), TypeScript, React Query, TailwindCSS, Recharts, lightweight-charts  
 - **Backend**: Spring Boot, JPA, Redis, WebSocket (STOMP)  
 - **Database**: MySQL  
 - **Infra**: AWS, Docker  
