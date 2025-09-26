@@ -255,14 +255,6 @@ public class AuthService {
         return accessToken;
     }
 
-//    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-//        return Arrays.stream(request.getCookies())
-//                .filter(cookie -> "refresh_token".equals(cookie.getName()))
-//                .findFirst()
-//                .map(Cookie::getValue)
-//                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN));
-//    }
-
     private Long getValidUserIdFromRefreshToken(String refreshToken, HttpServletResponse response) {
         if (!jwtProvider.validateToken(refreshToken)) {
             tokenCookieHandler.removeRefreshTokenCookie(response);
