@@ -11,6 +11,8 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -180,12 +182,12 @@ public class JwtProvider {
     }
 
     // 테스트 유저용 accessToken 생성
-    public String createTestAccessToken(String oauthId, OauthServerType provider) {
-        Date exp = Date.from(Instant.now().plus(10, ChronoUnit.YEARS));
+    public String createTestAccessToken(Long userId, int years) {
+        Date exp = Date.from(OffsetDateTime.now(ZoneOffset.UTC).plusYears(years).toInstant());
         return Jwts.builder()
-                .setSubject(oauthId)
+                .setSubject(String.valueOf(userId))
                 .claim("type", "access")
-                .claim("provider", provider.name())
+                .claim("test", true)
                 .setIssuedAt(new Date())
                 .setExpiration(exp)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

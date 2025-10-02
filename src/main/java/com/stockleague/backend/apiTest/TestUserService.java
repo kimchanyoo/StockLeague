@@ -63,7 +63,7 @@ public class TestUserService {
 
             user.setUserAsset(userAsset);
 
-            String accessToken = jwtProvider.createTestAccessToken(user.getOauthId(), user.getProvider());
+            String accessToken = jwtProvider.createTestAccessToken(user.getId(), 10);
 
             result.add(TokenItem.builder()
                     .userId(user.getId())
