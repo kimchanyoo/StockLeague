@@ -23,7 +23,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
     private final JwtHandshakeHandler jwtHandshakeHandler;
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
-//    private final WebSocketEventLogger webSocketEventLogger;
 
     @Bean
     public ThreadPoolTaskScheduler wsTaskScheduler() {
