@@ -10,8 +10,7 @@ public class MarketTimeUtil {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final LocalTime MARKET_OPEN = LocalTime.of(8, 59);
-    private static final LocalTime ORDERBOOK_CUTOFF = LocalTime.of(15, 0);
-    private static final LocalTime MARKET_CLOSE = LocalTime.of(15, 30);
+    private static final LocalTime MARKET_CLOSE = LocalTime.of(19, 0);
 
     private MarketTimeUtil() {
         throw new UnsupportedOperationException("Utility class");
@@ -39,7 +38,7 @@ public class MarketTimeUtil {
         ZonedDateTime now = ZonedDateTime.now(KST);
         if (!isWeekday(now)) return false;
         LocalTime t = now.toLocalTime();
-        return !t.isBefore(MARKET_OPEN) && t.isBefore(ORDERBOOK_CUTOFF);
+        return !t.isBefore(MARKET_OPEN) && t.isBefore(MARKET_CLOSE);
     }
 
     private static boolean isWeekday(ZonedDateTime zdt) {
