@@ -10,7 +10,7 @@ public class MarketTimeUtil {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final LocalTime MARKET_OPEN = LocalTime.of(8, 59);
-    private static final LocalTime MARKET_CLOSE = LocalTime.of(19, 0);
+    private static final LocalTime MARKET_CLOSE = LocalTime.of(23, 0);
 
     private MarketTimeUtil() {
         throw new UnsupportedOperationException("Utility class");
