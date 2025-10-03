@@ -65,6 +65,10 @@ public class ReservedCash {
     private LocalDateTime updatedAt;
 
     public void markAsRefunded(BigDecimal refundedAmount) {
+        if (Boolean.TRUE.equals(this.refunded)) {
+            return;
+        }
+
         this.refunded = true;
         this.refundedAmount = refundedAmount;
     }

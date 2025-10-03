@@ -18,11 +18,9 @@ import org.springframework.stereotype.Component;
 public class OrderMatchingScheduler {
 
     private final OrderQueueRedisService orderQueueRedisService;
-    private final StockOrderBookRedisService stockOrderBookRedisService;
-
     private final OrderMatchExecutor orderMatchExecutor;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 300)
     public void matchOrdersFromRedis() {
         if(MarketTimeUtil.isMarketClosed()){
             return;
@@ -35,13 +33,10 @@ public class OrderMatchingScheduler {
     }
 
     private void processBuyOrders(String ticker) {
-        StockOrderBookDto orderBook = stockOrderBookRedisService.get(ticker);
-        if (orderBook == null) return;
-
         List<Long> orderIds = orderQueueRedisService.getWaitingOrderIds(OrderType.BUY, ticker);
         for (Long orderId : orderIds) {
             try {
-                orderMatchExecutor.processBuyOrder(orderId, ticker, orderBook);
+                orderMatchExecutor.processBuyOrder(orderId, ticker);
             } catch (Exception e) {
                 log.warn("[Match][BUY] orderId={} 처리 실패 (다음 주문 계속)", orderId, e);
             }
@@ -49,13 +44,10 @@ public class OrderMatchingScheduler {
     }
 
     private void processSellOrders(String ticker) {
-        StockOrderBookDto orderBook = stockOrderBookRedisService.get(ticker);
-        if (orderBook == null) return;
-
         List<Long> orderIds = orderQueueRedisService.getWaitingOrderIds(OrderType.SELL, ticker);
         for (Long orderId : orderIds) {
             try {
-                orderMatchExecutor.processSellOrder(orderId, ticker, orderBook);
+                orderMatchExecutor.processSellOrder(orderId, ticker);
             } catch (Exception e) {
                 log.warn("[Match][SELL] orderId={} 처리 실패 (다음 주문 계속)", orderId, e);
             }
