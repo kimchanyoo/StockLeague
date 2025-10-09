@@ -16,7 +16,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrimaryKeyJoinColumn;
@@ -85,6 +84,9 @@ public class User {
     @Column(name = "ban_reason")
     private String banReason;
 
+    @Column(name = "last_nickname_changed_at")
+    private LocalDateTime lastNicknameChangedAt;
+
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @PrimaryKeyJoinColumn
     private UserAsset userAsset;
@@ -139,16 +141,11 @@ public class User {
 
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;
+
     }
 
     public void increaseWarningCount() {
         this.warningCount++;
-    }
-
-    public void decreaseWarningCount() {
-        if (this.warningCount > 0) {
-            this.warningCount--;
-        }
     }
 
     public void ban(String reason) {

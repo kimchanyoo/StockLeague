@@ -64,6 +64,11 @@ jobs:
             REDIS_PASSWORD=${{secrets.REDIS_PASSWORD}}
             OPENAPI_API_KEY=${{secrets.OPENAPI_API_KEY}}
             OPENAPI_API_SECRET=${{secrets.OPENAPI_API_SECRET}}
+            
+            SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=${{secrets.HIKARI_MAXIMUM_POOL_SIZE}}
+            SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=${{secrets.HIKARI_MINIMUM_IDLE}}
+            SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT=${{secrets.HIKARI_CONNECTION_TIMEOUT}}
+            
             EOF
 
       - name: Upload docker-compose.yml to server
@@ -84,7 +89,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/app
+            cd /home/ubuntu/
             docker-compose stop
             docker-compose pull
             docker image prune -f

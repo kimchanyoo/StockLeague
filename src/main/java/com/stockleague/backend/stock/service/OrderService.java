@@ -49,9 +49,6 @@ public class OrderService {
     private final UserStockRepository userStockRepository;
     private final OrderQueueRedisService orderQueueRedisService;
 
-    private final OrderMatchExecutor orderMatchExecutor;
-    private final StockOrderBookRedisService stockOrderBookRedisService;
-
     /**
      * 사용자가 종목 티커(ticker)와 주문 정보(가격, 수량)를 기반으로 매수 주문을 생성합니다.
      * <p>
@@ -84,21 +81,7 @@ public class OrderService {
         BigDecimal reservedAmount = order.getOrderPrice().multiply(order.getOrderAmount());
         reserveCash(user, order, reservedAmount);
 
-        BigDecimal remaining;
-        if (regular) {
-            StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
-            if (ob == null) {
-                remaining = order.getRemainingAmount();
-            } else {
-                remaining = orderMatchExecutor.processBuyOrder(order.getId(), stock.getStockTicker(), ob);
-            }
-        } else {
-            remaining = order.getRemainingAmount();
-        }
-
-        if (remaining.compareTo(BigDecimal.ZERO) > 0) {
-            orderQueueRedisService.saveWaitingOrder(order);
-        }
+        orderQueueRedisService.saveWaitingOrder(order);
 
         return BuyOrderResponseDto.from();
     }
@@ -134,21 +117,7 @@ public class OrderService {
 
         orderRepository.save(order);
 
-        BigDecimal remaining;
-        if (regular) {
-            StockOrderBookDto ob = stockOrderBookRedisService.get(stock.getStockTicker());
-            if (ob == null) {
-                remaining = order.getRemainingAmount();
-            } else {
-                remaining = orderMatchExecutor.processSellOrder(order.getId(), stock.getStockTicker(), ob);
-            }
-        } else {
-            remaining = order.getRemainingAmount();
-        }
-
-        if (remaining.compareTo(BigDecimal.ZERO) > 0) {
-            orderQueueRedisService.saveWaitingOrder(order);
-        }
+        orderQueueRedisService.saveWaitingOrder(order);
 
         return SellOrderResponseDto.from();
     }
@@ -248,10 +217,23 @@ public class OrderService {
      * @throws GlobalException USER_STOCK_NOT_FOUND - 사용자가 해당 종목을 보유하고 있지 않은 경우
      */
     private void unlockSellStock(User user, Stock stock, BigDecimal amount) {
-        UserStock userStock = userStockRepository.findByUserAndStock(user, stock)
+        UserStock us = userStockRepository.findByUserAndStock(user, stock)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
 
-        userStock.unlockQuantity(amount);
+        BigDecimal beforeLocked = us.getLockedQuantity();
+        BigDecimal beforeQty    = us.getQuantity();
+
+        us.unlockQuantity(amount);
+        userStockRepository.save(us);
+
+        log.info("[UserStock][CANCEL] userId={}, ticker={}, locked {} -> {}, qty {} -> {} (unlock={})",
+                user.getId(),
+                stock.getStockTicker(),
+                beforeLocked.stripTrailingZeros().toPlainString(),
+                us.getLockedQuantity().stripTrailingZeros().toPlainString(),
+                beforeQty.stripTrailingZeros().toPlainString(),
+                us.getQuantity().stripTrailingZeros().toPlainString(),
+                amount.stripTrailingZeros().toPlainString());
     }
 
     /**

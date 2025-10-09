@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,13 +20,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByNickname(String nickname);
 
-    @Query("SELECT u.id FROM User u")
-    List<Long> findAllUserIds();
-
-    @Query("SELECT u.id AS id, u.nickname AS nickname FROM User u WHERE u.id IN :userIds")
-    List<UserIdAndNicknameProjection> findIdAndNicknameByIds(@Param("userIds") List<Long> userIds);
+    @Query("select u.id as id, u.nickname as nickname from User u")
+    List<UserIdAndNicknameProjection> findIdAndNickname();
 
     long countByCreatedAtAfter(LocalDateTime dateTime);
 
     long countByIsBannedFalse();
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = "DELETE FROM users WHERE user_id = :id", nativeQuery = true)
+    int hardDeleteById(@Param("id") Long id);
 }

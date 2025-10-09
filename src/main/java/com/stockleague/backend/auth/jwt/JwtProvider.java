@@ -10,6 +10,10 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -175,6 +179,19 @@ public class JwtProvider {
             log.error("Temp 토큰 처리 중 예외: {}", e.getMessage());
             throw new GlobalException(GlobalErrorCode.INVALID_TEMP_TOKEN);
         }
+    }
+
+    // 테스트 유저용 accessToken 생성
+    public String createTestAccessToken(Long userId, int years) {
+        Date exp = Date.from(OffsetDateTime.now(ZoneOffset.UTC).plusYears(years).toInstant());
+        return Jwts.builder()
+                .setSubject(String.valueOf(userId))
+                .claim("type", "access")
+                .claim("test", true)
+                .setIssuedAt(new Date())
+                .setExpiration(exp)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
     // 내부 정적 클래스

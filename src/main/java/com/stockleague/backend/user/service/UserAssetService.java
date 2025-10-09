@@ -63,7 +63,7 @@ public class UserAssetService {
             StockPriceDto latestPrice = stockPriceRedisService.getLatest(ticker);
             BigDecimal totalQuantity = us.getQuantity().add(us.getLockedQuantity());
 
-            if (latestPrice == null) {
+            if (latestPrice == null || totalQuantity.compareTo(BigDecimal.ZERO) <= 0) {
                 continue;
             }
 

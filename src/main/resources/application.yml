@@ -15,9 +15,9 @@ spring:
         password: ${SPRING_DATASOURCE_PASSWORD}
         driver-class-name: org.postgresql.Driver
         hikari:
-            connection-timeout: 30000
-            maximum-pool-size: 10
-            minimum-idle: 2
+            connection-timeout: 2000
+            maximum-pool-size: 40
+            minimum-idle: 10
             idle-timeout: 600000
             max-lifetime: 1800000
 
@@ -75,18 +75,30 @@ logging:
         # 전체 기본은 INFO
         root: INFO
 
-        # Spring 프레임워크 전반은 경고만
+        # Spring 전반은 경고
         org.springframework: WARN
         org.springframework.web: WARN
 
-        # WebSocket/메시징은 평소엔 경고만
+        # ▶ 요청 흐름/예외 핵심 포인트만 INFO
+        org.springframework.web.servlet.DispatcherServlet: INFO            # "Completed 200 OK" 등 요청/응답 요약
+        org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: INFO  # @ExceptionHandler 매핑
+        org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler: INFO     # 스프링 기본 예외 처리
+        org.springframework.web.bind: INFO                               # 바인딩/Validation 오류 원인
+        org.springframework.http.converter: WARN                         # 바디 컨버팅 문제
+
+        # 보안 흐름(401/403 원인 파악)
+        org.springframework.security: INFO
+        org.springframework.security.web.access: INFO
+        org.springframework.security.authentication: INFO
+        org.springframework.security.oauth2: INFO
+
+        # WebSocket은 계속 억제
         org.springframework.web.socket: WARN
-        org.springframework.web.servlet.handler: WARN
+        org.springframework.web.servlet.handler: TRACE
         org.springframework.web.socket.server.support.WebSocketHttpRequestHandler: WARN
         org.springframework.web.socket.handler: WARN
         org.springframework.web.socket.config: WARN
         org.springframework.web.socket.sockjs: WARN
-
         org.springframework.web.socket.messaging: WARN
         org.springframework.messaging: WARN
         org.springframework.messaging.simp: WARN
@@ -98,7 +110,7 @@ logging:
         org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry: WARN
         org.springframework.messaging.simp.user.DefaultSimpUserRegistry: WARN
 
-        # Hibernate 완전 차단 + 자체 경고만
+        # Hibernate: SQL은 계속 끄되, DB 예외만 보이도록
         org.hibernate.SQL: OFF
         org.hibernate.type: OFF
         org.hibernate.type.descriptor.sql: OFF
@@ -106,19 +118,22 @@ logging:
         org.hibernate.orm.jdbc.bind: OFF
         org.hibernate.stat: OFF
         org.hibernate: WARN
+        # ▶ 제일 중요한 포인트: 실제 SQL 오류 원인(제약조건 위반 등)
+        org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
 
-        # 톰캣이 종종 뿜는 이상한 요청/스캔 로그는 ERROR만
+        # 톰캣 잡음 억제
         org.apache.coyote.http11.Http11Processor: ERROR
         org.apache.catalina.connector: ERROR
 
-        # 정적 리소스 404(예: /ws 를 정적 자원으로 찾다가 터지는 로그) 억제
+        # 정적리소스/기본 에러컨트롤러 억제
         org.springframework.web.servlet.resource: ERROR
-        # 기본 에러 컨트롤러 404 스팸 억제 (favicon.ico 등)
         org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController: OFF
 
-        # 프로젝트 내부 로거
+        # 프로젝트 로거
         com.stockleague.backend: INFO
-        com.stockleague.backend.global.exception: WARN
+        # 컨트롤러는 디버깅 때만 한 단계 올려도 좋아요
+        com.stockleague.backend..controller: DEBUG
+        com.stockleague.backend.global.exception: INFO
         com.stockleague.backend.openapi.parser.KisWebSocketResponseParser: INFO
         com.stockleague.backend.infra.redis.StockPriceRedisService: INFO
         com.stockleague.backend.infra.redis.StockOrderBookRedisService: INFO

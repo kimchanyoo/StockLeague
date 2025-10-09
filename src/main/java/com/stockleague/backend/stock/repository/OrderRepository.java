@@ -4,9 +4,12 @@ import com.stockleague.backend.stock.domain.Order;
 import com.stockleague.backend.stock.domain.OrderStatus;
 import com.stockleague.backend.user.domain.User;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -37,4 +40,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return 해당 상태의 주문 목록을 담은 {@link Page<Order>} 객체
      */
     Page<Order> findByUserAndStatusIn(User user, List<OrderStatus> statuses, Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update Order o set o.status = 'CANCELED'where o.id = :orderId")
+    int cancelOrderById(Long orderId, String reason);
+
+    @Query("""
+        select o from Order o
+        join fetch o.stock s
+        where o.user.id = :userId and o.status in :statuses
+    """)
+    List<Order> findByUserIdAndStatusIn(Long userId, Set<OrderStatus> statuses);
 }

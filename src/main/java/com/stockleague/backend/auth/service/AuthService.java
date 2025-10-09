@@ -48,15 +48,30 @@ public class AuthService {
     private static final Pattern nicknamePattern = Pattern.compile("^[a-zA-Z0-9가-힣]{2,10}$");
     private final TokenCookieHandler tokenCookieHandler;
 
+    private static final String REFRESH_COOKIE_NAME = "refresh_token";
+
     public OAuthLoginResponseDto login(OAuthLoginRequestDto requestDto,
-                                       HttpServletResponse response) {
+                                       HttpServletResponse response,
+                                       HttpServletRequest httpRequest) {
         OAuthClient client = oauthClients.stream()
                 .filter(c -> c.supports(OauthServerType.valueOf(requestDto.provider())))
                 .findFirst()
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.UNSUPPORTED_OAUTH_PROVIDER));
 
-        if(!RedirectUriValidator.isAllowed(requestDto.redirectUri())) {
-            log.warn("허용되지 않은 redirectUri 요청: {}", requestDto.redirectUri());
+        String host = httpRequest.getHeader("X-Forwarded-Host");
+        String proto = httpRequest.getHeader("X-Forwarded-Proto");
+
+        if (host == null) {
+            host = httpRequest.getHeader("Host");
+        }
+        if (proto == null) {
+            proto = httpRequest.getScheme();
+        }
+
+        String effectiveRedirectUri = proto + "://" + host + "/auth/callback";
+
+        if(!RedirectUriValidator.isAllowed(effectiveRedirectUri)) {
+            log.warn("허용되지 않은 redirectUri 요청: {}", effectiveRedirectUri);
             throw new GlobalException(GlobalErrorCode.INVALID_REDIRECT_URI);
         }
 
@@ -151,30 +166,49 @@ public class AuthService {
 
     public OAuthLogoutResponseDto logout(HttpServletRequest request, HttpServletResponse response) {
         String accessToken = jwtProvider.resolveToken(request);
-        String refreshToken = extractRefreshTokenFromCookie(request);
 
-        if (!jwtProvider.validateToken(accessToken)) {
-            throw new GlobalException(GlobalErrorCode.INVALID_ACCESS_TOKEN);
+        // access 토큰 null/NPE 방지 + 유효성 체크
+        if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
+            // access가 아예 없거나 잘못된 경우에도, 클라이언트 쿠키 정리 후 "성공"으로 반환 (멱등 로그아웃)
+            tokenCookieHandler.removeRefreshTokenCookie(response);
+            return new OAuthLogoutResponseDto(true, "로그아웃이 완료되었습니다.");
         }
 
         Long userId = jwtProvider.getUserId(accessToken);
-        if (!redisService.isRefreshTokenValid(userId, refreshToken)) {
-            tokenCookieHandler.removeRefreshTokenCookie(response);
-            throw new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN);
-        }
 
-        redisService.deleteRefreshToken(userId);
-        long expiration = jwtProvider.getTokenRemainingTime(accessToken);
+        // refresh 쿠키가 있으면만 서버측 무효화 시도
+        findRefreshTokenInCookies(request).ifPresentOrElse(refreshToken -> {
+            if (redisService.isRefreshTokenValid(userId, refreshToken)) {
+                redisService.deleteRefreshToken(userId);
+            } else {
+                // 유효하지 않으면 서버 상태만 정리 (예외 던지지 않음)
+                log.info("[logout] refresh 토큰이 유효하지 않음(이미 무효화되었거나 만료). userId={}", userId);
+            }
+        }, () -> {
+            log.info("[logout] 요청에 refresh 쿠키 없음. userId={}", userId);
+        });
+
+        // access 블랙리스트 등록 (잔여 만료시간 TTL로)
+        long expiration = 0L;
+        try {
+            expiration = jwtProvider.getTokenRemainingTime(accessToken);
+        } catch (Exception e) {
+            log.warn("[logout] access 토큰 잔여시간 계산 실패. 최소 TTL로 블랙리스트 등록");
+            expiration = 1000L; // 최소 TTL
+        }
         redisService.blacklistAccessToken(accessToken, expiration);
 
+        // 클라 쿠키 제거 (항상)
         tokenCookieHandler.removeRefreshTokenCookie(response);
 
         return new OAuthLogoutResponseDto(true, "로그아웃이 완료되었습니다.");
     }
 
     public TokenReissueResponseDto reissueToken(HttpServletRequest request, HttpServletResponse response) {
+        // 쿠키가 없으면 Optional.empty → orElseThrow 로 명확한 예외
+        String refreshToken = findRefreshTokenInCookies(request)
+                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN));
 
-        String refreshToken = extractRefreshTokenFromCookie(request);
         Long userId = getValidUserIdFromRefreshToken(refreshToken, response);
 
         User user = userRepository.findById(userId)
@@ -221,14 +255,6 @@ public class AuthService {
         return accessToken;
     }
 
-    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-        return Arrays.stream(request.getCookies())
-                .filter(cookie -> "refresh_token".equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElseThrow(() -> new GlobalException(GlobalErrorCode.INVALID_REFRESH_TOKEN));
-    }
-
     private Long getValidUserIdFromRefreshToken(String refreshToken, HttpServletResponse response) {
         if (!jwtProvider.validateToken(refreshToken)) {
             tokenCookieHandler.removeRefreshTokenCookie(response);
@@ -242,5 +268,17 @@ public class AuthService {
         }
 
         return userId;
+    }
+
+    private java.util.Optional<String> findRefreshTokenInCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null || cookies.length == 0) return java.util.Optional.empty();
+        for (Cookie c : cookies) {
+            if (REFRESH_COOKIE_NAME.equals(c.getName())) {
+                String v = c.getValue();
+                if (v != null && !v.isBlank()) return java.util.Optional.of(v);
+            }
+        }
+        return java.util.Optional.empty();
     }
 }

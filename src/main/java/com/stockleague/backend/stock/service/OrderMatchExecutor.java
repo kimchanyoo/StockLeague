@@ -2,6 +2,7 @@ package com.stockleague.backend.stock.service;
 
 import com.stockleague.backend.global.exception.GlobalErrorCode;
 import com.stockleague.backend.global.exception.GlobalException;
+import com.stockleague.backend.infra.redis.AtomicOrderbookMatcher;
 import com.stockleague.backend.notification.domain.NotificationType;
 import com.stockleague.backend.notification.domain.TargetType;
 import com.stockleague.backend.notification.dto.NotificationEvent;
@@ -27,8 +28,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -43,185 +45,177 @@ public class OrderMatchExecutor {
     private final ReservedCashRepository reservedCashRepository;
     private final UserStockRepository userStockRepository;
 
+    private final AtomicOrderbookMatcher matcher;
+
     /**
-     * 매수 주문 1건 처리 (트랜잭션 경계) - 체결내역 저장 → 주문 갱신 → 커밋 후 개인 웹소켓으로 알림
+     * 매수 주문 1건 처리
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public BigDecimal processBuyOrder(Long orderId, String ticker, StockOrderBookDto orderBook) {
+    @Transactional
+    public BigDecimal processBuyOrder(Long orderId, String ticker) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
 
-        BigDecimal remaining = order.getRemainingAmount();
-        List<OrderExecution> executions = new ArrayList<>();
-        BigDecimal executedAmount = BigDecimal.ZERO;
-        BigDecimal totalExecutedPrice = BigDecimal.ZERO;
+        if (order.isCompletedOrCanceled()) return order.getRemainingAmount();
 
-        long[] askPrices = orderBook.askPrices();
-        long[] askVolumes = orderBook.askVolumes();
+        BigDecimal beforeRemaining = order.getRemainingAmount();
+        if (beforeRemaining.compareTo(BigDecimal.ZERO) <= 0) return beforeRemaining;
 
-        for (int i = 0; i < askPrices.length; i++) {
-            BigDecimal price = BigDecimal.valueOf(askPrices[i]);
-            BigDecimal volume = BigDecimal.valueOf(askVolumes[i]);
+        AtomicOrderbookMatcher.MatchResult r =
+                matcher.matchBuy(ticker, order.getOrderPrice().longValue(), beforeRemaining);
 
-            if (price.compareTo(order.getOrderPrice()) > 0) break;
-            if (volume.compareTo(BigDecimal.ZERO) <= 0) continue;
-
-            BigDecimal matched = remaining.min(volume);
-            if (matched.compareTo(BigDecimal.ZERO) <= 0) continue;
-
-            executions.add(OrderExecution.builder()
-                    .order(order)
-                    .executedAmount(matched)
-                    .executedPrice(price)
-                    .build());
-
-            executedAmount = executedAmount.add(matched);
-            totalExecutedPrice = totalExecutedPrice.add(price.multiply(matched));
-            remaining = remaining.subtract(matched);
-
-            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
-        }
-
-        if (executions.isEmpty()) {
+        if (!r.hasFill()) {
             return order.getRemainingAmount();
         }
 
+        List<OrderExecution> executions = new ArrayList<>();
+        BigDecimal totalExecutedVolume = BigDecimal.ZERO;
+        BigDecimal totalExecutedVal = BigDecimal.ZERO;
+
+        for (AtomicOrderbookMatcher.Fill f : r.getMatches()) {
+            BigDecimal p = f.priceAsBigDecimal();
+            BigDecimal q = f.getVolume();
+            if (q == null || q.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            executions.add(OrderExecution.builder()
+                    .order(order)
+                    .executedAmount(q)
+                    .executedPrice(p)
+                    .build());
+
+            totalExecutedVolume = totalExecutedVolume.add(q);
+            totalExecutedVal = totalExecutedVal.add(p.multiply(q));
+        }
+
+        if (executions.isEmpty()) return order.getRemainingAmount();
+
         orderExecutionRepository.saveAll(executions);
-        order.updateExecutionInfo(executedAmount, totalExecutedPrice);
+
+        order.applyExecutionDelta(totalExecutedVolume, totalExecutedVal);
         orderRepository.save(order);
 
-        applyBuyStock(order.getUser(), order.getStock(), executedAmount, order.getAverageExecutedPrice());
+        applyBuyStock(order.getUser(), order.getStock(), totalExecutedVolume,
+                avgPrice(totalExecutedVal, totalExecutedVolume));
 
-        log.info("[Match][BUY] orderId={}, exec={}, remaining={}", order.getId(), executedAmount, order.getRemainingAmount());
+        BigDecimal afterRemaining = order.getRemainingAmount();
 
-        if (executedAmount.compareTo(BigDecimal.ZERO) > 0) {
-            notificationService.notify(
-                    new NotificationEvent(
-                            order.getUser().getId(),
-                            NotificationType.TRADE_PARTIALLY_EXECUTED,
-                            TargetType.TRADE,
-                            order.getId()
-                    ),
-                    String.format(
-                            "매수 부분 체결: %s (%s주, 평균가 %s)",
+        if (beforeRemaining.compareTo(afterRemaining) > 0 && afterRemaining.compareTo(BigDecimal.ZERO) > 0) {
+            notifyAfterCommit(
+                    order.getUser().getId(),
+                    NotificationType.TRADE_PARTIALLY_EXECUTED,
+                    order.getId(),
+                    String.format("매수 부분 체결: %s (%s주, 평균가 %s)",
                             order.getStock().getStockTicker(),
-                            executedAmount.stripTrailingZeros().toPlainString(),
-                            order.getAverageExecutedPrice()
-                    )
+                            totalExecutedVolume.stripTrailingZeros().toPlainString(),
+                            order.getAverageExecutedPrice())
             );
         }
 
         if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            finalizeReservedCash(order, totalExecutedPrice);
+            finalizeReservedCash(order, totalExecutedVal);
+            orderQueueRedisService.removeOrderFromQueue(OrderType.BUY, ticker, order.getId());
 
-            notificationService.notify(
-                    new NotificationEvent(
-                            order.getUser().getId(),
-                            NotificationType.TRADE_EXECUTED,
-                            TargetType.TRADE,
-                            order.getId()
-                    ),
-                    String.format(
-                            "매수 최종 체결: %s (총 %s주, 평균가 %s)",
+            notifyAfterCommit(
+                    order.getUser().getId(),
+                    NotificationType.TRADE_EXECUTED,
+                    order.getId(),
+                    String.format("매수 최종 체결: %s (총 %s주, 평균가 %s)",
                             order.getStock().getStockTicker(),
                             order.getOrderAmount().stripTrailingZeros().toPlainString(),
-                            order.getAverageExecutedPrice()
-                    )
+                            order.getAverageExecutedPrice())
             );
-            orderQueueRedisService.removeOrderFromQueue(OrderType.BUY, ticker, order.getId());
         }
 
         return order.getRemainingAmount();
     }
 
     /**
-     * 매도 주문 1건 처리 (트랜잭션 경계)
+     * 매도 주문 1건 처리
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public BigDecimal processSellOrder(Long orderId, String ticker, StockOrderBookDto orderBook) {
+    @Transactional
+    public BigDecimal processSellOrder(Long orderId, String ticker) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.ORDER_NOT_FOUND));
 
-        BigDecimal remaining = order.getRemainingAmount();
-        List<OrderExecution> executions = new ArrayList<>();
-        BigDecimal executedAmount = BigDecimal.ZERO;
-        BigDecimal totalExecutedPrice = BigDecimal.ZERO;
+        if (order.isCompletedOrCanceled()) return order.getRemainingAmount();
 
-        long[] bidPrices = orderBook.bidPrices();
-        long[] bidVolumes = orderBook.bidVolumes();
+        BigDecimal beforeRemaining = order.getRemainingAmount();
+        if (beforeRemaining.compareTo(BigDecimal.ZERO) <= 0) return beforeRemaining;
 
-        for (int i = 0; i < bidPrices.length; i++) {
-            BigDecimal price = BigDecimal.valueOf(bidPrices[i]);
-            BigDecimal volume = BigDecimal.valueOf(bidVolumes[i]);
+        AtomicOrderbookMatcher.MatchResult r =
+                matcher.matchSell(ticker, order.getOrderPrice().longValue(), beforeRemaining);
 
-            if (price.compareTo(order.getOrderPrice()) < 0) break;
-            if (volume.compareTo(BigDecimal.ZERO) <= 0) continue;
-
-            BigDecimal matched = remaining.min(volume);
-            if (matched.compareTo(BigDecimal.ZERO) <= 0) continue;
-
-            executions.add(OrderExecution.builder()
-                    .order(order)
-                    .executedAmount(matched)
-                    .executedPrice(price)
-                    .build());
-
-            executedAmount = executedAmount.add(matched);
-            totalExecutedPrice = totalExecutedPrice.add(price.multiply(matched));
-            remaining = remaining.subtract(matched);
-
-            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
-        }
-
-        if (executions.isEmpty()) {
+        if (!r.hasFill()) {
             return order.getRemainingAmount();
         }
 
+        List<OrderExecution> executions = new ArrayList<>();
+        BigDecimal totalExecutedVolume = BigDecimal.ZERO;
+        BigDecimal totalExecutedVal = BigDecimal.ZERO;
+
+        for (AtomicOrderbookMatcher.Fill f : r.getMatches()) {
+            BigDecimal p = f.priceAsBigDecimal();
+            BigDecimal q = f.getVolume();
+            if (q == null || q.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            executions.add(OrderExecution.builder()
+                    .order(order)
+                    .executedAmount(q)
+                    .executedPrice(p)
+                    .build());
+
+            totalExecutedVolume = totalExecutedVolume.add(q);
+            totalExecutedVal = totalExecutedVal.add(p.multiply(q));
+        }
+
+        if (executions.isEmpty()) return order.getRemainingAmount();
+
         orderExecutionRepository.saveAll(executions);
-        order.updateExecutionInfo(executedAmount, totalExecutedPrice);
+        order.applyExecutionDelta(totalExecutedVolume, totalExecutedVal);
         orderRepository.save(order);
 
-        finalizeSellStock(order.getUser(), order.getStock(), executedAmount);
-        applySellRevenue(order.getUser(), totalExecutedPrice);
+        finalizeSellStock(order.getUser(), order.getStock(), totalExecutedVolume);
+        applySellRevenue(order.getUser(), totalExecutedVal);
 
-        log.info("[Match][SELL] orderId={}, exec={}, remaining={}", order.getId(), executedAmount, order.getRemainingAmount());
+        BigDecimal afterRemaining = order.getRemainingAmount();
 
-        if (executedAmount.compareTo(BigDecimal.ZERO) > 0) {
-            notificationService.notify(
-                    new NotificationEvent(
-                            order.getUser().getId(),
-                            NotificationType.TRADE_PARTIALLY_EXECUTED,
-                            TargetType.TRADE,
-                            order.getId()
-                    ),
-                    String.format(
-                            "매도 부분 체결: %s (%s주, 평균가 %s)",
+        if (beforeRemaining.compareTo(afterRemaining) > 0 && afterRemaining.compareTo(BigDecimal.ZERO) > 0) {
+            notifyAfterCommit(
+                    order.getUser().getId(),
+                    NotificationType.TRADE_PARTIALLY_EXECUTED,
+                    order.getId(),
+                    String.format("매도 부분 체결: %s (%s주, 평균가 %s)",
                             order.getStock().getStockTicker(),
-                            executedAmount.stripTrailingZeros().toPlainString(),
-                            order.getAverageExecutedPrice()
-                    )
+                            totalExecutedVolume.stripTrailingZeros().toPlainString(),
+                            order.getAverageExecutedPrice())
             );
         }
 
         if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            notificationService.notify(
-                    new NotificationEvent(
-                            order.getUser().getId(),
-                            NotificationType.TRADE_EXECUTED,
-                            TargetType.TRADE,
-                            order.getId()
-                    ),
-                    String.format(
-                            "매도 최종 체결: %s (총 %s주, 평균가 %s)",
+            orderQueueRedisService.removeOrderFromQueue(OrderType.SELL, ticker, order.getId());
+
+            notifyAfterCommit(
+                    order.getUser().getId(),
+                    NotificationType.TRADE_EXECUTED,
+                    order.getId(),
+                    String.format("매도 최종 체결: %s (총 %s주, 평균가 %s)",
                             order.getStock().getStockTicker(),
                             order.getOrderAmount().stripTrailingZeros().toPlainString(),
-                            order.getAverageExecutedPrice()
-                    )
+                            order.getAverageExecutedPrice())
             );
-            orderQueueRedisService.removeOrderFromQueue(OrderType.SELL, ticker, order.getId());
         }
 
         return order.getRemainingAmount();
+    }
+
+    /**
+     * 체결 금액 총합과 체결 수량으로 평균 체결 단가를 계산
+     * @param totalVal 체결 금액 총액
+     * @param volume 체결 수량 총합
+     * @return 평균 체결 단가
+     */
+    private BigDecimal avgPrice(BigDecimal totalVal, BigDecimal volume) {
+        if (volume.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+        return totalVal.divide(volume, 2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -248,11 +242,11 @@ public class OrderMatchExecutor {
                     .avgBuyPrice(executedPrice)
                     .build();
         } else {
-            BigDecimal currentQty = us.getQuantity();
+            BigDecimal currentVolume = us.getQuantity();
             BigDecimal currentAvg = us.getAvgBuyPrice();
-            BigDecimal totalQty = currentQty.add(amount);
-            BigDecimal totalVal = currentAvg.multiply(currentQty).add(executedPrice.multiply(amount));
-            BigDecimal newAvg = totalVal.divide(totalQty, 2, RoundingMode.HALF_UP);
+            BigDecimal totalVolume = currentVolume.add(amount);
+            BigDecimal totalVal = currentAvg.multiply(currentVolume).add(executedPrice.multiply(amount));
+            BigDecimal newAvg = totalVal.divide(totalVolume, 2, RoundingMode.HALF_UP);
 
             us.increaseQuantity(amount);
             us.setAvgBuyPrice(newAvg);
@@ -301,7 +295,17 @@ public class OrderMatchExecutor {
     private void finalizeSellStock(User user, Stock stock, BigDecimal executedAmount) {
         UserStock us = userStockRepository.findByUserAndStock(user, stock)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.USER_STOCK_NOT_FOUND));
+
+        BigDecimal beforeLocked = us.getLockedQuantity();
         us.executeSell(executedAmount);
+        userStockRepository.save(us);
+
+        log.info("[UserStock][SELL] userId={}, ticker={}, locked {} -> {} (exec={})",
+                user.getId(),
+                stock.getStockTicker(),
+                beforeLocked.stripTrailingZeros().toPlainString(),
+                us.getLockedQuantity().stripTrailingZeros().toPlainString(),
+                executedAmount.stripTrailingZeros().toPlainString());
     }
 
     /**
@@ -318,5 +322,24 @@ public class OrderMatchExecutor {
         UserAsset asset = user.getUserAsset();
         if (asset == null) throw new GlobalException(GlobalErrorCode.USER_ASSET_NOT_FOUND);
         asset.addCash(revenue);
+    }
+
+    private void notifyAfterCommit(Long userId, NotificationType type, Long targetId, String message) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() {
+                    notificationService.notify(
+                            new NotificationEvent(userId, type, TargetType.TRADE, targetId),
+                            message
+                    );
+                }
+            });
+        } else {
+            // 트랜잭션 밖이라면 즉시 전송
+            notificationService.notify(
+                    new NotificationEvent(userId, type, TargetType.TRADE, targetId),
+                    message
+            );
+        }
     }
 }

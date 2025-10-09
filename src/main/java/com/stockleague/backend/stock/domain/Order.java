@@ -40,6 +40,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "orders")
 public class Order {
 
+    private static final BigDecimal ZERO = BigDecimal.ZERO;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
@@ -98,18 +100,38 @@ public class Order {
     @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private ReservedCash reservedCash;
 
-    public void updateExecutionInfo(BigDecimal executedAmount, BigDecimal totalExecutedPrice) {
-        this.executedAmount = executedAmount;
-        this.remainingAmount = this.orderAmount.subtract(executedAmount);
-
-        if (executedAmount.compareTo(BigDecimal.ZERO) > 0) {
-            this.averageExecutedPrice = totalExecutedPrice.divide(executedAmount, 2, RoundingMode.HALF_UP);
+    /**
+     * 이번 배치의 체결 결과(증분)를 누적으로 반영한다.
+     * @param deltaExecutedAmount 이번 배치 체결 수량 (Σ matched)
+     * @param deltaExecutedValue  이번 배치 체결 금액 합 (Σ price*matched)
+     */
+    public void applyExecutionDelta(BigDecimal deltaExecutedAmount, BigDecimal deltaExecutedValue) {
+        if (deltaExecutedAmount == null || deltaExecutedAmount.signum() <= 0) {
+            return;
         }
 
-        if (this.remainingAmount.compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal prevAmt   = nz(this.executedAmount);
+        BigDecimal prevValue = (prevAmt.signum() > 0 && this.averageExecutedPrice != null)
+                ? this.averageExecutedPrice.multiply(prevAmt)
+                : ZERO;
+
+        BigDecimal newAmt    = prevAmt.add(deltaExecutedAmount);
+        BigDecimal newValue  = prevValue.add(nz(deltaExecutedValue)); // 누적 체결 금액 합
+
+        this.executedAmount  = newAmt.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal rem = nz(this.orderAmount).subtract(newAmt);
+        if (rem.signum() < 0) rem = ZERO; // 하한 보정
+        this.remainingAmount = rem.setScale(2, RoundingMode.HALF_UP);
+
+        if (newAmt.signum() > 0) {
+            this.averageExecutedPrice = newValue.divide(newAmt, 2, RoundingMode.HALF_UP);
+        }
+
+        if (this.remainingAmount.signum() == 0) {
             this.status = OrderStatus.EXECUTED;
             this.executedAt = LocalDateTime.now();
-        } else if (this.remainingAmount.compareTo(this.orderAmount) < 0) {
+        } else if (newAmt.signum() > 0) {
             this.status = OrderStatus.PARTIALLY_EXECUTED;
             this.executedAt = LocalDateTime.now();
         }
@@ -124,6 +146,14 @@ public class Order {
     }
 
     public boolean isCompletedOrCanceled() {
-        return this.status == OrderStatus.CANCELED || this.status == OrderStatus.EXECUTED;
+        return this.status == OrderStatus.EXECUTED
+                || this.status == OrderStatus.CANCELED
+                || this.status == OrderStatus.CANCELED_AFTER_PARTIAL;
+    }
+
+    private static BigDecimal nz(BigDecimal v) { return v == null ? ZERO : v; }
+
+    public void cancelBySystem() {
+        this.setStatus(OrderStatus.CANCELED);
     }
 }

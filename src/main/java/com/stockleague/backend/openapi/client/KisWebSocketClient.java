@@ -5,6 +5,7 @@ import static com.stockleague.backend.global.util.MarketTimeUtil.shouldCollectOr
 
 import com.stockleague.backend.infra.redis.OpenApiTokenRedisService;
 import com.stockleague.backend.infra.redis.StockOrderBookRedisService;
+import com.stockleague.backend.infra.redis.StockOrderBookSnapshotRedisService;
 import com.stockleague.backend.infra.redis.StockPriceRedisService;
 import com.stockleague.backend.openapi.parser.KisWebSocketResponseParser;
 import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
@@ -44,6 +45,8 @@ public class KisWebSocketClient {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final SimpMessagingTemplate messagingTemplate;
 
+    private final StockOrderBookSnapshotRedisService snapshotRedisService;
+
     private static final String WS_URL = "ws://ops.koreainvestment.com:31000";
     private final List<String> tickers;
 
@@ -57,7 +60,8 @@ public class KisWebSocketClient {
             StockOrderBookRedisService stockOrderBookRedisService,
             KisWebSocketResponseParser parser,
             SimpMessagingTemplate messagingTemplate,
-            List<String> tickers
+            List<String> tickers,
+            StockOrderBookSnapshotRedisService snapshotRedisService
     ) {
         this.stockPriceRedisService = stockPriceRedisService;
         this.openApiTokenRedisService = openApiTokenRedisService;
@@ -65,6 +69,7 @@ public class KisWebSocketClient {
         this.parser = parser;
         this.messagingTemplate = messagingTemplate;
         this.tickers = tickers;
+        this.snapshotRedisService = snapshotRedisService;
     }
 
     /**
@@ -372,6 +377,14 @@ public class KisWebSocketClient {
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
                 if (orderBookDto != null) {
                     stockOrderBookRedisService.save(orderBookDto);
+
+                    try {
+                        long ver = snapshotRedisService.writeSnapshot(orderBookDto);
+                        log.debug("[Snapshot] {} ver={}", orderBookDto.ticker(), ver);
+                    } catch (Exception e) {
+                        log.warn("[Snapshot] write 실패: {}", e.getMessage(), e);
+                    }
+
                     messagingTemplate.convertAndSend("/topic/orderbook/" + orderBookDto.ticker(), orderBookDto);
                 }
             }

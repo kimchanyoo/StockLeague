@@ -264,7 +264,7 @@ public class NotificationController {
             @PathVariable Long id
     ) {
         Long userId = (Long) authentication.getPrincipal();
-        service.close(userId, id);
+        service.markAsClose(userId, id);
         return ResponseEntity.ok(Map.of("success", true, "notificationId", id, "isClosed", true));
     }
 }

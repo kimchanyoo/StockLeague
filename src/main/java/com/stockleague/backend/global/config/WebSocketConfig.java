@@ -3,7 +3,7 @@ package com.stockleague.backend.global.config;
 import com.stockleague.backend.global.handler.JwtHandshakeHandler;
 import com.stockleague.backend.global.interceptor.JwtHandshakeInterceptor;
 import com.stockleague.backend.global.interceptor.WebSocketSecurityInterceptor;
-import com.stockleague.backend.infra.webSocket.WebSocketEventLogger;
+//import com.stockleague.backend.infra.webSocket.WebSocketEventLogger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketSecurityInterceptor webSocketSecurityInterceptor;
     private final JwtHandshakeHandler jwtHandshakeHandler;
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
-    private final WebSocketEventLogger webSocketEventLogger;
 
     @Bean
     public ThreadPoolTaskScheduler wsTaskScheduler() {
@@ -56,7 +55,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration
-                .interceptors(webSocketSecurityInterceptor, webSocketEventLogger)
+                .interceptors(webSocketSecurityInterceptor/*, webSocketEventLogger*/)
                 .taskExecutor()
                 .corePoolSize(8)
                 .maxPoolSize(32)

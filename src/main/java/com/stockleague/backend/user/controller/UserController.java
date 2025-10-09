@@ -1,6 +1,7 @@
 package com.stockleague.backend.user.controller;
 
 import com.stockleague.backend.auth.service.AuthService;
+import com.stockleague.backend.global.exception.ErrorResponse;
 import com.stockleague.backend.user.dto.request.UserProfileUpdateRequestDto;
 import com.stockleague.backend.user.dto.request.UserWithdrawRequestDto;
 import com.stockleague.backend.user.dto.response.UserProfileResponseDto;
@@ -20,7 +21,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -92,7 +92,9 @@ public class UserController {
                                             {
                                                 "success" : true,
                                                 "message" : "회원 정보가 수정되었습니다.",
-                                                "nickname" : "김찬유"
+                                                "nickname" : "김찬유",
+                                                "lastNicknameChangedAt": "2025-08-26T14:30:00",
+                                                "nextNicknameChangeAt": "2025-09-25T14:30:00"
                                             }
                                             """
                             )
@@ -121,6 +123,21 @@ public class UserController {
                                                        "success" : false,
                                                        "message" : "이미 사용 중인 닉네임입니다.",
                                                        "errorCode": "DUPLICATED_NICKNAME"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "NicknameChangeNotAllowed",
+                                            summary = "닉네임 변경 쿨타임",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "message": "닉네임 변경은 30일마다 가능합니다.",
+                                                      "errorCode": "NICKNAME_CHANGE_NOT_ALLOWED",
+                                                      "details": {
+                                                        "daysLeft": 12,
+                                                        "nextAvailableAt": "2025-09-25T14:30:00"
+                                                      }
                                                     }
                                                     """
                                     )
@@ -216,8 +233,8 @@ public class UserController {
             @RequestBody @Valid UserWithdrawRequestDto request) {
         Long userId = (Long) authentication.getPrincipal();
 
-        UserWithdrawResponseDto result = userService.deleteUser(userId, request);
         authService.clearUserTokens(userId, servletRequest, response);
+        UserWithdrawResponseDto result = userService.deleteUser(userId, request);
 
         return ResponseEntity.ok(result);
     }

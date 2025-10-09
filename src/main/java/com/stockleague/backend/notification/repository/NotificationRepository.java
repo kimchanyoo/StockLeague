@@ -86,4 +86,16 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
               and n.deletedAt < :threshold
            """)
     int purgeDeletedBefore(@Param("threshold") LocalDateTime threshold);
+
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+       update Notification n
+          set n.isDeleted = true,
+              n.deletedAt = CURRENT_TIMESTAMP
+        where n.id = :id
+          and n.user.id = :userId
+          and n.isDeleted = false
+       """)
+    int softClose(@Param("userId") Long userId, @Param("id") Long id);
 }

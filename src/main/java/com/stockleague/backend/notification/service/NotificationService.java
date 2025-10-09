@@ -235,7 +235,10 @@ public class NotificationService {
      * @throws GlobalException FORBIDDEN 다른 사용자 소유인 경우
      */
     @Transactional
-    public void close(Long userId, Long id) {
+    public void markAsClose(Long userId, Long id) {
+        int updated = notificationRepository.softClose(userId, id);
+        if (updated > 0) return;
+
         Notification n = notificationRepository.findById(id)
                 .orElseThrow(() -> new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND));
 
@@ -245,7 +248,6 @@ public class NotificationService {
         if (n.isDeleted()) {
             throw new GlobalException(GlobalErrorCode.NOTIFICATION_NOT_FOUND);
         }
-        n.close();
     }
 
     /**
