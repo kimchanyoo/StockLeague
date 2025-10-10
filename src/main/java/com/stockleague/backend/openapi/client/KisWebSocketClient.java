@@ -12,6 +12,8 @@ import com.stockleague.backend.stock.dto.response.stock.StockOrderBookDto;
 import com.stockleague.backend.stock.dto.response.stock.StockPriceDto;
 import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +55,7 @@ public class KisWebSocketClient {
     private WebSocket webSocket;
     private boolean isConnected = false;
     private int reconnectAttempts = 0;
+    private final ConcurrentMap<String, Long> lastSnapshotMillis = new ConcurrentHashMap<>();
 
     public KisWebSocketClient(
             StockPriceRedisService stockPriceRedisService,
@@ -103,6 +106,7 @@ public class KisWebSocketClient {
             sendUnsubscribe(webSocket, "H0STASP0", ticker);
         }
         log.info("[WebSocket] 15:00 호가 해제 완료");
+        lastSnapshotMillis.clear();
     }
 
     /**
@@ -377,15 +381,23 @@ public class KisWebSocketClient {
                 StockOrderBookDto orderBookDto = parser.parseOrderBook(body);
                 if (orderBookDto != null) {
                     stockOrderBookRedisService.save(orderBookDto);
-
-                    try {
-                        long ver = snapshotRedisService.writeSnapshot(orderBookDto);
-                        log.debug("[Snapshot] {} ver={}", orderBookDto.ticker(), ver);
-                    } catch (Exception e) {
-                        log.warn("[Snapshot] write 실패: {}", e.getMessage(), e);
-                    }
-
                     messagingTemplate.convertAndSend("/topic/orderbook/" + orderBookDto.ticker(), orderBookDto);
+
+                    final String ticker = orderBookDto.ticker();
+                    lastSnapshotMillis.compute(ticker, (t, lastMs) -> {
+                        long now = System.currentTimeMillis();
+                        if (lastMs != null && (now - lastMs) < 1000L) {
+                            return lastMs;
+                        }
+                        try {
+                            long ver = snapshotRedisService.writeSnapshot(orderBookDto);
+                            log.debug("[Snapshot] {} ver={} (throttled <= 1/sec)", ticker, ver);
+                        } catch (Exception e) {
+                            log.warn("[Snapshot] write 실패: {}", e.getMessage(), e);
+                            return lastMs;
+                        }
+                        return now;
+                    });
                 }
             }
         } catch (Exception e) {
