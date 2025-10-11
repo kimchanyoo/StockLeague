@@ -1,0 +1,1 @@
+CREATE INDEX idx_ticker ON stocks (stock_ticker);

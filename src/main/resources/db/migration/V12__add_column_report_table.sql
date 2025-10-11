@@ -1,0 +1,5 @@
+ALTER TABLE comment_reports
+    ADD COLUMN warning_sent BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE comments
+    ADD COLUMN report_count INTEGER NOT NULL DEFAULT 0;
