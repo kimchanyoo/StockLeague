@@ -30,7 +30,7 @@ export default function InquiryList() {
         const res = await getInquiries(currentPage, inquiriesPerPage);
         setInquiries(res.inquiries);
         setTotalCount(res.totalCount);
-      } catch (err) {
+      } catch (_err) {
         //console.error("문의 목록 불러오기 실패:", err);
       }
     };
@@ -102,7 +102,7 @@ export default function InquiryList() {
                         return;
                       }
                       router.push(`/help/inquiry/write?inquiryId=${item.inquiryId}`);
-                    } catch (error) {
+                    } catch (_error) {
                       alert("문의 내역을 확인할 수 없습니다.");
                     }
                   }} 
@@ -121,6 +121,7 @@ export default function InquiryList() {
                       } else {
                         alert(res.message || "삭제에 실패했습니다.");
                       }
+                      // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     } catch (error: any) {
                       // 서버에서 내려주는 에러 메시지 처리
                       if (error.response?.data?.message) {

@@ -200,6 +200,7 @@ export const reportComment = async (commentId: number, payload: ReportPayload) =
 };
 
 export const fetchReports = async ( page = 1, size = 10, status?: ReportStatus | null ): Promise<ReportListResponse> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const params: any = { page, size };
   if (status !== null && status !== undefined) {
     params.status = status;

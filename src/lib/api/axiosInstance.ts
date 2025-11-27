@@ -59,6 +59,7 @@ axiosInstance.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
         return axiosInstance(originalRequest); // 재요청
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (refreshError: any) {
         //console.error("🔒 refresh 실패:", refreshError.response?.data || refreshError);
 

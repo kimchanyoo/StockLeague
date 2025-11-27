@@ -48,7 +48,6 @@ export function useMainStockPriceSocket(
             activatedRef.current = true;
             client.subscribe(`/topic/stocks/${ticker}`, (msg: IMessage) => {
               try {
-                const data = JSON.parse(msg.body) as StockPriceResponse;
                 //console.log("[STOCK MESSAGE 수신]", data)
                 onUpdate(JSON.parse(msg.body) as StockPriceResponse);
               } catch (e) {
@@ -57,14 +56,14 @@ export function useMainStockPriceSocket(
             });
           },
           onDisconnect: () => { activatedRef.current = false; },
-          onWebSocketClose: (evt) => {
+          onWebSocketClose: (_evt) => {
             activatedRef.current = false;
             //console.log("WS closed 메인", evt?.code, evt?.reason);
           },
-          onWebSocketError: (evt) => {
+          onWebSocketError: (_evt) => {
            //console.error("WS error 메인", evt);
           },
-          onStompError: (frame) => {
+          onStompError: (_frame) => {
             //console.error("STOMP 에러 메인", frame.headers["message"], frame.body);
           },
         });

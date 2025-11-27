@@ -14,10 +14,10 @@ const noticesPerPage = 20;
 const maxPageButtons = 10;
 
 const Community = ({ ticker }: Props) => {
-  const [comments, setComments] = useState<CommentType[]>([]);
+  const [_comments, setComments] = useState<CommentType[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(false);
+  const [_error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [newComment, setNewComment] = useState("");
   const [stockName, setStockName] = useState<string | null>(null); // 기본값은 ticker
@@ -33,7 +33,7 @@ const Community = ({ ticker }: Props) => {
       if (matchedStock) {
         setStockName(matchedStock.stockName);
       }
-    } catch (err) {
+    } catch (_err) {
       //console.error("종목 이름 가져오기 실패", err);
     }
   };
@@ -48,7 +48,7 @@ const Community = ({ ticker }: Props) => {
       } else {
         setError("댓글을 불러오지 못했습니다.");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("서버 요청 오류가 발생했습니다.");
     }
     setLoading(false);
@@ -70,7 +70,7 @@ const Community = ({ ticker }: Props) => {
       setNewComment(""); // 입력창 비우기
       setCurrentPage(1); // 첫 페이지로 이동 (선택사항)
       setRefreshTrigger((prev) => prev + 1);  // 댓글 목록 새로고침
-    } catch (e) {
+    } catch (_e) {
       //console.error("댓글 작성 실패", e);
     }
   };

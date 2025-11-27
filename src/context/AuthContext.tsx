@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
           setStompConnected(true);
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         catch (error: any) {
           const status = error?.response?.status;
           //console.error("프로필 요청 실패 상태 코드:", status);

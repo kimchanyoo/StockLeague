@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import "./account.css";
 import Portfolio from "@/app/components/user/Portfolio";
 import { getUserAssetValuation, UserAssetValuation } from "@/lib/api/user"
@@ -55,6 +55,7 @@ export default function Account() {
         }));
 
         setStocks(formattedStocks);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err: any) {
         setError(err.message || "데이터를 불러오는 데 실패했습니다.");
       } finally {

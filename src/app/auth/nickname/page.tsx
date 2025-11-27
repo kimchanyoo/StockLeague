@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useSocialSignup } from "@/context/SocialSignupContext";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import type { AxiosError } from "axios";
 
 export default function Nickname() {
   const { data, setData, finalizeSignup } = useSocialSignup();
@@ -39,18 +40,18 @@ export default function Nickname() {
   // 닉네임 중복 검사
   const duplicateMutation = useMutation<
     { available: boolean }, // 성공 반환 타입
-    any,                    // 에러 타입
+    AxiosError<{ message: string }>,
     string                  // mutate 파라미터
   >(
     async (nickname: string) => {
-      const res = await axios.get("/api/v1/auth/check-nickname", {
+      const res = await axios.get<{ available: boolean }>("/api/v1/auth/check-nickname", {
         params: { nickname },
         headers: { "Content-Type": "application/json" },
       });
       return res.data;
     },
     {
-      onSuccess: (res) => {
+      onSuccess: (res: { available: boolean }) => {
         if (res.available) {
           setIsAvailable(true);
           setError(null);
@@ -59,7 +60,7 @@ export default function Nickname() {
           setError("이미 사용 중인 닉네임입니다.");
         }
       },
-      onError: (err) => {
+      onError: (err: AxiosError<{ message: string }>) => {
         setIsAvailable(false);
         setError(err.response?.data?.message || "중복 검사 중 오류가 발생했습니다.");
       },
@@ -76,12 +77,12 @@ export default function Nickname() {
 
   // 회원가입 완료
   const signupMutation = useMutation<
-    any, // 성공 반환 타입
-    any, // 에러 타입
+    { success: boolean }, // 성공 반환 타입
+    AxiosError,  // 에러 타입
     void // mutate 파라미터
   >(
-    async () => {
-      const res = await axios.post(
+    async (): Promise<{ success: boolean }> => {
+      const res = await axios.post<{ success: boolean }>(
         "/api/v1/auth/oauth/complete",
         {
           nickname,
@@ -99,7 +100,7 @@ export default function Nickname() {
       return res.data;
     },
     {
-      onSuccess: (res) => {
+      onSuccess: (res: { success: boolean }) => {
         finalizeSignup(nickname, "USER", data.accessToken!);
         router.push("/auth/success");
       },

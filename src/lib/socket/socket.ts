@@ -1,7 +1,7 @@
 import { Client, IMessage } from "@stomp/stompjs";
 
 export let stompClient: Client | null = null;
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface QueuedMessage {
   destination: string;
   body: any;
@@ -31,7 +31,7 @@ export const connectStomp = (
           try {
             const payload = JSON.parse(message.body);
             onMessage(payload);
-          } catch (e) {
+          } catch (_e) {
             //console.error("STOMP 메시지 파싱 실패:", e);
           }
         });
@@ -39,7 +39,7 @@ export const connectStomp = (
         flushMessageQueue();
         resolve();
       },
-      onStompError: (frame) => {
+      onStompError: (_frame) => {
         //console.error("STOMP 에러:", frame);
         reject(new Error("STOMP 연결 실패"));
       },
@@ -61,7 +61,7 @@ export const disconnectStomp = () => {
     stompClient = null;
   }
 };
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const sendMessage = (destination: string, body: any) => {
   if (stompClient?.active) {
     stompClient.publish({

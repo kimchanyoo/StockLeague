@@ -32,18 +32,18 @@ export const useStockPriceMultiSocket = (
               const data: StockPriceResponse = JSON.parse(message.body);
               //console.log(`📈 실시간 수신 - ${ticker}:`, data);
               onUpdate(data);
-            } catch (err) {
+            } catch (_err) {
               //console.error(`❌ JSON 파싱 오류 (${ticker})`, err, message.body);
             }
           });
         });
       },
-      onStompError: (frame) => {
+      onStompError: (_frame) => {
         //console.error("🛑 STOMP 실시간 주식가격 에러", frame.headers["message"], frame.body);
       },
     });
 
-    let subscribedTickers: string[] = [];
+    const subscribedTickers: string[] = [];
 
     const init = async () => {
       const promises = tickers.map(async (ticker) => {

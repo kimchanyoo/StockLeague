@@ -51,6 +51,7 @@ export default function AccountSettings() {
       alert(res.message); // ex: "회원 탈퇴가 완료되었습니다."
       await logout(); // context에 정의된 로그아웃 함수
       window.location.href = "/";
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error: any) {
       alert(error.response?.data?.message || "회원 탈퇴 중 오류가 발생했습니다.");
     }

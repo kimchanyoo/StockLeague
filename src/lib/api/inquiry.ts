@@ -129,7 +129,7 @@ export const createInquiry = async ({
         message: res.data.message,
       };
     }
-  } catch (error) {
+  } catch (_error) {
     //console.error("서버와의 통신 중 문제가 발생: ", error);
     throw new Error("서버와의 통신 중 문제가 발생했습니다.");
   }
@@ -156,6 +156,7 @@ export const updateInquiry = async (inquiryId: number, data: InquiryCreateReques
       message: res.data.message,
       errorCode: res.data.errorCode,
     };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     const res = error.response?.data;
     return {
@@ -176,6 +177,7 @@ export const deleteInquiry = async (inquiryId: number) => {
       message: res.data.message,
       errorCode: res.data.errorCode,
     };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
     const res = error.response?.data;
     return {
@@ -205,12 +207,12 @@ export const getAdminInquiries = async (
     } else {
       throw new Error(res.data.message || "문의 내역을 불러오지 못했습니다.");
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error: any) {
-    //console.error("관리자 문의 목록 조회 중 오류 발생:", error);
     throw new Error(error.message || "서버와의 통신 중 문제가 발생했습니다.");
   }
 };
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 // 관리자용 문의 상세 조회
 export const getAdminInquiryDetail = async (
   inquiryId: number

@@ -20,14 +20,14 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
   const [showReporters, setShowReporters] = useState(false);
   const [showWarnings, setShowWarnings] = useState(false);
   const [selectedAction, setSelectedAction] = useState<ActionType>("none");
-  const [suspendDays, setSuspendDays] = useState<number>(1);
+  const [_suspendDays, setSuspendDays] = useState<number>(1);
   const getAccountStatusText = (status: boolean) => (status ? "정지" : "활동 중");
   const [warningReason, setWarningReason] = useState<keyof typeof reasonTextMap>("OTHER");
   const [adminNickname, setAdminNickname] = useState<string | null>(null);
   const [actionTakenResult, setActionTakenResult] = useState<string | null>(null);
   
   // STOMP 연결 상태 관리용
-  const [stompConnected, setStompConnected] = useState(false);
+  const [_stompConnected, _setStompConnected] = useState(false);
 
   const reasonTextMap: Record<string, string> = {
     INSULT: "욕설 및 비방",
@@ -126,7 +126,7 @@ const ReportDetailModal = ({ open, onClose, report }: Props) => {
         });
       }
 
-    } catch (error) {
+    } catch (_error) {
       //console.error("조치 처리 중 오류 발생:", error);
       alert("조치 처리 중 오류가 발생했습니다.");
     }

@@ -33,6 +33,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   const totalPrice = parseFloat((quantity * price).toFixed(1));
 
   const { accessToken, loading } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { orderbook, isMarketOpen } = useOrderbook({ ticker, accessToken, loading });
   const [myStockQuantity, setMyStockQuantity] = useState<number>(0);
 
@@ -45,7 +46,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
       try {
         const balance = await getUserAssetValuation();
         setMyMoney(balance.availableCash)
-      } catch (err) {
+      } catch (_err) {
         //console.error("보유 현금 조회 실패:", err);
         //alert("보유 자산 정보를 불러오지 못했습니다.");
       }
@@ -64,7 +65,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
         
         const myStock = res.stocks.find(s => s.ticker === ticker);
         setMyStockQuantity(myStock ? parseFloat(myStock.quantity) : 0);
-      } catch (err) {
+      } catch (_err) {
         //console.error(err);
       }
     };
@@ -184,7 +185,7 @@ const StockOrder = ({ stockName, currentPrice, ticker }: StockOrderProps) => {
   };
 
   const handlePriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let raw = e.target.value.replace(/,/g, "");
+    const raw = e.target.value.replace(/,/g, "");
     if (!/^\d*$/.test(raw)) return; // 숫자 외 입력 차단
 
     setPriceInput(raw);

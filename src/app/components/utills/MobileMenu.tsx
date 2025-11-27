@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import styles from "@/app/styles/components/utills/MobileMenu.module.css";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import Link from "next/link";
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -66,8 +67,8 @@ const MobileMenu = () => {
               <div className={styles.menuTitle}>
                 <h1>고객지원/이용안내</h1>
                 <nav className={styles.menuLinks}>
-                  <a href="/help/guide">이용안내</a>
-                  <a href="/help/notice">공지사항</a>
+                  <Link href="/help/guide">이용안내</Link>
+                  <Link href="/help/notice">공지사항</Link>
                   <a href="/help/inquiry">1:1문의하기</a>
                   <a href="https://www.notion.so/FAQ-216af0b607f880248008e1e15a111ccd?source=copy_link" target="_blank" rel="noopener noreferrer">FAQ</a>
                 </nav>

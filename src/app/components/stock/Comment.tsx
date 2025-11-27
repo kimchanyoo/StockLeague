@@ -49,7 +49,7 @@ const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
           setLikedMap(initialLikedMap);
         }
       })
-      .catch(err => {
+      .catch(_err => {
         //console.error("댓글 목록 조회 실패", err);
       });
   }, [ticker, refreshTrigger]);
@@ -79,7 +79,7 @@ const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
               }));
             }
           })
-          .catch((err) => {
+          .catch((_err) => {
             //console.error("대댓글 조회 실패", err);
           });
       }
@@ -124,7 +124,7 @@ const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
       } else {
         alert('대댓글 작성에 실패했습니다.');
       }
-    } catch (error) {
+    } catch (_error) {
       //console.error(error);
       alert('대댓글 작성 중 오류가 발생했습니다.');
     }
@@ -165,7 +165,7 @@ const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
       } else {
         alert(res.message || '댓글 수정에 실패했습니다.');
       }
-    } catch (error) {
+    } catch (_error) {
       //console.error(error);
       alert('댓글 수정 중 오류가 발생했습니다.');
     }
@@ -211,7 +211,7 @@ const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
       } else {
         alert(res.message || '대댓글 수정에 실패했습니다.');
       }
-    } catch (error) {
+    } catch (_error) {
       //console.error(error);
       alert('대댓글 수정 중 오류가 발생했습니다.');
     }
@@ -229,7 +229,7 @@ const Comment = ({ ticker, refreshTrigger }: CommentProps) => {
       } else {
         alert(res.message || '대댓글 삭제에 실패했습니다.');
       }
-    } catch (error) {
+    } catch (_error) {
       //console.error(error);
       alert('대댓글 삭제 중 오류가 발생했습니다.');
     }
@@ -250,7 +250,7 @@ const handleReport = async (commentId: number) => {
     closeReportModal();
     setReportReason('');
     setReportContent('');
-  } catch (error) {
+  } catch (_error) {
     alert('신고에 실패했습니다.');
     //console.error(error);
   }

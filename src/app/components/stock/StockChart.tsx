@@ -44,7 +44,7 @@ type Props = {
 
 type Point = { time: Time; price: number };
 
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurrentPriceChange }) => {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const volumeContainerRef = useRef<HTMLDivElement | null>(null);
@@ -61,8 +61,8 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
   const lastRangeFrom = useRef<number | null>(null);
 
   const [candles, setCandles] = useState<CandleData[]>([]);
-  const [realTimeCandle, setRealTimeCandle] = useState<RealTimeCandleData | null>(null);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [_realTimeCandle, setRealTimeCandle] = useState<RealTimeCandleData | null>(null);
+  const [_currentPrice, setCurrentPrice] = useState<number | null>(null);
 
   const [lines, setLines] = useState<Point[][]>([]);
   const [hoverPreviewLine, setHoverPreviewLine] = useState<Point[] | null>(null);
@@ -103,13 +103,13 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
             
             setRealTimeCandle(data);
 
-          } catch (err) {
+          } catch (_err) {
             //console.error("실시간 데이터 처리 오류:", err);
           }
         });
       },
 
-      onStompError: (frame) => {
+      onStompError: (_frame) => {
         //console.error("WebSocket STOMP 오류:", frame.headers["message"]);
       },
     });
@@ -134,7 +134,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
         setCandles(sortedData);
         setOffset(sortedData.length);
       })
-      .catch((err) => {
+      .catch((_err) => {
         if (!isMounted) return;
         //console.error("캔들 데이터 로드 실패:", err);
         setCandles([]);
@@ -231,7 +231,7 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
 
         setOffset((prevOffset) => prevOffset + addCount);
       })
-      .catch((err) => {
+      .catch((_err) => {
         //console.error("추가 캔들 로드 실패:", err);
       })
       .finally(() => setIsLoading(false));
@@ -545,7 +545,8 @@ const StockChart: React.FC<Props> = ({ activeTab, setActiveTab, ticker, onCurren
 
     if (hoverPreviewLine && hoverPreviewLine.length === 2) {
       const previewSeries = chartRef.current.addLineSeries({ color: 'gray', lineWidth: 1, lineStyle: 1 });
-      let [p1, p2] = [...hoverPreviewLine];
+      const [p1, p2Init] = [...hoverPreviewLine];
+      let p2 = p2Init;
       if (p1.time === p2.time) {
         p2 = { ...p2, time: (p2.time as number) + 1 as UTCTimestamp };
       }

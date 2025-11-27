@@ -137,6 +137,7 @@ export const getAdminNotices = async ({
   size?: number;
   isDeleted?: boolean;
 }): Promise<AdminNoticeListResponse> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const params: any = { page, size };
   if (isDeleted !== undefined) params.isDeleted = isDeleted;
 

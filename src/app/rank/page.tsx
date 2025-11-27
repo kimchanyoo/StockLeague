@@ -32,11 +32,11 @@ export default function Rank() {
       if (myRankRef.current) observer.unobserve(myRankRef.current);
     };
   }, [visibleCount, rankingData]);
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onUpdateGlobal = useCallback((data: any) => {
     setRankingData(data.rankingList);
   }, []);
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onUpdateMe = useCallback((data: any) => {
     setMyRanking(data.myRanking);
   }, []);

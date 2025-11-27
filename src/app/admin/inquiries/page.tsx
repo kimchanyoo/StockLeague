@@ -45,7 +45,6 @@ export default function Inquiries() {
       }
     } catch (error) {
       alert("문의 목록을 불러오는 중 오류가 발생했습니다.");
-      //console.error(error);
     } finally {
       setLoading(false);
     }
@@ -64,7 +63,6 @@ export default function Inquiries() {
       }
     } catch (error) {
       alert("문의 상세를 불러오는 중 오류가 발생했습니다.");
-      //console.error(error);
     } finally {
       setLoading(false);
     }
@@ -93,7 +91,6 @@ export default function Inquiries() {
       }
     } catch (error) {
       alert("답변 등록 중 오류가 발생했습니다.");
-      //console.error(error);
     } finally {
       setLoading(false);
     }

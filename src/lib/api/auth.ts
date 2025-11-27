@@ -48,6 +48,7 @@ export async function updateNickname(nickname: string) {
       nickname: res.data.nickname,
       nextNicknameChangeAt: res.data.nextNicknameChangeAt
     };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err: any) {
     const res = err.response?.data;
     if (!res) throw err;

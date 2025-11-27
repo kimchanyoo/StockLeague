@@ -37,7 +37,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       if (res.success) {
         setNotifications(res.content);
       }
-    } catch (err) {
+    } catch (_err) {
       //console.error("알림 목록 조회 실패:", err);
     }
   };
@@ -62,7 +62,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
               refreshUnreadCount();
             }
           });
-        } catch (error: any) {
+        } catch (_error) {
           //console.error("STOMP 알림 연결 중 오류 발생:", error?.message || error, error);
         }
       })();
@@ -93,7 +93,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         );
         await refreshUnreadCount();
       }
-    } catch (err) {
+    } catch (_err) {
       //console.error("알림 읽음 처리 실패:", err);
     }
   };
@@ -120,7 +120,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
         );
         await refreshUnreadCount();
       }
-    } catch (err) {
+    } catch (_err) {
       //console.error("전체 알림 읽음 처리 실패:", err);
     }
   };
@@ -131,7 +131,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       if (res.success) {
         setUnreadCount(res.unreadCount);
       }
-    } catch (err) {
+    } catch (_err) {
       //console.error("읽지 않은 알림 개수 조회 실패:", err);
     }
   };

@@ -43,7 +43,7 @@ export default function Reports () {
       const detail = await fetchReportDetail(report.commentId); // 상세 데이터 받아오기
       setSelectedReport(detail); // 상세 객체를 모달로 전달
       setModalOpen(true);
-    } catch (err) {
+    } catch (_err) {
       alert("신고 상세 정보를 불러오지 못했습니다.");
     }
   };
@@ -73,7 +73,7 @@ export default function Reports () {
         const res = await fetchReports(params.page, params.size, params.status);
         setReports(res.reports);
         setTotalCount(res.totalCount);
-      } catch (err: any) {
+      } catch (_err: any) {
         setError("신고 목록을 불러오는 데 실패했습니다.");
       } finally {
         setLoading(false);

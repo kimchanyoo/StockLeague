@@ -13,7 +13,7 @@ export const useNotification = (accessToken: string | null) => {
     try {
       const res = await getNotifications("unread", 1, 20);
       setNotifications(res.content);
-    } catch (err) {
+    } catch (_err) {
       //console.error("알림 조회 실패:", err);
     } finally {
       setLoading(false);
