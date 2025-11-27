@@ -1,5 +1,11 @@
 # StockLeague
 
+## 📷 스크린샷
+<img width="1892" height="895" alt="1" src="https://github.com/user-attachments/assets/50c40749-7010-4357-93ba-e50d0aa2f84a" />
+<img width="1893" height="890" alt="2" src="https://github.com/user-attachments/assets/5eb0396b-4e91-459d-b36e-f8c070ee2a70" />
+
+---
+
 ## 📌 프로젝트 소개
 **StockLeague**는 실시간 주식 데이터를 기반으로 한 **모의투자 및 랭킹 서비스**입니다.  
 주식 투자 경험이 없는 사용자도 가상의 자산으로 투자 경험을 쌓을 수 있으며, 다른 사용자와 수익률을 비교하며 경쟁할 수 있습니다.  
