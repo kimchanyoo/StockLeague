@@ -1,8 +1,8 @@
 import { CanvasRenderingTarget2D } from 'fancy-canvas';
-import { IPrimitivePaneRenderer } from 'lightweight-charts';
+import { ISeriesPrimitivePaneRenderer  } from 'lightweight-charts';
 import { positionsBox } from './helpers/dimensions/positions';
 
-export class TrendLinePluginAxisPaneRenderer implements IPrimitivePaneRenderer {
+export class TrendLinePluginAxisPaneRenderer implements ISeriesPrimitivePaneRenderer {
 	_p1: number | null;
 	_p2: number | null;
 	_fillColor: string;
